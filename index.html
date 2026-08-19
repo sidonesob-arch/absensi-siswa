@@ -8,7 +8,7 @@
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: #f4f6f9; margin: 0; padding: 15px; }
-    .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .container { max-width: 650px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     h2, h3 { text-align: center; color: #1a73e8; margin-bottom: 15px; }
     .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
     button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
@@ -24,6 +24,7 @@
     .badge-success { background: #e6f4ea; color: #137333; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .badge-warning { background: #fef7e0; color: #b06000; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .badge-danger { background: #fce8e6; color: #c5221f; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+    .badge-purple { background: #f3e8fd; color: #681da8; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .hidden { display: none; }
   </style>
 </head>
@@ -32,7 +33,6 @@
 <div class="container">
   <h2>Portal Absensi Online</h2>
 
-  <!-- Pilihan Mode awal -->
   <div class="btn-group" id="modeSelector">
     <button class="btn-primary" onclick="switchMode('ortu')">👨‍👩‍👧 Mode Orang Tua</button>
     <button class="btn-secondary" onclick="switchMode('guru')">👨‍🏫 Mode Guru / Petugas</button>
@@ -63,7 +63,6 @@
 
   <!-- SECTION GURU -->
   <div id="sectionGuru" class="hidden">
-    <!-- PIN Auth Sederhana -->
     <div id="guruAuth" class="card">
       <h3>Verifikasi Guru</h3>
       <label>Masukkan PIN Akses Guru (Default: 1234):</label>
@@ -71,7 +70,6 @@
       <button class="btn-success" onclick="verifyPin()">Masuk Mode Guru</button>
     </div>
 
-    <!-- Dashboard Guru -->
     <div id="guruDashboard" class="hidden">
       <div class="btn-group">
         <button class="btn-primary" onclick="toggleGuruMenu('scan')">📷 Scanner QR</button>
@@ -101,12 +99,11 @@
 
 <script>
   // ⚠️ GANTI URL INI DENGAN URL WEB APP APPS SCRIPT ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKnOkU1ViYjAHzMPPfl7o5HCJsfemXqrZDbigoIsTSXaSek89-ffQ15D5QKFzvvo-L7w/exec"; 
-  const PIN_GURU = "1234"; // Ubah PIN Guru di sini
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycb.../exec"; 
+  const PIN_GURU = "1234";
 
   let html5QrcodeScanner;
 
-  // Set Default Date Hari Ini
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('ortuTglAwal').value = today;
   document.getElementById('ortuTglAkhir').value = today;
@@ -123,7 +120,6 @@
     }
   }
 
-  // --- LOGIK ORANG TUA ---
   function cariAbsensiOrtu() {
     const nisn = document.getElementById('ortuNisn').value;
     const tglAwal = document.getElementById('ortuTglAwal').value;
@@ -156,10 +152,10 @@
         `;
 
         if(data.riwayat.length === 0) {
-          html += `<tr><td colspan="4">Tidak ada riwayat absensi pada rentang tanggal ini.</td></tr>`;
+          html += `<tr><td colspan="4">Tidak ada data absensi pada tanggal ini.</td></tr>`;
         } else {
           data.riwayat.forEach(row => {
-            let badge = row.status === 'Terlambat' ? 'badge-warning' : 'badge-success';
+            let badge = getBadgeClass(row.status);
             html += `
               <tr>
                 <td>${row.tanggal}</td>
@@ -176,7 +172,6 @@
       });
   }
 
-  // --- LOGIK GURU ---
   function verifyPin() {
     const pin = document.getElementById('guruPin').value;
     if (pin === PIN_GURU) {
@@ -210,9 +205,9 @@
       .then(res => res.json())
       .then(data => {
         if(data.success) {
-          document.getElementById('scanMsg').innerHTML = `<span style="color:green;">✅ ${data.message}</span>`;
+          document.getElementById('scanMsg').innerHTML = `<span style="color:green;">${data.message}</span>`;
         } else {
-          document.getElementById('scanMsg').innerHTML = `<span style="color:red;">⚠️ ${data.message}</span>`;
+          document.getElementById('scanMsg').innerHTML = `<span style="color:red;">${data.message}</span>`;
         }
       });
     });
@@ -239,7 +234,7 @@
         `;
 
         data.data.forEach(row => {
-          let badge = row.status === 'Hadir Tepat Waktu' ? 'badge-success' : (row.status === 'Terlambat' ? 'badge-warning' : 'badge-danger');
+          let badge = getBadgeClass(row.status);
           html += `
             <tr>
               <td>${row.nisn}</td>
@@ -254,6 +249,14 @@
         html += `</tbody></table>`;
         resDiv.innerHTML = html;
       });
+  }
+
+  function getBadgeClass(status) {
+    if (status === 'Hadir Tepat Waktu') return 'badge-success';
+    if (status === 'Terlambat') return 'badge-warning';
+    if (status === 'Alpa') return 'badge-danger';
+    if (status.includes('Bolos')) return 'badge-purple';
+    return 'badge-secondary';
   }
 </script>
 
