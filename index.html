@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan Absensi Siswa</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body { background-color: #f4f6f9; font-family: system-ui, -apple-system, sans-serif; }
+    #reader { width: 100%; max-width: 500px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; }
+    .status-card { display: none; margin-top: 15px; font-weight: bold; }
+  </style>
+</head>
+<body class="p-3">
+  <div class="container text-center" style="max-width: 500px;">
+    <h4 class="mb-1 text-primary fw-bold">Absensi Online Siswa</h4>
+    <p class="text-muted small mb-3">Arahkan kamera ke QR Code / Barcode Kartu Pelajar</p>
+
+    <!-- Tempat Kamera Live Scanner -->
+    <div id="reader" class="shadow-sm border"></div>
+
+    <!-- Kotak Notifikasi -->
+    <div id="alertBox" class="alert status-card shadow-sm" role="alert"></div>
+
+    <!-- Input Manual jika barcode rusak -->
+    <div class="input-group mt-3">
+      <input type="text" id="manualId" class="form-control" placeholder="Ketik NIS / ID Siswa...">
+      <button class="btn btn-outline-primary" type="button" onclick="kirimManual()">Kirim</button>
+    </div>
+
+    <!-- Log Riwayat Absen -->
+    <div class="card shadow-sm text-start mt-3">
+      <div class="card-header bg-white fw-bold small text-secondary">
+        Riwayat Scan Sesi Ini
+      </div>
+      <ul id="logList" class="list-group list-group-flush small">
+        <li class="list-group-item text-muted text-center">Belum ada data di-scan</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ MASUKKAN WEB APP URL DARI GOOGLE APPS SCRIPT LANGKAH 1 DI SINI:
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycby8gLwomsybF-KuLekcz2Jt-P3sYi7TyZlPsjA8zcnmLka2oAEvJeOlPMFIKBHClkMcVw/exec";
+
+    let isProcessing = false;
+
+    function onScanSuccess(decodedText) {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      prosesKeServer(decodedText);
+    }
+
+    function kirimManual() {
+      const val = document.getElementById('manualId').value.trim();
+      if (!val) {
+        alert("Masukkan ID atau NIS Siswa!");
+        return;
+      }
+      prosesKeServer(val);
+      document.getElementById('manualId').value = "";
+    }
+
+    function prosesKeServer(idSiswa) {
+      showNotification("⏳ Memproses ID: " + idSiswa + "...", "info");
+
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Menghindari masalah CORS browser
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idSiswa: idSiswa })
+      })
+      .then(() => {
+        // Karena mode no-cors, kita anggap request berhasil terkirim ke Google Sheets
+        showNotification("⚡ Data ID " + idSiswa + " dikirim ke server!", "success");
+        addLog(idSiswa, "Terkirim", "text-success");
+        playAudio(true);
+        setTimeout(() => { isProcessing = false; }, 2000);
+      })
+      .catch(err => {
+        showNotification("❌ Gagal mengirim data!", "danger");
+        playAudio(false);
+        setTimeout(() => { isProcessing = false; }, 2000);
+      });
+    }
+
+    function showNotification(msg, type) {
+      const alertBox = document.getElementById('alertBox');
+      alertBox.className = `alert alert-${type} status-card d-block`;
+      alertBox.innerText = msg;
+    }
+
+    function addLog(id, status, colorClass) {
+      const logList = document.getElementById('logList');
+      if (logList.children[0] && logList.children[0].innerText.includes("Belum ada")) {
+        logList.innerHTML = "";
+      }
+      const time = new Date().toLocaleTimeString();
+      const item = `<li class="list-group-item d-flex justify-content-between align-items-center">
+        <span><b>${id}</b> <small class="text-muted">(${time})</small></span>
+        <span class="${colorClass} fw-bold">${status}</span>
+      </li>`;
+      logList.insertAdjacentHTML('afterbegin', item);
+    }
+
+    function playAudio(isSuccess) {
+      if (navigator.vibrate) navigator.vibrate(isSuccess ? 100 : [100, 50, 100]);
+    }
+
+    window.onload = function() {
+      const html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader", 
+        { 
+          fps: 10, 
+          qrbox: { width: 250, height: 250 },
+          rememberLastUsedCamera: true
+        },
+        false
+      );
+      html5QrcodeScanner.render(onScanSuccess);
+    };
+  </script>
+</body>
+</html>
