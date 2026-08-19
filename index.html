@@ -3,13 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Absensi SMPN 1 SOBANG</title>
+  <title>Portal Absensi Resmi Sekolah</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: #f4f6f9; margin: 0; padding: 15px; }
-    .container { max-width: 650px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    h2, h3 { text-align: center; color: #1a73e8; margin-bottom: 15px; }
+    .container { max-width: 650px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    
+    /* Header & Logo Styling */
+    .header-sekolah {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      border-bottom: 3px double #1a73e8;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+    .logo-sekolah {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+    }
+    .title-container {
+      text-align: left;
+    }
+    .title-container h2 {
+      margin: 0;
+      color: #1a73e8;
+      font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .title-container p {
+      margin: 3px 0 0 0;
+      color: #5f6368;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
     .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
     button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
     .btn-primary { background-color: #1a73e8; color: white; }
@@ -31,7 +63,15 @@
 <body>
 
 <div class="container">
-  <h2>Portal Absensi Online</h2>
+  <!-- HEADER LOGO RESMI SEKOLAH -->
+  <div class="header-sekolah">
+    <!-- Ganti src di bawah ini dengan URL Gambar Logo Sekolah Anda -->
+    <img class="logo-sekolah" src="https://drive.google.com/file/d/11YsPOKyrRxyFEseGmrMQoe8Iem44OiUH/view?usp=drive_link" alt="Logo Sekolah">
+    <div class="title-container">
+      <h2>SMP NEGERI 1 SOBANG</h2>
+      <p>Sistem Absensi Digital QR-Code Resmi</p>
+    </div>
+  </div>
 
   <div class="btn-group" id="modeSelector">
     <button class="btn-primary" onclick="switchMode('ortu')">👨‍👩‍👧 Mode Orang Tua</button>
@@ -41,7 +81,7 @@
   <!-- SECTION ORANG TUA -->
   <div id="sectionOrtu" class="hidden">
     <div class="card">
-      <h3>Pencarian Absensi Siswa</h3>
+      <h3 style="text-align:center; color:#1a73e8; margin-top:0;">Pencarian Absensi Siswa</h3>
       <label><b>NISN Siswa:</b></label>
       <input type="text" id="ortuNisn" placeholder="Masukkan NISN Siswa...">
       
@@ -64,7 +104,7 @@
   <!-- SECTION GURU -->
   <div id="sectionGuru" class="hidden">
     <div id="guruAuth" class="card">
-      <h3>Verifikasi Guru</h3>
+      <h3 style="text-align:center; color:#1a73e8; margin-top:0;">Verifikasi Guru</h3>
       <label>Masukkan PIN Akses Guru (Default: 1234):</label>
       <input type="password" id="guruPin" placeholder="Masukkan PIN...">
       <button class="btn-success" onclick="verifyPin()">Masuk Mode Guru</button>
@@ -99,7 +139,7 @@
 
 <script>
   // ⚠️ GANTI URL INI DENGAN URL WEB APP APPS SCRIPT ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu5trLBECkAp8LC4Gl2OOgjQkJs1FGiwDuicg2UX3nF_9d0oQ1lCQ8L3OO2yLHT70VMA/exec"; 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycb.../exec"; 
   const PIN_GURU = "1234";
 
   let html5QrcodeScanner;
