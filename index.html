@@ -310,20 +310,16 @@
     document.getElementById('reader').innerHTML = `<span id="cameraPlaceholder" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>`;
   }
 
-  function onScanSuccess(decodedText) {
-    // Berhentikan scan sementara agar tidak terkirim ganda
+function onScanSuccess(decodedText) {
     document.getElementById('scanMsg').innerHTML = `⌛ Memproses NISN: ${decodedText}...`;
     
-    // Gunakan FormData/URLSearchParams agar compatible dengan Apps Script
-    let formData = new URLSearchParams();
-    formData.append("nisn", decodedText);
-
+    // Mengirim data menggunakan text/plain untuk menghindari CORS preflight block
     fetch(SCRIPT_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'text/plain;charset=utf-8',
       },
-      body: formData.toString()
+      body: JSON.stringify({ nisn: decodedText })
     })
     .then(res => res.json())
     .then(data => {
@@ -334,8 +330,8 @@
       }
     })
     .catch(err => {
-      document.getElementById('scanMsg').innerHTML = `<span style="color:red;">❌ Gagal terhubung ke server/network!</span>`;
       console.error(err);
+      document.getElementById('scanMsg').innerHTML = `<span style="color:red;">❌ Gagal terhubung ke server! Cek URL SCRIPT_URL atau koneksi internet.</span>`;
     });
   }
 
