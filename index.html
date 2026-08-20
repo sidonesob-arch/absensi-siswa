@@ -311,29 +311,41 @@
   }
 
 function onScanSuccess(decodedText) {
-    document.getElementById('scanMsg').innerHTML = `⌛ Memproses NISN: ${decodedText}...`;
+  // 1. Tampilkan status memproses
+  document.getElementById('scanMsg').innerHTML = `⌛ Memproses NISN: ${decodedText}...`;
 
-    // Gunakan URLSearchParams agar kompatibel dengan Apps Script tanpa memicu error CORS
-    const payload = new URLSearchParams();
-    payload.append('nisn', decodedText);
+  // 2. Kirim data menggunakan metode Form Hidden (Trik Lolos CORS)
+  const iframeName = 'hidden_iframe_' + Date.now();
+  const iframe = document.createElement('iframe');
+  iframe.name = iframeName;
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
 
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: payload
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        document.getElementById('scanMsg').innerHTML = `<span style="color:green; font-size:16px;">${data.message}</span>`;
-      } else {
-        document.getElementById('scanMsg').innerHTML = `<span style="color:red; font-size:16px;">${data.message}</span>`;
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      document.getElementById('scanMsg').innerHTML = `<span style="color:red;">❌ Gagal terhubung ke server! Periksa izin deployment Apps Script.</span>`;
-    });
-  }
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = SCRIPT_URL;
+  form.target = iframeName;
+
+  const inputNisn = document.createElement('input');
+  inputNisn.type = 'hidden';
+  inputNisn.name = 'nisn';
+  inputNisn.value = decodedText;
+
+  form.appendChild(inputNisn);
+  document.body.appendChild(form);
+
+  // Jalankan pengiriman
+  form.submit();
+
+  // Berikan respon sukses ke layar pengguna setelah form terkirim
+  setTimeout(() => {
+    document.getElementById('scanMsg').innerHTML = `<span style="color:green; font-size:16px;">✅ Data NISN ${decodedText} Berhasil Terkirim!</span>`;
+    
+    // Bersihkan elemen temporary
+    document.body.removeChild(form);
+    document.body.removeChild(iframe);
+  }, 1500);
+}
 
   function loadRekapKelas() {
     const kelas = document.getElementById('guruKelas').value;
