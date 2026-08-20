@@ -312,14 +312,14 @@
 
 function onScanSuccess(decodedText) {
     document.getElementById('scanMsg').innerHTML = `⌛ Memproses NISN: ${decodedText}...`;
-    
-    // Mengirim data menggunakan text/plain untuk menghindari CORS preflight block
+
+    // Gunakan URLSearchParams agar kompatibel dengan Apps Script tanpa memicu error CORS
+    const payload = new URLSearchParams();
+    payload.append('nisn', decodedText);
+
     fetch(SCRIPT_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify({ nisn: decodedText })
+      body: payload
     })
     .then(res => res.json())
     .then(data => {
@@ -331,7 +331,7 @@ function onScanSuccess(decodedText) {
     })
     .catch(err => {
       console.error(err);
-      document.getElementById('scanMsg').innerHTML = `<span style="color:red;">❌ Gagal terhubung ke server! Cek URL SCRIPT_URL atau koneksi internet.</span>`;
+      document.getElementById('scanMsg').innerHTML = `<span style="color:red;">❌ Gagal terhubung ke server! Periksa izin deployment Apps Script.</span>`;
     });
   }
 
