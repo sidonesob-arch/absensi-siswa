@@ -310,11 +310,14 @@
     document.getElementById('reader').innerHTML = `<span id="cameraPlaceholder" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>`;
   }
 
+let isScanning = false;
+
 function onScanSuccess(decodedText) {
-  // 1. Tampilkan status memproses
+  if (isScanning) return; // Abaikan jika sedang memproses scan sebelumnya
+  isScanning = true;
+
   document.getElementById('scanMsg').innerHTML = `⌛ Memproses NISN: ${decodedText}...`;
 
-  // 2. Kirim data menggunakan metode Form Hidden (Trik Lolos CORS)
   const iframeName = 'hidden_iframe_' + Date.now();
   const iframe = document.createElement('iframe');
   iframe.name = iframeName;
@@ -333,18 +336,18 @@ function onScanSuccess(decodedText) {
 
   form.appendChild(inputNisn);
   document.body.appendChild(form);
-
-  // Jalankan pengiriman
   form.submit();
 
-  // Berikan respon sukses ke layar pengguna setelah form terkirim
   setTimeout(() => {
-    document.getElementById('scanMsg').innerHTML = `<span style="color:green; font-size:16px;">✅ Data NISN ${decodedText} Berhasil Terkirim!</span>`;
-    
-    // Bersihkan elemen temporary
+    document.getElementById('scanMsg').innerHTML = `<span style="color:green; font-size:16px;">✅ NISN ${decodedText} Berhasil Diproses!</span>`;
     document.body.removeChild(form);
     document.body.removeChild(iframe);
-  }, 1500);
+  }, 1000);
+
+  // Buka kembali kunci scanner setelah 4 detik
+  setTimeout(() => {
+    isScanning = false;
+  }, 4000);
 }
 
   function loadRekapKelas() {
