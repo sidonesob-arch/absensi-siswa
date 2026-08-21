@@ -115,7 +115,6 @@
       font-size: 13px;
     }
 
-    /* Debug console */
     #debugConsole {
       background: #1e1e1e;
       color: #d4d4d4;
@@ -129,6 +128,11 @@
       word-wrap: break-word;
       margin-top: 10px;
     }
+    #debugConsole .time { color: #888; }
+    #debugConsole .success { color: #4caf50; }
+    #debugConsole .error { color: #f44336; }
+    #debugConsole .info { color: #2196f3; }
+    #debugConsole .warn { color: #ff9800; }
 
     @media print {
       body { background: white; padding: 0; }
@@ -264,7 +268,7 @@
 
 <script>
   // ⚠️ GANTI URL INI DENGAN URL WEB APP ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywMRfY9TG48DHvmO_qaSaHV0VoWI9QfeGBnKu1mtht6rE63s3L1bbk1e7pdNqhddd2BQ/exec"; 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbziwzFBiXgWtMb8YEiCEUOIQozFerfIQOHNQPIIrIbQmShUoLroNA_utu7lPXfXhbrPlw/exec"; 
   const PIN_GURU = "1234";
 
   let html5QrCode = null;
@@ -283,14 +287,29 @@
   document.getElementById('guruTglAwalRange').value = firstDayMonth.toISOString().split('T')[0];
   document.getElementById('guruTglAkhirRange').value = today;
 
-  // === DEBUG FUNCTION ===
-  function debugLog(msg) {
-    const console = document.getElementById('debugConsole');
-    if (console) {
+  // === DEBUG FUNCTION (Tanpa console.log) ===
+  function debugLog(msg, type) {
+    type = type || 'info';
+    const debugEl = document.getElementById('debugConsole');
+    if (debugEl) {
       const time = new Date().toLocaleTimeString();
-      console.textContent = `[${time}] ${msg}\n` + console.textContent;
+      const colors = {
+        success: 'success',
+        error: 'error', 
+        warn: 'warn',
+        info: 'info'
+      };
+      const colorClass = colors[type] || 'info';
+      // Simpan konten lama, tambahkan yang baru di atas
+      const lines = debugEl.textContent.split('\n');
+      // Hapus baris pertama jika terlalu banyak (max 20 baris)
+      if (lines.length > 20) {
+        lines.pop();
+      }
+      const newContent = `[${time}] ${msg}`;
+      lines.unshift(newContent);
+      debugEl.textContent = lines.join('\n');
     }
-    console.log(msg);
   }
 
   // === FUNGSI SWITCH MODE ===
@@ -303,11 +322,13 @@
     if (mode === 'ortu') {
       document.getElementById('sectionOrtu').classList.remove('hidden');
       document.getElementById('resultOrtu').innerHTML = '';
+      debugLog('👨‍👩‍👧 Mode Orang Tua diaktifkan', 'info');
     } else {
       document.getElementById('sectionGuru').classList.remove('hidden');
       document.getElementById('guruAuth').classList.remove('hidden');
       document.getElementById('guruDashboard').classList.add('hidden');
       document.getElementById('guruPin').value = '';
+      debugLog('👨‍🏫 Mode Guru diaktifkan', 'info');
     }
   }
 
@@ -319,9 +340,11 @@
     
     if (mode === 'harian') {
       document.getElementById('rekapHarianView').classList.remove('hidden');
+      debugLog('📅 Mode Rekap Harian', 'info');
     } else {
       document.getElementById('rekapRangeView').classList.remove('hidden');
       document.getElementById('rangeTitle').textContent = mode === 'bulanan' ? '📆 Rekap Absensi Bulanan' : '📚 Rekap Absensi Tahunan';
+      debugLog(`📊 Mode Rekap ${mode === 'bulanan' ? 'Bulanan' : 'Tahunan'}`, 'info');
     }
     document.getElementById('resultRekapKelas').innerHTML = '';
   }
@@ -333,6 +356,7 @@
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
     document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
+    debugLog('📅 Set range: Bulan Ini', 'success');
   }
 
   function setRangeSemester() {
@@ -345,6 +369,7 @@
     const lastDay = new Date(startYear, startMonth + 6, 0);
     document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
     document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
+    debugLog('📚 Set range: Semester', 'success');
   }
 
   function setRangeTahunAjaran() {
@@ -357,6 +382,7 @@
     const lastDay = new Date(endYear, 5, 30);
     document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
     document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
+    debugLog('🎓 Set range: Tahun Ajaran', 'success');
   }
 
   // === FUNGSI ORANG TUA ===
@@ -370,14 +396,18 @@
     if (!tglAwal || !tglAkhir) { alert("Harap pilih rentang tanggal!"); return; }
 
     resDiv.innerHTML = "<p style='text-align:center;'>⏳ Mengambil data...</p>";
+    debugLog(`🔍 Mencari absensi NISN: ${nisn} (${tglAwal} - ${tglAkhir})`, 'info');
 
     fetch(`${SCRIPT_URL}?action=getRiwayatSiswa&nisn=${encodeURIComponent(nisn)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
       .then(res => res.json())
       .then(data => {
         if (!data.success) {
           resDiv.innerHTML = `<p style='color:red; text-align:center;'>${data.message}</p>`;
+          debugLog(`❌ Error: ${data.message}`, 'error');
           return;
         }
+
+        debugLog(`✅ Data ditemukan untuk ${data.siswa.nama}`, 'success');
 
         let html = `
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;" class="no-print">
@@ -408,6 +438,7 @@
       })
       .catch(err => {
         resDiv.innerHTML = `<p style='color:red; text-align:center;'>Error: ${err.message}</p>`;
+        debugLog(`❌ Fetch Error: ${err.message}`, 'error');
       });
   }
 
@@ -420,10 +451,12 @@
       document.getElementById('guruScanView').classList.remove('hidden');
       document.getElementById('guruRekapView').classList.add('hidden');
       toggleRekapMode('harian');
+      debugLog('✅ Verifikasi PIN berhasil', 'success');
     } else {
       alert("PIN Salah!");
       document.getElementById('guruPin').value = '';
       document.getElementById('guruPin').focus();
+      debugLog('❌ PIN salah', 'error');
     }
   }
 
@@ -433,9 +466,11 @@
     if(view === 'scan') {
       document.getElementById('guruScanView').classList.remove('hidden');
       document.getElementById('guruRekapView').classList.add('hidden');
+      debugLog('📷 Beralih ke Scanner QR', 'info');
     } else {
       document.getElementById('guruScanView').classList.add('hidden');
       document.getElementById('guruRekapView').classList.remove('hidden');
+      debugLog('📊 Beralih ke Rekap Absensi', 'info');
     }
   }
 
@@ -468,13 +503,13 @@
       document.getElementById('btnStopCamera').style.opacity = '1';
       document.getElementById('scanMsg').className = 'scan-result scan-info';
       document.getElementById('scanMsg').textContent = '📷 Kamera Aktif, Siap Memindai...';
-      debugLog('📷 Kamera berhasil dibuka');
+      debugLog('📷 Kamera berhasil dibuka', 'success');
     }).catch(err => {
       alert("Gagal membuka kamera: " + err);
       readerDiv.innerHTML = `<span id="cameraPlaceholder" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>`;
       document.getElementById('btnStartCamera').disabled = false;
       document.getElementById('btnStartCamera').style.opacity = '1';
-      debugLog('❌ Gagal buka kamera: ' + err);
+      debugLog(`❌ Gagal buka kamera: ${err}`, 'error');
     });
   }
 
@@ -483,9 +518,8 @@
       html5QrCode.stop().then(() => {
         isScanning = false;
         updateCameraUIStopped();
-        debugLog('🛑 Kamera ditutup');
+        debugLog('🛑 Kamera ditutup', 'info');
       }).catch(err => {
-        console.error("Gagal menghentikan kamera", err);
         isScanning = false;
         updateCameraUIStopped();
       });
@@ -514,28 +548,30 @@
     const scanMsg = document.getElementById('scanMsg');
     scanMsg.className = 'scan-result scan-info';
     scanMsg.textContent = `⏳ Memproses NISN: ${decodedText}...`;
-    debugLog(`📱 Scan QR: ${decodedText}`);
+    debugLog(`📱 Scan QR: ${decodedText}`, 'info');
 
-    // Gunakan fetch dengan mode yang benar
+    // Kirim data ke server menggunakan GET
     fetch(`${SCRIPT_URL}?action=absen&nisn=${encodeURIComponent(decodedText)}`, {
       method: 'GET'
     })
     .then(response => {
-      debugLog(`📡 Response status: ${response.status}`);
+      debugLog(`📡 Response status: ${response.status}`, 'info');
       return response.json();
     })
     .then(data => {
-      debugLog(`📩 Response data: ${JSON.stringify(data)}`);
+      debugLog(`📩 Response: ${JSON.stringify(data)}`, 'info');
       if (data.success) {
         scanMsg.className = 'scan-result scan-success';
         scanMsg.textContent = `✅ ${data.message}`;
+        debugLog(`✅ ${data.message}`, 'success');
       } else {
         scanMsg.className = 'scan-result scan-error';
         scanMsg.textContent = `❌ ${data.message}`;
+        debugLog(`❌ ${data.message}`, 'error');
       }
     })
     .catch(error => {
-      debugLog(`❌ Error: ${error}`);
+      debugLog(`❌ Error: ${error.message}`, 'error');
       scanMsg.className = 'scan-result scan-error';
       scanMsg.textContent = `❌ Error: ${error.message}`;
     })
@@ -565,14 +601,18 @@
     if(!tanggal) { alert("Pilih tanggal!"); return; }
 
     resDiv.innerHTML = "<p style='text-align:center;'>⏳ Memuat data kelas...</p>";
+    debugLog(`📊 Memuat rekap harian: Kelas ${kelas}, Tanggal ${tanggal}`, 'info');
 
     fetch(`${SCRIPT_URL}?action=getRekapKelas&kelas=${encodeURIComponent(kelas)}&tanggal=${tanggal}`)
       .then(res => res.json())
       .then(data => {
         if (!data.success) {
           resDiv.innerHTML = `<p style='color:red; text-align:center;'>${data.message || 'Gagal memuat data'}</p>`;
+          debugLog(`❌ ${data.message || 'Gagal memuat data'}`, 'error');
           return;
         }
+
+        debugLog(`✅ Data rekap harian ditemukan (${data.data ? data.data.length : 0} siswa)`, 'success');
 
         let html = `
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;" class="no-print">
@@ -601,6 +641,7 @@
       })
       .catch(err => {
         resDiv.innerHTML = `<p style='color:red; text-align:center;'>Error: ${err.message}</p>`;
+        debugLog(`❌ Error: ${err.message}`, 'error');
       });
   }
 
@@ -616,14 +657,18 @@
     if(tglAwal > tglAkhir) { alert("Tanggal awal tidak boleh lebih besar dari tanggal akhir!"); return; }
 
     resDiv.innerHTML = "<p style='text-align:center;'>⏳ Memuat data rekap...</p>";
+    debugLog(`📊 Memuat rekap ${rekapMode}: Kelas ${kelas}, ${tglAwal} - ${tglAkhir}`, 'info');
 
     fetch(`${SCRIPT_URL}?action=getRekapKelasRange&kelas=${encodeURIComponent(kelas)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
       .then(res => res.json())
       .then(data => {
         if (!data.success) {
           resDiv.innerHTML = `<p style='color:red; text-align:center;'>${data.message || 'Gagal memuat data'}</p>`;
+          debugLog(`❌ ${data.message || 'Gagal memuat data'}`, 'error');
           return;
         }
+
+        debugLog(`✅ Data rekap ditemukan (${data.data ? data.data.length : 0} siswa)`, 'success');
 
         let html = `
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;" class="no-print">
@@ -689,6 +734,7 @@
       })
       .catch(err => {
         resDiv.innerHTML = `<p style='color:red; text-align:center;'>Error: ${err.message}</p>`;
+        debugLog(`❌ Error: ${err.message}`, 'error');
       });
   }
 
@@ -717,6 +763,7 @@
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
+    debugLog(`📥 Export CSV: ${filename}.csv`, 'success');
   }
 
   // === FUNGSI BADGE ===
@@ -730,7 +777,7 @@
 
   // === INIT ===
   switchMode('ortu');
-  debugLog('🚀 Aplikasi siap digunakan');
+  debugLog('🚀 Aplikasi siap digunakan', 'success');
 </script>
 
 </body>
