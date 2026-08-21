@@ -10,7 +10,6 @@
     body { background-color: #f4f6f9; margin: 0; padding: 15px; }
     .container { max-width: 750px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     
-    /* Header & Logo Styling */
     .header-sekolah {
       display: flex;
       align-items: center;
@@ -67,9 +66,6 @@
     .badge-secondary { background: #e8eaed; color: #3c4043; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .badge-info { background: #e8f0fe; color: #1a73e8; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .hidden { display: none; }
-    .text-center { text-align: center; }
-    .mt-10 { margin-top: 10px; }
-    .mb-10 { margin-bottom: 10px; }
 
     #reader {
       width: 100%;
@@ -107,20 +103,6 @@
     .scan-error { background: #fce8e6; color: #c5221f; }
     .scan-info { background: #e8f0fe; color: #1a73e8; }
 
-    .stat-box {
-      display: inline-block;
-      padding: 8px 15px;
-      margin: 5px;
-      border-radius: 6px;
-      font-weight: bold;
-      min-width: 100px;
-    }
-    .stat-hadir { background: #e6f4ea; color: #137333; }
-    .stat-terlambat { background: #fef7e0; color: #b06000; }
-    .stat-alpa { background: #fce8e6; color: #c5221f; }
-    .stat-bolos { background: #f3e8fd; color: #681da8; }
-    .stat-persen { background: #e8f0fe; color: #1a73e8; }
-
     .sub-menu {
       display: flex;
       gap: 10px;
@@ -133,28 +115,36 @@
       font-size: 13px;
     }
 
-    /* CSS KHUSUS PRINT PDF */
+    /* Debug console */
+    #debugConsole {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 10px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-top: 10px;
+    }
+
     @media print {
       body { background: white; padding: 0; }
       .container { box-shadow: none; border: none; max-width: 100%; width: 100%; padding: 0; }
-      .btn-group, .card, #modeSelector, .btn-action, #guruAuth, #reader, .no-print, .camera-controls, .sub-menu { display: none !important; }
+      .btn-group, .card, #modeSelector, .btn-action, #guruAuth, #reader, .no-print, .camera-controls, .sub-menu, #debugConsole { display: none !important; }
       .header-sekolah { border-bottom: 2px solid #000; }
       table { width: 100%; font-size: 12pt; }
       th { background-color: #f2f2f2 !important; color: black !important; }
       .badge-success, .badge-warning, .badge-danger, .badge-purple, .badge-secondary, .badge-info { background: none !important; color: black !important; }
-      .stat-box { border: 1px solid #ccc; background: none !important; color: black !important; }
-    }
-
-    /* Hidden iframe for form submit */
-    #hiddenIframe {
-      display: none;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- HEADER LOGO RESMI SEKOLAH -->
+  <!-- HEADER -->
   <div class="header-sekolah">
     <img class="logo-sekolah" src="https://lh3.googleusercontent.com/d/11YsPOKyrRxyFEseGmrMQoe8Iem44OiUH" alt="Logo Sekolah">
     <div class="title-container">
@@ -167,9 +157,6 @@
     <button class="btn-primary" onclick="switchMode('ortu')">👨‍👩‍👧 Mode Orang Tua</button>
     <button class="btn-secondary" onclick="switchMode('guru')">👨‍🏫 Mode Guru / Petugas</button>
   </div>
-
-  <!-- Hidden iframe untuk menangani form submit -->
-  <iframe id="hiddenIframe" name="hiddenIframe" style="display:none;"></iframe>
 
   <!-- SECTION ORANG TUA -->
   <div id="sectionOrtu" class="hidden">
@@ -190,7 +177,6 @@
       </div>
       <button class="btn-primary" onclick="cariAbsensiOrtu()">🔍 Cari Data Absensi</button>
     </div>
-
     <div id="resultOrtu"></div>
   </div>
 
@@ -220,18 +206,19 @@
           <span id="cameraPlaceholder" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>
         </div>
         <div id="scanMsg" class="scan-result scan-info">📷 Siap memindai QR Code</div>
+        
+        <!-- Debug Console -->
+        <div id="debugConsole" class="no-print">🔍 Debug Console:\nMenunggu aktivitas...</div>
       </div>
 
-      <!-- Menu Rekap Kelas -->
+      <!-- Menu Rekap -->
       <div id="guruRekapView" class="hidden">
-        <!-- Sub Menu Rekap -->
         <div class="sub-menu no-print">
           <button class="btn-primary" onclick="toggleRekapMode('harian')">📅 Harian</button>
           <button class="btn-purple" onclick="toggleRekapMode('bulanan')">📆 Bulanan</button>
           <button class="btn-success" onclick="toggleRekapMode('tahunan')">📚 Tahunan</button>
         </div>
 
-        <!-- Rekap Harian -->
         <div id="rekapHarianView">
           <div class="card no-print">
             <h4 style="margin-top:0; color:#1a73e8;">📅 Rekap Absensi Harian</h4>
@@ -243,7 +230,6 @@
           </div>
         </div>
 
-        <!-- Rekap Bulanan & Tahunan -->
         <div id="rekapRangeView" class="hidden">
           <div class="card no-print">
             <h4 id="rangeTitle" style="margin-top:0; color:#7c3aed;">📆 Rekap Absensi Bulanan</h4>
@@ -277,8 +263,8 @@
 </div>
 
 <script>
-  // ⚠️ GANTI URL INI DENGAN URL WEB APP APPS SCRIPT ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyH4WssI6DsoeAqPJVwBYg1c8okJ-v2KCnjjTqCflBoy1oyvZ77-I5cO0NHekFFhw44aQ/exec"; 
+  // ⚠️ GANTI URL INI DENGAN URL WEB APP ANDA
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywMRfY9TG48DHvmO_qaSaHV0VoWI9QfeGBnKu1mtht6rE63s3L1bbk1e7pdNqhddd2BQ/exec"; 
   const PIN_GURU = "1234";
 
   let html5QrCode = null;
@@ -292,17 +278,24 @@
   document.getElementById('ortuTglAkhir').value = today;
   document.getElementById('guruTanggal').value = today;
   
-  // Set default range untuk bulanan
   const firstDayMonth = new Date();
   firstDayMonth.setDate(1);
   document.getElementById('guruTglAwalRange').value = firstDayMonth.toISOString().split('T')[0];
   document.getElementById('guruTglAkhirRange').value = today;
 
-  // ===== FUNGSI SWITCH MODE =====
-  function switchMode(mode) {
-    if (isScanning) {
-      stopCamera();
+  // === DEBUG FUNCTION ===
+  function debugLog(msg) {
+    const console = document.getElementById('debugConsole');
+    if (console) {
+      const time = new Date().toLocaleTimeString();
+      console.textContent = `[${time}] ${msg}\n` + console.textContent;
     }
+    console.log(msg);
+  }
+
+  // === FUNGSI SWITCH MODE ===
+  function switchMode(mode) {
+    if (isScanning) stopCamera();
     
     document.getElementById('sectionOrtu').classList.add('hidden');
     document.getElementById('sectionGuru').classList.add('hidden');
@@ -318,33 +311,26 @@
     }
   }
 
-  // ===== FUNGSI TOGGLE REKAP MODE =====
+  // === FUNGSI TOGGLE REKAP MODE ===
   function toggleRekapMode(mode) {
     rekapMode = mode;
-    
     document.getElementById('rekapHarianView').classList.add('hidden');
     document.getElementById('rekapRangeView').classList.add('hidden');
     
     if (mode === 'harian') {
       document.getElementById('rekapHarianView').classList.remove('hidden');
-      document.getElementById('rangeTitle').textContent = '📅 Rekap Absensi Harian';
-    } else if (mode === 'bulanan') {
+    } else {
       document.getElementById('rekapRangeView').classList.remove('hidden');
-      document.getElementById('rangeTitle').textContent = '📆 Rekap Absensi Bulanan';
-    } else if (mode === 'tahunan') {
-      document.getElementById('rekapRangeView').classList.remove('hidden');
-      document.getElementById('rangeTitle').textContent = '📚 Rekap Absensi Tahunan';
+      document.getElementById('rangeTitle').textContent = mode === 'bulanan' ? '📆 Rekap Absensi Bulanan' : '📚 Rekap Absensi Tahunan';
     }
-    
     document.getElementById('resultRekapKelas').innerHTML = '';
   }
 
-  // ===== FUNGSI SET RANGE OTOMATIS =====
+  // === FUNGSI SET RANGE OTOMATIS ===
   function setRangeBulanIni() {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
     document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
     document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
   }
@@ -353,19 +339,10 @@
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
-    
-    let startMonth, startYear;
-    if (month >= 0 && month <= 5) {
-      startMonth = 0;
-      startYear = year;
-    } else {
-      startMonth = 6;
-      startYear = year;
-    }
-    
+    let startMonth = month >= 0 && month <= 5 ? 0 : 6;
+    let startYear = month >= 0 && month <= 5 ? year : year;
     const firstDay = new Date(startYear, startMonth, 1);
     const lastDay = new Date(startYear, startMonth + 6, 0);
-    
     document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
     document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
   }
@@ -374,38 +351,23 @@
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
-    
-    let startYear, endYear;
-    if (month >= 6) {
-      startYear = year;
-      endYear = year + 1;
-    } else {
-      startYear = year - 1;
-      endYear = year;
-    }
-    
+    let startYear = month >= 6 ? year : year - 1;
+    let endYear = startYear + 1;
     const firstDay = new Date(startYear, 6, 1);
     const lastDay = new Date(endYear, 5, 30);
-    
     document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
     document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
   }
 
-  // ===== FUNGSI ORANG TUA =====
+  // === FUNGSI ORANG TUA ===
   function cariAbsensiOrtu() {
     const nisn = document.getElementById('ortuNisn').value.trim();
     const tglAwal = document.getElementById('ortuTglAwal').value;
     const tglAkhir = document.getElementById('ortuTglAkhir').value;
     const resDiv = document.getElementById('resultOrtu');
 
-    if (!nisn) {
-      alert("Harap isi NISN!");
-      return;
-    }
-    if (!tglAwal || !tglAkhir) {
-      alert("Harap pilih rentang tanggal!");
-      return;
-    }
+    if (!nisn) { alert("Harap isi NISN!"); return; }
+    if (!tglAwal || !tglAkhir) { alert("Harap pilih rentang tanggal!"); return; }
 
     resDiv.innerHTML = "<p style='text-align:center;'>⏳ Mengambil data...</p>";
 
@@ -428,9 +390,7 @@
             <b>Kelas:</b> ${data.siswa.kelas}
           </div>
           <table id="tableOrtu">
-            <thead>
-              <tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr>
-            </thead>
+            <thead><tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead>
             <tbody>
         `;
 
@@ -439,14 +399,7 @@
         } else {
           data.riwayat.forEach(row => {
             let badge = getBadgeClass(row.status);
-            html += `
-              <tr>
-                <td>${row.tanggal}</td>
-                <td>${row.jamMasuk}</td>
-                <td>${row.jamPulang}</td>
-                <td><span class="${badge}">${row.status}</span></td>
-              </tr>
-            `;
+            html += `<tr><td>${row.tanggal}</td><td>${row.jamMasuk}</td><td>${row.jamPulang}</td><td><span class="${badge}">${row.status}</span></td></tr>`;
           });
         }
 
@@ -458,7 +411,7 @@
       });
   }
 
-  // ===== FUNGSI GURU =====
+  // === FUNGSI GURU ===
   function verifyPin() {
     const pin = document.getElementById('guruPin').value;
     if (pin === PIN_GURU) {
@@ -475,9 +428,7 @@
   }
 
   function toggleGuruMenu(view) {
-    if (view === 'rekap' && isScanning) {
-      stopCamera();
-    }
+    if (view === 'rekap' && isScanning) stopCamera();
     
     if(view === 'scan') {
       document.getElementById('guruScanView').classList.remove('hidden');
@@ -488,7 +439,7 @@
     }
   }
 
-  // ===== FUNGSI KAMERA =====
+  // === FUNGSI KAMERA ===
   function startCamera() {
     if (isScanning) return;
 
@@ -502,10 +453,7 @@
       html5QrCode = new Html5Qrcode("reader");
     }
 
-    const config = { 
-      fps: 10, 
-      qrbox: { width: 250, height: 250 } 
-    };
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
     html5QrCode.start(
       { facingMode: "environment" },
@@ -520,11 +468,13 @@
       document.getElementById('btnStopCamera').style.opacity = '1';
       document.getElementById('scanMsg').className = 'scan-result scan-info';
       document.getElementById('scanMsg').textContent = '📷 Kamera Aktif, Siap Memindai...';
+      debugLog('📷 Kamera berhasil dibuka');
     }).catch(err => {
       alert("Gagal membuka kamera: " + err);
       readerDiv.innerHTML = `<span id="cameraPlaceholder" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>`;
       document.getElementById('btnStartCamera').disabled = false;
       document.getElementById('btnStartCamera').style.opacity = '1';
+      debugLog('❌ Gagal buka kamera: ' + err);
     });
   }
 
@@ -533,6 +483,7 @@
       html5QrCode.stop().then(() => {
         isScanning = false;
         updateCameraUIStopped();
+        debugLog('🛑 Kamera ditutup');
       }).catch(err => {
         console.error("Gagal menghentikan kamera", err);
         isScanning = false;
@@ -555,7 +506,7 @@
     document.getElementById('scanMsg').textContent = '📷 Siap memindai QR Code';
   }
 
-  // ===== FUNGSI SCAN QR - Menggunakan Form Submit =====
+  // === FUNGSI SCAN QR ===
   function onScanSuccess(decodedText) {
     if (isProcessingScan) return;
     isProcessingScan = true;
@@ -563,103 +514,55 @@
     const scanMsg = document.getElementById('scanMsg');
     scanMsg.className = 'scan-result scan-info';
     scanMsg.textContent = `⏳ Memproses NISN: ${decodedText}...`;
+    debugLog(`📱 Scan QR: ${decodedText}`);
 
-    // Kirim data menggunakan form submit ke iframe
-    const iframe = document.getElementById('hiddenIframe');
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = SCRIPT_URL;
-    form.target = 'hiddenIframe';
-    form.style.display = 'none';
-
-    const inputNisn = document.createElement('input');
-    inputNisn.type = 'hidden';
-    inputNisn.name = 'nisn';
-    inputNisn.value = decodedText;
-
-    form.appendChild(inputNisn);
-    document.body.appendChild(form);
-
-    // Event listener untuk iframe load (response diterima)
-    iframe.onload = function() {
-      try {
-        // Coba baca response dari iframe
-        const responseText = iframe.contentDocument.body.innerText;
-        if (responseText) {
-          const response = JSON.parse(responseText);
-          if (response.success) {
-            scanMsg.className = 'scan-result scan-success';
-            scanMsg.textContent = `✅ ${response.message}`;
-          } else {
-            scanMsg.className = 'scan-result scan-error';
-            scanMsg.textContent = `❌ ${response.message}`;
-          }
-        } else {
-          scanMsg.className = 'scan-result scan-success';
-          scanMsg.textContent = `✅ NISN ${decodedText} Berhasil Diproses!`;
-        }
-      } catch(e) {
-        // Jika tidak bisa parse JSON, anggap sukses
+    // Gunakan fetch dengan mode yang benar
+    fetch(`${SCRIPT_URL}?action=absen&nisn=${encodeURIComponent(decodedText)}`, {
+      method: 'GET'
+    })
+    .then(response => {
+      debugLog(`📡 Response status: ${response.status}`);
+      return response.json();
+    })
+    .then(data => {
+      debugLog(`📩 Response data: ${JSON.stringify(data)}`);
+      if (data.success) {
         scanMsg.className = 'scan-result scan-success';
-        scanMsg.textContent = `✅ NISN ${decodedText} Berhasil Diproses!`;
+        scanMsg.textContent = `✅ ${data.message}`;
+      } else {
+        scanMsg.className = 'scan-result scan-error';
+        scanMsg.textContent = `❌ ${data.message}`;
       }
-      
-      // Hapus form setelah selesai
-      document.body.removeChild(form);
-      iframe.onload = null;
-      
+    })
+    .catch(error => {
+      debugLog(`❌ Error: ${error}`);
+      scanMsg.className = 'scan-result scan-error';
+      scanMsg.textContent = `❌ Error: ${error.message}`;
+    })
+    .finally(() => {
       setTimeout(() => {
         if (isScanning) {
-          try {
-            html5QrCode.resume();
-          } catch(e) {}
+          try { html5QrCode.resume(); } catch(e) {}
         }
         isProcessingScan = false;
       }, 3000);
-    };
+    });
 
-    // Submit form
-    form.submit();
-
-    // Pause scanner
     if (html5QrCode && isScanning) {
-      try {
-        html5QrCode.pause();
-      } catch(e) {}
+      try { html5QrCode.pause(); } catch(e) {}
     }
-
-    // Timeout untuk keamanan (jika iframe tidak merespon)
-    setTimeout(() => {
-      if (isProcessingScan) {
-        scanMsg.className = 'scan-result scan-info';
-        scanMsg.textContent = `⏳ NISN ${decodedText} sedang diproses...`;
-        iframe.onload = null;
-        try {
-          document.body.removeChild(form);
-        } catch(e) {}
-        isProcessingScan = false;
-      }
-    }, 10000);
   }
 
-  function onScanFailure(error) {
-    // Tidak perlu handle error scan failure
-  }
+  function onScanFailure(error) {}
 
-  // ===== FUNGSI REKAP HARIAN =====
+  // === FUNGSI REKAP HARIAN ===
   function loadRekapHarian() {
     const kelas = document.getElementById('guruKelas').value.trim();
     const tanggal = document.getElementById('guruTanggal').value;
     const resDiv = document.getElementById('resultRekapKelas');
 
-    if(!kelas) {
-      alert("Isi nama kelas!");
-      return;
-    }
-    if(!tanggal) {
-      alert("Pilih tanggal!");
-      return;
-    }
+    if(!kelas) { alert("Isi nama kelas!"); return; }
+    if(!tanggal) { alert("Pilih tanggal!"); return; }
 
     resDiv.innerHTML = "<p style='text-align:center;'>⏳ Memuat data kelas...</p>";
 
@@ -680,24 +583,14 @@
             </div>
           </div>
           <table id="tableGuru">
-            <thead>
-              <tr><th>NISN</th><th>Nama</th><th>Datang</th><th>Pulang</th><th>Status</th></tr>
-            </thead>
+            <thead><tr><th>NISN</th><th>Nama</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead>
             <tbody>
         `;
 
         if (data.data && data.data.length > 0) {
           data.data.forEach(row => {
             let badge = getBadgeClass(row.status);
-            html += `
-              <tr>
-                <td>${row.nisn}</td>
-                <td style="text-align:left;">${row.nama}</td>
-                <td>${row.jamMasuk}</td>
-                <td>${row.jamPulang}</td>
-                <td><span class="${badge}">${row.status}</span></td>
-              </tr>
-            `;
+            html += `<tr><td>${row.nisn}</td><td style="text-align:left;">${row.nama}</td><td>${row.jamMasuk}</td><td>${row.jamPulang}</td><td><span class="${badge}">${row.status}</span></td></tr>`;
           });
         } else {
           html += `<tr><td colspan="5">Tidak ada data siswa di kelas ini.</td></tr>`;
@@ -711,25 +604,16 @@
       });
   }
 
-  // ===== FUNGSI REKAP RANGE (BULANAN/TAHUNAN) =====
+  // === FUNGSI REKAP RANGE ===
   function loadRekapRange() {
     const kelas = document.getElementById('guruKelasRange').value.trim();
     const tglAwal = document.getElementById('guruTglAwalRange').value;
     const tglAkhir = document.getElementById('guruTglAkhirRange').value;
     const resDiv = document.getElementById('resultRekapKelas');
 
-    if(!kelas) {
-      alert("Isi nama kelas!");
-      return;
-    }
-    if(!tglAwal || !tglAkhir) {
-      alert("Pilih rentang tanggal!");
-      return;
-    }
-    if(tglAwal > tglAkhir) {
-      alert("Tanggal awal tidak boleh lebih besar dari tanggal akhir!");
-      return;
-    }
+    if(!kelas) { alert("Isi nama kelas!"); return; }
+    if(!tglAwal || !tglAkhir) { alert("Pilih rentang tanggal!"); return; }
+    if(tglAwal > tglAkhir) { alert("Tanggal awal tidak boleh lebih besar dari tanggal akhir!"); return; }
 
     resDiv.innerHTML = "<p style='text-align:center;'>⏳ Memuat data rekap...</p>";
 
@@ -759,31 +643,13 @@
             <h5 style="margin:15px 0 10px 0;">📊 Ringkasan Kehadiran</h5>
             <table id="tableRange">
               <thead>
-                <tr>
-                  <th>NISN</th>
-                  <th style="text-align:left;">Nama</th>
-                  <th>✅ Hadir</th>
-                  <th>⚠️ Terlambat</th>
-                  <th>❌ Alpa</th>
-                  <th>🟣 Bolos</th>
-                  <th>📈 % Hadir</th>
-                </tr>
+                <tr><th>NISN</th><th style="text-align:left;">Nama</th><th>✅ Hadir</th><th>⚠️ Terlambat</th><th>❌ Alpa</th><th>🟣 Bolos</th><th>📈 % Hadir</th></tr>
               </thead>
               <tbody>
           `;
 
           data.data.forEach(row => {
-            html += `
-              <tr>
-                <td>${row.nisn}</td>
-                <td style="text-align:left;">${row.nama}</td>
-                <td><span class="badge-success">${row.totalHadir}</span></td>
-                <td><span class="badge-warning">${row.totalTerlambat}</span></td>
-                <td><span class="badge-danger">${row.totalAlpa}</span></td>
-                <td><span class="badge-purple">${row.totalBolos}</span></td>
-                <td><span class="badge-info">${row.persentaseKehadiran}%</span></td>
-              </tr>
-            `;
+            html += `<tr><td>${row.nisn}</td><td style="text-align:left;">${row.nama}</td><td><span class="badge-success">${row.totalHadir}</span></td><td><span class="badge-warning">${row.totalTerlambat}</span></td><td><span class="badge-danger">${row.totalAlpa}</span></td><td><span class="badge-purple">${row.totalBolos}</span></td><td><span class="badge-info">${row.persentaseKehadiran}%</span></td></tr>`;
           });
 
           html += `</tbody></table>`;
@@ -793,30 +659,21 @@
             <div style="overflow-x:auto;">
           `;
 
-          data.data.forEach((row, idx) => {
+          data.data.forEach((row) => {
             html += `
               <details style="margin-bottom:10px; border:1px solid #ddd; border-radius:6px; padding:10px;">
                 <summary style="font-weight:bold; cursor:pointer;">
                   ${row.nama} (${row.nisn}) - Hadir: ${row.totalHadir}, Terlambat: ${row.totalTerlambat}, Alpa: ${row.totalAlpa}
                 </summary>
                 <table style="margin-top:10px; font-size:12px;">
-                  <thead>
-                    <tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr>
-                  </thead>
+                  <thead><tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead>
                   <tbody>
             `;
 
             if (row.detail && row.detail.length > 0) {
               row.detail.forEach(d => {
                 let badge = getBadgeClass(d.status);
-                html += `
-                  <tr>
-                    <td>${d.tanggal}</td>
-                    <td>${d.jamMasuk}</td>
-                    <td>${d.jamPulang}</td>
-                    <td><span class="${badge}">${d.status}</span></td>
-                  </tr>
-                `;
+                html += `<tr><td>${d.tanggal}</td><td>${d.jamMasuk}</td><td>${d.jamPulang}</td><td><span class="${badge}">${d.status}</span></td></tr>`;
               });
             }
 
@@ -824,7 +681,6 @@
           });
 
           html += `</div>`;
-
         } else {
           html += `<p style="text-align:center; color:#666;">Tidak ada data siswa di kelas ini.</p>`;
         }
@@ -836,7 +692,7 @@
       });
   }
 
-  // ===== FUNGSI EXPORT CSV =====
+  // === FUNGSI EXPORT CSV ===
   function exportToCSV(tableId, filename) {
     const table = document.getElementById(tableId);
     if (!table) return;
@@ -863,7 +719,7 @@
     document.body.removeChild(downloadLink);
   }
 
-  // ===== FUNGSI BADGE =====
+  // === FUNGSI BADGE ===
   function getBadgeClass(status) {
     if (status === 'Hadir Tepat Waktu') return 'badge-success';
     if (status === 'Terlambat') return 'badge-warning';
@@ -872,8 +728,9 @@
     return 'badge-secondary';
   }
 
-  // ===== INIT =====
+  // === INIT ===
   switchMode('ortu');
+  debugLog('🚀 Aplikasi siap digunakan');
 </script>
 
 </body>
