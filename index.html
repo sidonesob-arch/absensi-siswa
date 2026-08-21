@@ -70,7 +70,7 @@
     .badge-sakit { background: #fce4ec; color: #c62828; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .hidden { display: none; }
 
-    #reader {
+    #reader, #readerAdmin {
       width: 100%;
       min-height: 250px;
       background: #eee;
@@ -81,7 +81,7 @@
       overflow: hidden;
       position: relative;
     }
-    #reader video {
+    #reader video, #readerAdmin video {
       width: 100% !important;
       height: auto !important;
     }
@@ -118,7 +118,7 @@
       font-size: 13px;
     }
 
-    #debugConsole {
+    #debugConsole, #debugConsoleAdmin {
       background: #1e1e1e;
       color: #d4d4d4;
       padding: 10px;
@@ -157,7 +157,7 @@
     @media print {
       body { background: white; padding: 0; }
       .container { box-shadow: none; border: none; max-width: 100%; width: 100%; padding: 0; }
-      .btn-group, .card, #modeSelector, .btn-action, #guruAuth, #reader, .no-print, .camera-controls, .sub-menu, #debugConsole, .status-form { display: none !important; }
+      .btn-group, .card, #modeSelector, .btn-action, #guruAuth, #adminAuth, #reader, #readerAdmin, .no-print, .camera-controls, .sub-menu, #debugConsole, #debugConsoleAdmin, .status-form { display: none !important; }
       .header-sekolah { border-bottom: 2px solid #000; }
       table { width: 100%; font-size: 12pt; }
       th { background-color: #f2f2f2 !important; color: black !important; }
@@ -179,7 +179,8 @@
 
   <div class="btn-group no-print" id="modeSelector">
     <button class="btn-primary" onclick="switchMode('ortu')">👨‍👩‍👧 Mode Orang Tua</button>
-    <button class="btn-secondary" onclick="switchMode('guru')">👨‍🏫 Mode Guru / Petugas</button>
+    <button class="btn-secondary" onclick="switchMode('guru')">👨‍🏫 Mode Guru</button>
+    <button class="btn-purple" onclick="switchMode('admin')">👔 Mode Admin Guru</button>
   </div>
 
   <!-- SECTION ORANG TUA -->
@@ -322,17 +323,78 @@
       </div>
     </div>
   </div>
+
+  <!-- SECTION ADMIN GURU -->
+  <div id="sectionAdmin" class="hidden">
+    <div id="adminAuth" class="card no-print">
+      <h3 style="text-align:center; color:#7c3aed; margin-top:0;">🔐 Verifikasi Admin Guru</h3>
+      <label>Masukkan PIN Admin</label>
+      <input type="password" id="adminPin" placeholder="Masukkan PIN Admin...">
+      <button class="btn-purple" onclick="verifyAdminPin()">Masuk Mode Admin</button>
+    </div>
+
+    <div id="adminDashboard" class="hidden">
+      <div class="btn-group no-print">
+        <button class="btn-purple" onclick="toggleAdminMenu('scanGuru')">📷 Scan QR Guru</button>
+        <button class="btn-secondary" onclick="toggleAdminMenu('rekapGuru')">📊 Rekap Absensi Guru</button>
+      </div>
+
+      <!-- Menu Scan QR Guru -->
+      <div id="adminScanView">
+        <div class="camera-controls no-print">
+          <button id="btnStartCameraAdmin" class="btn-success" onclick="startCameraAdmin()">📷 Buka Kamera</button>
+          <button id="btnStopCameraAdmin" class="btn-danger" onclick="stopCameraAdmin()" disabled>🛑 Tutup Kamera</button>
+        </div>
+
+        <div id="readerAdmin">
+          <span id="cameraPlaceholderAdmin" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai QR Guru.</span>
+        </div>
+        <div id="scanMsgAdmin" class="scan-result scan-info">📷 Siap memindai QR Code Guru</div>
+        <div id="debugConsoleAdmin" class="no-print">🔍 Debug Console Admin:\nMenunggu aktivitas...</div>
+      </div>
+
+      <!-- Menu Rekap Guru -->
+      <div id="adminRekapView" class="hidden">
+        <div class="card no-print">
+          <h4 style="margin-top:0; color:#7c3aed;">📊 Rekap Absensi Guru</h4>
+          
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:150px;">
+              <label><b>Dari Tanggal:</b></label>
+              <input type="date" id="adminTglAwal">
+            </div>
+            <div style="flex:1; min-width:150px;">
+              <label><b>Sampai Tanggal:</b></label>
+              <input type="date" id="adminTglAkhir">
+            </div>
+          </div>
+          
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn-purple" onclick="loadRekapGuru()" style="flex:2;">📊 Tampilkan Rekap Guru</button>
+            <button class="btn-success" onclick="setRangeBulanIniAdmin()" style="flex:1;">📅 Bulan Ini</button>
+            <button class="btn-primary" onclick="setRangeBulanLaluAdmin()" style="flex:1;">📅 Bulan Lalu</button>
+          </div>
+        </div>
+        <div id="resultRekapGuru"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
   // ⚠️ GANTI URL INI DENGAN URL WEB APP ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvpjq76lGk-gdA9XaR7YcbBbTmOT_FTfvRVsQsKTrarm_T69w6K55DjWl3uBUfVGZhBA/exec"; 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLVUaNKwhmkFna08pWumhg0JEhyhIaKIWHZgnPAdNG3yXCvaZtJq1mY7uNHZsdPyaVkw/exec"; 
   const PIN_GURU = "1234";
+  const PIN_ADMIN = "9999";
 
   let html5QrCode = null;
   let isScanning = false;
   let isProcessingScan = false;
   let rekapMode = 'harian';
+
+  let html5QrCodeAdmin = null;
+  let isScanningAdmin = false;
+  let isProcessingScanAdmin = false;
 
   // Set tanggal default
   const today = new Date().toISOString().split('T')[0];
@@ -340,6 +402,8 @@
   document.getElementById('ortuTglAkhir').value = today;
   document.getElementById('guruTanggal').value = today;
   document.getElementById('statusTanggal').value = today;
+  document.getElementById('adminTglAwal').value = today;
+  document.getElementById('adminTglAkhir').value = today;
   
   const firstDayMonth = new Date();
   firstDayMonth.setDate(1);
@@ -360,17 +424,38 @@
     }
   }
 
+  function debugLogAdmin(msg, type) {
+    type = type || 'info';
+    const debugEl = document.getElementById('debugConsoleAdmin');
+    if (debugEl) {
+      const time = new Date().toLocaleTimeString();
+      const lines = debugEl.textContent.split('\n');
+      if (lines.length > 20) lines.pop();
+      const newContent = `[${time}] ${msg}`;
+      lines.unshift(newContent);
+      debugEl.textContent = lines.join('\n');
+    }
+  }
+
   // === FUNGSI SWITCH MODE ===
   function switchMode(mode) {
     if (isScanning) stopCamera();
+    if (isScanningAdmin) stopCameraAdmin();
     
     document.getElementById('sectionOrtu').classList.add('hidden');
     document.getElementById('sectionGuru').classList.add('hidden');
+    document.getElementById('sectionAdmin').classList.add('hidden');
 
     if (mode === 'ortu') {
       document.getElementById('sectionOrtu').classList.remove('hidden');
       document.getElementById('resultOrtu').innerHTML = '';
       debugLog('👨‍👩‍👧 Mode Orang Tua diaktifkan', 'info');
+    } else if (mode === 'admin') {
+      document.getElementById('sectionAdmin').classList.remove('hidden');
+      document.getElementById('adminAuth').classList.remove('hidden');
+      document.getElementById('adminDashboard').classList.add('hidden');
+      document.getElementById('adminPin').value = '';
+      debugLog('👔 Mode Admin Guru diaktifkan', 'info');
     } else {
       document.getElementById('sectionGuru').classList.remove('hidden');
       document.getElementById('guruAuth').classList.remove('hidden');
@@ -596,7 +681,7 @@
     document.getElementById('scanMsg').textContent = '📷 Siap memindai QR Code';
   }
 
-  // === FUNGSI SCAN QR ===
+  // === FUNGSI SCAN QR SISWA ===
   function onScanSuccess(decodedText) {
     if (isProcessingScan) return;
     isProcessingScan = true;
@@ -646,6 +731,156 @@
 
   function onScanFailure(error) {}
 
+  // === FUNGSI ADMIN ===
+  function verifyAdminPin() {
+    const pin = document.getElementById('adminPin').value;
+    if (pin === PIN_ADMIN) {
+      document.getElementById('adminAuth').classList.add('hidden');
+      document.getElementById('adminDashboard').classList.remove('hidden');
+      document.getElementById('adminScanView').classList.remove('hidden');
+      document.getElementById('adminRekapView').classList.add('hidden');
+      debugLogAdmin('✅ Verifikasi PIN Admin berhasil', 'success');
+    } else {
+      alert("PIN Admin Salah!");
+      document.getElementById('adminPin').value = '';
+      document.getElementById('adminPin').focus();
+      debugLogAdmin('❌ PIN Admin salah', 'error');
+    }
+  }
+
+  function toggleAdminMenu(view) {
+    if (view === 'rekapGuru' && isScanningAdmin) {
+      stopCameraAdmin();
+    }
+    
+    document.getElementById('adminScanView').classList.add('hidden');
+    document.getElementById('adminRekapView').classList.add('hidden');
+    
+    if(view === 'scanGuru') {
+      document.getElementById('adminScanView').classList.remove('hidden');
+      debugLogAdmin('📷 Beralih ke Scan QR Guru', 'info');
+    } else {
+      document.getElementById('adminRekapView').classList.remove('hidden');
+      debugLogAdmin('📊 Beralih ke Rekap Guru', 'info');
+    }
+  }
+
+  // === FUNGSI KAMERA ADMIN ===
+  function startCameraAdmin() {
+    if (isScanningAdmin) return;
+
+    const readerDiv = document.getElementById('readerAdmin');
+    const placeholder = document.getElementById('cameraPlaceholderAdmin');
+    if (placeholder) placeholder.style.display = 'none';
+
+    readerDiv.innerHTML = '';
+
+    if (!html5QrCodeAdmin) {
+      html5QrCodeAdmin = new Html5Qrcode("readerAdmin");
+    }
+
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    html5QrCodeAdmin.start(
+      { facingMode: "environment" },
+      config,
+      onScanSuccessAdmin,
+      onScanFailureAdmin
+    ).then(() => {
+      isScanningAdmin = true;
+      document.getElementById('btnStartCameraAdmin').disabled = true;
+      document.getElementById('btnStartCameraAdmin').style.opacity = '0.5';
+      document.getElementById('btnStopCameraAdmin').disabled = false;
+      document.getElementById('btnStopCameraAdmin').style.opacity = '1';
+      document.getElementById('scanMsgAdmin').className = 'scan-result scan-info';
+      document.getElementById('scanMsgAdmin').textContent = '📷 Kamera Aktif, Siap Memindai QR Guru...';
+      debugLogAdmin('📷 Kamera Admin berhasil dibuka', 'success');
+    }).catch(err => {
+      alert("Gagal membuka kamera: " + err);
+      readerDiv.innerHTML = `<span id="cameraPlaceholderAdmin" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>`;
+      document.getElementById('btnStartCameraAdmin').disabled = false;
+      document.getElementById('btnStartCameraAdmin').style.opacity = '1';
+      debugLogAdmin(`❌ Gagal buka kamera: ${err}`, 'error');
+    });
+  }
+
+  function stopCameraAdmin() {
+    if (html5QrCodeAdmin && isScanningAdmin) {
+      html5QrCodeAdmin.stop().then(() => {
+        isScanningAdmin = false;
+        updateCameraAdminUIStopped();
+        debugLogAdmin('🛑 Kamera Admin ditutup', 'info');
+      }).catch(err => {
+        isScanningAdmin = false;
+        updateCameraAdminUIStopped();
+      });
+    } else {
+      updateCameraAdminUIStopped();
+    }
+  }
+
+  function updateCameraAdminUIStopped() {
+    const readerDiv = document.getElementById('readerAdmin');
+    readerDiv.innerHTML = `<span id="cameraPlaceholderAdmin" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai QR Guru.</span>`;
+    
+    document.getElementById('btnStartCameraAdmin').disabled = false;
+    document.getElementById('btnStartCameraAdmin').style.opacity = '1';
+    document.getElementById('btnStopCameraAdmin').disabled = true;
+    document.getElementById('btnStopCameraAdmin').style.opacity = '0.5';
+    document.getElementById('scanMsgAdmin').className = 'scan-result scan-info';
+    document.getElementById('scanMsgAdmin').textContent = '📷 Siap memindai QR Code Guru';
+  }
+
+  // === FUNGSI SCAN QR GURU ===
+  function onScanSuccessAdmin(decodedText) {
+    if (isProcessingScanAdmin) return;
+    isProcessingScanAdmin = true;
+
+    const scanMsg = document.getElementById('scanMsgAdmin');
+    scanMsg.className = 'scan-result scan-info';
+    scanMsg.textContent = `⏳ Memproses NIP: ${decodedText}...`;
+    debugLogAdmin(`📱 Scan QR Guru: ${decodedText}`, 'info');
+
+    fetch(`${SCRIPT_URL}?action=absenGuru&nip=${encodeURIComponent(decodedText)}`, {
+      method: 'GET'
+    })
+    .then(response => {
+      debugLogAdmin(`📡 Response status: ${response.status}`, 'info');
+      return response.json();
+    })
+    .then(data => {
+      debugLogAdmin(`📩 Response: ${JSON.stringify(data)}`, 'info');
+      if (data.success) {
+        scanMsg.className = 'scan-result scan-success';
+        scanMsg.textContent = `✅ ${data.message}`;
+        debugLogAdmin(`✅ ${data.message}`, 'success');
+      } else {
+        scanMsg.className = 'scan-result scan-error';
+        scanMsg.textContent = `❌ ${data.message}`;
+        debugLogAdmin(`❌ ${data.message}`, 'error');
+      }
+    })
+    .catch(error => {
+      debugLogAdmin(`❌ Error: ${error.message}`, 'error');
+      scanMsg.className = 'scan-result scan-error';
+      scanMsg.textContent = `❌ Error: ${error.message}`;
+    })
+    .finally(() => {
+      setTimeout(() => {
+        if (isScanningAdmin) {
+          try { html5QrCodeAdmin.resume(); } catch(e) {}
+        }
+        isProcessingScanAdmin = false;
+      }, 3000);
+    });
+
+    if (html5QrCodeAdmin && isScanningAdmin) {
+      try { html5QrCodeAdmin.pause(); } catch(e) {}
+    }
+  }
+
+  function onScanFailureAdmin(error) {}
+
   // === FUNGSI INPUT STATUS SISWA ===
   function inputStatusSiswa() {
     const nisn = document.getElementById('statusNisn').value.trim();
@@ -675,7 +910,6 @@
         resultDiv.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
         debugLog(`✅ ${data.message}`, 'success');
         loadStatusHariIni();
-        // Kosongkan input
         document.getElementById('statusNisn').value = '';
         document.getElementById('statusKeterangan').value = '';
       } else {
@@ -691,8 +925,6 @@
 
   // === FUNGSI LOAD STATUS HARI INI ===
   function loadStatusHariIni() {
-    // Untuk sementara, kita hanya bisa menampilkan status yang sudah diinput
-    // Karena Apps Script tidak memiliki API untuk mengambil semua status
     const listDiv = document.getElementById('statusList');
     listDiv.innerHTML = '<p style="color:#666;">📋 Status yang sudah diinput akan muncul di rekap absensi.</p>';
   }
@@ -864,6 +1096,104 @@
       });
   }
 
+  // === FUNGSI REKAP GURU ===
+  function setRangeBulanIniAdmin() {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    document.getElementById('adminTglAwal').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('adminTglAkhir').value = lastDay.toISOString().split('T')[0];
+    debugLogAdmin('📅 Set range: Bulan Ini', 'success');
+  }
+
+  function setRangeBulanLaluAdmin() {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+    document.getElementById('adminTglAwal').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('adminTglAkhir').value = lastDay.toISOString().split('T')[0];
+    debugLogAdmin('📅 Set range: Bulan Lalu', 'success');
+  }
+
+  function loadRekapGuru() {
+    const tglAwal = document.getElementById('adminTglAwal').value;
+    const tglAkhir = document.getElementById('adminTglAkhir').value;
+    const resDiv = document.getElementById('resultRekapGuru');
+
+    if(!tglAwal || !tglAkhir) {
+      alert("Pilih rentang tanggal!");
+      return;
+    }
+    if(tglAwal > tglAkhir) {
+      alert("Tanggal awal tidak boleh lebih besar dari tanggal akhir!");
+      return;
+    }
+
+    resDiv.innerHTML = "<p style='text-align:center;'>⏳ Memuat data rekap guru...</p>";
+    debugLogAdmin(`📊 Memuat rekap guru: ${tglAwal} - ${tglAkhir}`, 'info');
+
+    fetch(`${SCRIPT_URL}?action=getRekapGuru&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          resDiv.innerHTML = `<p style='color:red; text-align:center;'>${data.message || 'Gagal memuat data'}</p>`;
+          debugLogAdmin(`❌ ${data.message || 'Gagal memuat data'}`, 'error');
+          return;
+        }
+
+        debugLogAdmin(`✅ Data rekap guru ditemukan (${data.data ? data.data.length : 0} guru)`, 'success');
+
+        let html = `
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;" class="no-print">
+            <h4 style="margin:0;">📊 Rekap Absensi Guru</h4>
+            <div>
+              <button class="btn-action btn-pdf" onclick="window.print()">🖨️ Cetak / PDF</button>
+              <button class="btn-action btn-excel" onclick="exportToCSV('tableGuruRekap', 'Rekap_Guru')">📥 Excel/CSV</button>
+            </div>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <b>Periode:</b> ${data.tglAwal} s/d ${data.tglAkhir}
+          </div>
+          <table id="tableGuruRekap">
+            <thead>
+              <tr>
+                <th>NIP</th>
+                <th style="text-align:left;">Nama</th>
+                <th>Jabatan</th>
+                <th>✅ Hadir</th>
+                <th>❌ Alpa</th>
+                <th>📈 % Hadir</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        if (data.data && data.data.length > 0) {
+          data.data.forEach(row => {
+            html += `
+              <tr>
+                <td>${row.nip}</td>
+                <td style="text-align:left;">${row.nama}</td>
+                <td>${row.jabatan || '-'}</td>
+                <td><span class="badge-success">${row.totalHadir}</span></td>
+                <td><span class="badge-danger">${row.totalAlpa}</span></td>
+                <td><span class="badge-info">${row.persentaseKehadiran}%</span></td>
+              </tr>
+            `;
+          });
+        } else {
+          html += `<tr><td colspan="6">Tidak ada data guru.</td></tr>`;
+        }
+
+        html += `</tbody></table>`;
+        resDiv.innerHTML = html;
+      })
+      .catch(err => {
+        resDiv.innerHTML = `<p style='color:red; text-align:center;'>Error: ${err.message}</p>`;
+        debugLogAdmin(`❌ Error: ${err.message}`, 'error');
+      });
+  }
+
   // === FUNGSI EXPORT CSV ===
   function exportToCSV(tableId, filename) {
     const table = document.getElementById(tableId);
@@ -906,6 +1236,7 @@
   // === INIT ===
   switchMode('ortu');
   debugLog('🚀 Aplikasi siap digunakan', 'success');
+  debugLogAdmin('🚀 Mode Admin siap digunakan', 'success');
 </script>
 
 </body>
