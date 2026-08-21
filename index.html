@@ -47,6 +47,7 @@
     .btn-danger { background-color: #ea4335; color: white; }
     .btn-warning { background-color: #fbbc04; color: #333; }
     .btn-purple { background-color: #7c3aed; color: white; }
+    .btn-orange { background-color: #ff6d00; color: white; }
     
     .btn-action { padding: 8px 12px; font-size: 12px; border-radius: 6px; margin-top: 10px; display: inline-block; cursor: pointer; border: none; font-weight: bold; }
     .btn-pdf { background-color: #ea4335; color: white; margin-right: 5px; }
@@ -54,8 +55,8 @@
     
     button:hover, .btn-action:hover { opacity: 0.9; transform: scale(1.02); }
     .card { background: #f8f9fa; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-    input, select { width: 100%; padding: 10px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; }
-    input:focus, select:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 5px rgba(26,115,232,0.3); }
+    input, select, textarea { width: 100%; padding: 10px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; }
+    input:focus, select:focus, textarea:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 5px rgba(26,115,232,0.3); }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
     th { background-color: #1a73e8; color: white; }
@@ -65,6 +66,8 @@
     .badge-purple { background: #f3e8fd; color: #681da8; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .badge-secondary { background: #e8eaed; color: #3c4043; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .badge-info { background: #e8f0fe; color: #1a73e8; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+    .badge-izin { background: #fff3e0; color: #e65100; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+    .badge-sakit { background: #fce4ec; color: #c62828; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .hidden { display: none; }
 
     #reader {
@@ -128,20 +131,37 @@
       word-wrap: break-word;
       margin-top: 10px;
     }
-    #debugConsole .time { color: #888; }
-    #debugConsole .success { color: #4caf50; }
-    #debugConsole .error { color: #f44336; }
-    #debugConsole .info { color: #2196f3; }
-    #debugConsole .warn { color: #ff9800; }
+
+    .status-form {
+      background: #fff8e1;
+      border: 2px solid #ffb300;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .status-form select {
+      width: auto;
+      min-width: 150px;
+    }
+    .status-form .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .status-form .row > * {
+      flex: 1;
+      min-width: 120px;
+    }
 
     @media print {
       body { background: white; padding: 0; }
       .container { box-shadow: none; border: none; max-width: 100%; width: 100%; padding: 0; }
-      .btn-group, .card, #modeSelector, .btn-action, #guruAuth, #reader, .no-print, .camera-controls, .sub-menu, #debugConsole { display: none !important; }
+      .btn-group, .card, #modeSelector, .btn-action, #guruAuth, #reader, .no-print, .camera-controls, .sub-menu, #debugConsole, .status-form { display: none !important; }
       .header-sekolah { border-bottom: 2px solid #000; }
       table { width: 100%; font-size: 12pt; }
       th { background-color: #f2f2f2 !important; color: black !important; }
-      .badge-success, .badge-warning, .badge-danger, .badge-purple, .badge-secondary, .badge-info { background: none !important; color: black !important; }
+      .badge-success, .badge-warning, .badge-danger, .badge-purple, .badge-secondary, .badge-info, .badge-izin, .badge-sakit { background: none !important; color: black !important; }
     }
   </style>
 </head>
@@ -197,6 +217,7 @@
       <div class="btn-group no-print">
         <button class="btn-primary" onclick="toggleGuruMenu('scan')">📷 Scanner QR</button>
         <button class="btn-secondary" onclick="toggleGuruMenu('rekap')">📊 Rekap Absensi</button>
+        <button class="btn-orange" onclick="toggleGuruMenu('status')">📝 Input Izin/Sakit</button>
       </div>
 
       <!-- Menu Scan -->
@@ -210,9 +231,46 @@
           <span id="cameraPlaceholder" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>
         </div>
         <div id="scanMsg" class="scan-result scan-info">📷 Siap memindai QR Code</div>
-        
-        <!-- Debug Console -->
         <div id="debugConsole" class="no-print">🔍 Debug Console:\nMenunggu aktivitas...</div>
+      </div>
+
+      <!-- Menu Input Status -->
+      <div id="guruStatusView" class="hidden">
+        <div class="card">
+          <h4 style="margin-top:0; color:#ff6d00;">📝 Input Status Khusus (Izin/Sakit/Alpa)</h4>
+          <div class="status-form">
+            <div class="row">
+              <div>
+                <label><b>NISN:</b></label>
+                <input type="text" id="statusNisn" placeholder="Masukkan NISN...">
+              </div>
+              <div>
+                <label><b>Tanggal:</b></label>
+                <input type="date" id="statusTanggal">
+              </div>
+              <div>
+                <label><b>Status:</b></label>
+                <select id="statusPilih">
+                  <option value="Izin">📝 Izin</option>
+                  <option value="Sakit">🤒 Sakit</option>
+                  <option value="Alpa">❌ Alpa</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label><b>Keterangan (Opsional):</b></label>
+              <input type="text" id="statusKeterangan" placeholder="Contoh: Izin keluarga, Demam, dll...">
+            </div>
+            <button class="btn-orange" onclick="inputStatusSiswa()">💾 Simpan Status</button>
+            <div id="statusResult" style="margin-top:10px;"></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h5 style="margin-top:0;">📋 Daftar Status Hari Ini</h5>
+          <button class="btn-secondary" onclick="loadStatusHariIni()">🔄 Refresh</button>
+          <div id="statusList" style="margin-top:10px;"></div>
+        </div>
       </div>
 
       <!-- Menu Rekap -->
@@ -268,7 +326,7 @@
 
 <script>
   // ⚠️ GANTI URL INI DENGAN URL WEB APP ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3JAiPuLNso-v_EfDM7bvg29ZxAEWIVUjMRsJRFybsXjAgWtYL30ZHiNnCs0ZpLbHAhw/exec"; 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_nSrrMZLkHFBleccqkS8IPnVdVgZQltHyo57kZYQoo0AJIxf6TLVdn90LX8Ya3ux7PA/exec"; 
   const PIN_GURU = "1234";
 
   let html5QrCode = null;
@@ -281,31 +339,21 @@
   document.getElementById('ortuTglAwal').value = today;
   document.getElementById('ortuTglAkhir').value = today;
   document.getElementById('guruTanggal').value = today;
+  document.getElementById('statusTanggal').value = today;
   
   const firstDayMonth = new Date();
   firstDayMonth.setDate(1);
   document.getElementById('guruTglAwalRange').value = firstDayMonth.toISOString().split('T')[0];
   document.getElementById('guruTglAkhirRange').value = today;
 
-  // === DEBUG FUNCTION (Tanpa console.log) ===
+  // === DEBUG FUNCTION ===
   function debugLog(msg, type) {
     type = type || 'info';
     const debugEl = document.getElementById('debugConsole');
     if (debugEl) {
       const time = new Date().toLocaleTimeString();
-      const colors = {
-        success: 'success',
-        error: 'error', 
-        warn: 'warn',
-        info: 'info'
-      };
-      const colorClass = colors[type] || 'info';
-      // Simpan konten lama, tambahkan yang baru di atas
       const lines = debugEl.textContent.split('\n');
-      // Hapus baris pertama jika terlalu banyak (max 20 baris)
-      if (lines.length > 20) {
-        lines.pop();
-      }
+      if (lines.length > 20) lines.pop();
       const newContent = `[${time}] ${msg}`;
       lines.unshift(newContent);
       debugEl.textContent = lines.join('\n');
@@ -329,6 +377,27 @@
       document.getElementById('guruDashboard').classList.add('hidden');
       document.getElementById('guruPin').value = '';
       debugLog('👨‍🏫 Mode Guru diaktifkan', 'info');
+    }
+  }
+
+  // === FUNGSI TOGGLE GURU MENU ===
+  function toggleGuruMenu(view) {
+    if (view === 'rekap' && isScanning) stopCamera();
+    
+    document.getElementById('guruScanView').classList.add('hidden');
+    document.getElementById('guruRekapView').classList.add('hidden');
+    document.getElementById('guruStatusView').classList.add('hidden');
+    
+    if(view === 'scan') {
+      document.getElementById('guruScanView').classList.remove('hidden');
+      debugLog('📷 Beralih ke Scanner QR', 'info');
+    } else if (view === 'status') {
+      document.getElementById('guruStatusView').classList.remove('hidden');
+      loadStatusHariIni();
+      debugLog('📝 Beralih ke Input Status', 'info');
+    } else {
+      document.getElementById('guruRekapView').classList.remove('hidden');
+      debugLog('📊 Beralih ke Rekap Absensi', 'info');
     }
   }
 
@@ -450,6 +519,7 @@
       document.getElementById('guruDashboard').classList.remove('hidden');
       document.getElementById('guruScanView').classList.remove('hidden');
       document.getElementById('guruRekapView').classList.add('hidden');
+      document.getElementById('guruStatusView').classList.add('hidden');
       toggleRekapMode('harian');
       debugLog('✅ Verifikasi PIN berhasil', 'success');
     } else {
@@ -457,20 +527,6 @@
       document.getElementById('guruPin').value = '';
       document.getElementById('guruPin').focus();
       debugLog('❌ PIN salah', 'error');
-    }
-  }
-
-  function toggleGuruMenu(view) {
-    if (view === 'rekap' && isScanning) stopCamera();
-    
-    if(view === 'scan') {
-      document.getElementById('guruScanView').classList.remove('hidden');
-      document.getElementById('guruRekapView').classList.add('hidden');
-      debugLog('📷 Beralih ke Scanner QR', 'info');
-    } else {
-      document.getElementById('guruScanView').classList.add('hidden');
-      document.getElementById('guruRekapView').classList.remove('hidden');
-      debugLog('📊 Beralih ke Rekap Absensi', 'info');
     }
   }
 
@@ -550,7 +606,6 @@
     scanMsg.textContent = `⏳ Memproses NISN: ${decodedText}...`;
     debugLog(`📱 Scan QR: ${decodedText}`, 'info');
 
-    // Kirim data ke server menggunakan GET
     fetch(`${SCRIPT_URL}?action=absen&nisn=${encodeURIComponent(decodedText)}`, {
       method: 'GET'
     })
@@ -590,6 +645,57 @@
   }
 
   function onScanFailure(error) {}
+
+  // === FUNGSI INPUT STATUS SISWA ===
+  function inputStatusSiswa() {
+    const nisn = document.getElementById('statusNisn').value.trim();
+    const tanggal = document.getElementById('statusTanggal').value;
+    const status = document.getElementById('statusPilih').value;
+    const keterangan = document.getElementById('statusKeterangan').value.trim();
+    const resultDiv = document.getElementById('statusResult');
+
+    if (!nisn) {
+      resultDiv.innerHTML = '<p style="color:red;">❌ Harap isi NISN!</p>';
+      return;
+    }
+    if (!tanggal) {
+      resultDiv.innerHTML = '<p style="color:red;">❌ Harap pilih tanggal!</p>';
+      return;
+    }
+
+    resultDiv.innerHTML = '<p style="color:blue;">⏳ Menyimpan status...</p>';
+    debugLog(`📝 Input status: ${status} untuk NISN ${nisn} (${tanggal})`, 'info');
+
+    fetch(`${SCRIPT_URL}?action=setStatus&nisn=${encodeURIComponent(nisn)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&guru=Guru`, {
+      method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        resultDiv.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
+        debugLog(`✅ ${data.message}`, 'success');
+        loadStatusHariIni();
+        // Kosongkan input
+        document.getElementById('statusNisn').value = '';
+        document.getElementById('statusKeterangan').value = '';
+      } else {
+        resultDiv.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
+        debugLog(`❌ ${data.message}`, 'error');
+      }
+    })
+    .catch(error => {
+      resultDiv.innerHTML = `<p style="color:red;">❌ Error: ${error.message}</p>`;
+      debugLog(`❌ Error: ${error.message}`, 'error');
+    });
+  }
+
+  // === FUNGSI LOAD STATUS HARI INI ===
+  function loadStatusHariIni() {
+    // Untuk sementara, kita hanya bisa menampilkan status yang sudah diinput
+    // Karena Apps Script tidak memiliki API untuk mengambil semua status
+    const listDiv = document.getElementById('statusList');
+    listDiv.innerHTML = '<p style="color:#666;">📋 Status yang sudah diinput akan muncul di rekap absensi.</p>';
+  }
 
   // === FUNGSI REKAP HARIAN ===
   function loadRekapHarian() {
@@ -688,13 +794,33 @@
             <h5 style="margin:15px 0 10px 0;">📊 Ringkasan Kehadiran</h5>
             <table id="tableRange">
               <thead>
-                <tr><th>NISN</th><th style="text-align:left;">Nama</th><th>✅ Hadir</th><th>⚠️ Terlambat</th><th>❌ Alpa</th><th>🟣 Bolos</th><th>📈 % Hadir</th></tr>
+                <tr>
+                  <th>NISN</th>
+                  <th style="text-align:left;">Nama</th>
+                  <th>✅ Hadir</th>
+                  <th>⚠️ Terlambat</th>
+                  <th>❌ Alpa</th>
+                  <th>🟣 Bolos</th>
+                  <th>📝 Izin</th>
+                  <th>🤒 Sakit</th>
+                  <th>📈 % Hadir</th>
+                </tr>
               </thead>
               <tbody>
           `;
 
           data.data.forEach(row => {
-            html += `<tr><td>${row.nisn}</td><td style="text-align:left;">${row.nama}</td><td><span class="badge-success">${row.totalHadir}</span></td><td><span class="badge-warning">${row.totalTerlambat}</span></td><td><span class="badge-danger">${row.totalAlpa}</span></td><td><span class="badge-purple">${row.totalBolos}</span></td><td><span class="badge-info">${row.persentaseKehadiran}%</span></td></tr>`;
+            html += `<tr>
+              <td>${row.nisn}</td>
+              <td style="text-align:left;">${row.nama}</td>
+              <td><span class="badge-success">${row.totalHadir}</span></td>
+              <td><span class="badge-warning">${row.totalTerlambat}</span></td>
+              <td><span class="badge-danger">${row.totalAlpa}</span></td>
+              <td><span class="badge-purple">${row.totalBolos}</span></td>
+              <td><span class="badge-izin">${row.totalIzin || 0}</span></td>
+              <td><span class="badge-sakit">${row.totalSakit || 0}</span></td>
+              <td><span class="badge-info">${row.persentaseKehadiran}%</span></td>
+            </tr>`;
           });
 
           html += `</tbody></table>`;
@@ -772,6 +898,8 @@
     if (status === 'Terlambat') return 'badge-warning';
     if (status === 'Alpa') return 'badge-danger';
     if (status.includes('Bolos')) return 'badge-purple';
+    if (status === 'Izin') return 'badge-izin';
+    if (status === 'Sakit') return 'badge-sakit';
     return 'badge-secondary';
   }
 
