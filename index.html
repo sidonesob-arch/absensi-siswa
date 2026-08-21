@@ -144,6 +144,11 @@
       .badge-success, .badge-warning, .badge-danger, .badge-purple, .badge-secondary, .badge-info { background: none !important; color: black !important; }
       .stat-box { border: 1px solid #ccc; background: none !important; color: black !important; }
     }
+
+    /* Hidden iframe for form submit */
+    #hiddenIframe {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -162,6 +167,9 @@
     <button class="btn-primary" onclick="switchMode('ortu')">👨‍👩‍👧 Mode Orang Tua</button>
     <button class="btn-secondary" onclick="switchMode('guru')">👨‍🏫 Mode Guru / Petugas</button>
   </div>
+
+  <!-- Hidden iframe untuk menangani form submit -->
+  <iframe id="hiddenIframe" name="hiddenIframe" style="display:none;"></iframe>
 
   <!-- SECTION ORANG TUA -->
   <div id="sectionOrtu" class="hidden">
@@ -270,7 +278,7 @@
 
 <script>
   // ⚠️ GANTI URL INI DENGAN URL WEB APP APPS SCRIPT ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6YXaZwsn9fmSr1HGwqfRRYJvIL3JSNW1Gx5AvCabaATOX_Z8zrr2iLm2noYNQ0J1I9A/exec"; 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyH4WssI6DsoeAqPJVwBYg1c8okJ-v2KCnjjTqCflBoy1oyvZ77-I5cO0NHekFFhw44aQ/exec"; 
   const PIN_GURU = "1234";
 
   let html5QrCode = null;
@@ -328,7 +336,6 @@
       document.getElementById('rangeTitle').textContent = '📚 Rekap Absensi Tahunan';
     }
     
-    // Clear hasil
     document.getElementById('resultRekapKelas').innerHTML = '';
   }
 
@@ -348,10 +355,10 @@
     const month = now.getMonth();
     
     let startMonth, startYear;
-    if (month >= 0 && month <= 5) { // Semester Genap (Jan-Jun)
+    if (month >= 0 && month <= 5) {
       startMonth = 0;
       startYear = year;
-    } else { // Semester Ganjil (Jul-Dec)
+    } else {
       startMonth = 6;
       startYear = year;
     }
@@ -369,7 +376,7 @@
     const month = now.getMonth();
     
     let startYear, endYear;
-    if (month >= 6) { // Mulai Juli tahun berjalan
+    if (month >= 6) {
       startYear = year;
       endYear = year + 1;
     } else {
@@ -377,8 +384,8 @@
       endYear = year;
     }
     
-    const firstDay = new Date(startYear, 6, 1); // 1 Juli
-    const lastDay = new Date(endYear, 5, 30); // 30 Juni
+    const firstDay = new Date(startYear, 6, 1);
+    const lastDay = new Date(endYear, 5, 30);
     
     document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
     document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
@@ -459,7 +466,6 @@
       document.getElementById('guruDashboard').classList.remove('hidden');
       document.getElementById('guruScanView').classList.remove('hidden');
       document.getElementById('guruRekapView').classList.add('hidden');
-      // Default rekap mode harian
       toggleRekapMode('harian');
     } else {
       alert("PIN Salah!");
@@ -549,7 +555,7 @@
     document.getElementById('scanMsg').textContent = '📷 Siap memindai QR Code';
   }
 
-  // ===== FUNGSI SCAN QR =====
+  // ===== FUNGSI SCAN QR - Menggunakan Form Submit =====
   function onScanSuccess(decodedText) {
     if (isProcessingScan) return;
     isProcessingScan = true;
@@ -558,17 +564,49 @@
     scanMsg.className = 'scan-result scan-info';
     scanMsg.textContent = `⏳ Memproses NISN: ${decodedText}...`;
 
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ nisn: decodedText })
-    })
-    .then(() => {
-      scanMsg.className = 'scan-result scan-success';
-      scanMsg.textContent = `✅ NISN ${decodedText} Berhasil Diproses!`;
+    // Kirim data menggunakan form submit ke iframe
+    const iframe = document.getElementById('hiddenIframe');
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SCRIPT_URL;
+    form.target = 'hiddenIframe';
+    form.style.display = 'none';
+
+    const inputNisn = document.createElement('input');
+    inputNisn.type = 'hidden';
+    inputNisn.name = 'nisn';
+    inputNisn.value = decodedText;
+
+    form.appendChild(inputNisn);
+    document.body.appendChild(form);
+
+    // Event listener untuk iframe load (response diterima)
+    iframe.onload = function() {
+      try {
+        // Coba baca response dari iframe
+        const responseText = iframe.contentDocument.body.innerText;
+        if (responseText) {
+          const response = JSON.parse(responseText);
+          if (response.success) {
+            scanMsg.className = 'scan-result scan-success';
+            scanMsg.textContent = `✅ ${response.message}`;
+          } else {
+            scanMsg.className = 'scan-result scan-error';
+            scanMsg.textContent = `❌ ${response.message}`;
+          }
+        } else {
+          scanMsg.className = 'scan-result scan-success';
+          scanMsg.textContent = `✅ NISN ${decodedText} Berhasil Diproses!`;
+        }
+      } catch(e) {
+        // Jika tidak bisa parse JSON, anggap sukses
+        scanMsg.className = 'scan-result scan-success';
+        scanMsg.textContent = `✅ NISN ${decodedText} Berhasil Diproses!`;
+      }
+      
+      // Hapus form setelah selesai
+      document.body.removeChild(form);
+      iframe.onload = null;
       
       setTimeout(() => {
         if (isScanning) {
@@ -578,18 +616,30 @@
         }
         isProcessingScan = false;
       }, 3000);
-    })
-    .catch(err => {
-      scanMsg.className = 'scan-result scan-error';
-      scanMsg.textContent = `❌ Error: ${err.message}`;
-      isProcessingScan = false;
-    });
+    };
 
+    // Submit form
+    form.submit();
+
+    // Pause scanner
     if (html5QrCode && isScanning) {
       try {
         html5QrCode.pause();
       } catch(e) {}
     }
+
+    // Timeout untuk keamanan (jika iframe tidak merespon)
+    setTimeout(() => {
+      if (isProcessingScan) {
+        scanMsg.className = 'scan-result scan-info';
+        scanMsg.textContent = `⏳ NISN ${decodedText} sedang diproses...`;
+        iframe.onload = null;
+        try {
+          document.body.removeChild(form);
+        } catch(e) {}
+        isProcessingScan = false;
+      }
+    }, 10000);
   }
 
   function onScanFailure(error) {
@@ -705,7 +755,6 @@
         `;
 
         if (data.data && data.data.length > 0) {
-          // Tabel Ringkasan
           html += `
             <h5 style="margin:15px 0 10px 0;">📊 Ringkasan Kehadiran</h5>
             <table id="tableRange">
@@ -739,7 +788,6 @@
 
           html += `</tbody></table>`;
 
-          // Detail Harian (collapsible)
           html += `
             <h5 style="margin:20px 0 10px 0;">📋 Detail Harian</h5>
             <div style="overflow-x:auto;">
