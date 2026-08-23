@@ -337,6 +337,7 @@
       <div class="btn-group no-print">
         <button class="btn-purple" onclick="toggleAdminMenu('scanGuru')">📷 Scan QR Guru</button>
         <button class="btn-secondary" onclick="toggleAdminMenu('rekapGuru')">📊 Rekap Absensi Guru</button>
+        <button class="btn-orange" onclick="toggleAdminMenu('statusGuru')">📝 Izin/Sakit Guru</button>
       </div>
 
       <!-- Menu Scan QR Guru -->
@@ -368,6 +369,57 @@
               <input type="date" id="adminTglAkhir">
             </div>
           </div>
+
+
+          <!-- Menu Input Status Guru -->
+<div id="adminStatusView" class="hidden">
+  <div class="card">
+    <h4 style="margin-top:0; color:#ff6d00;">📝 Input Izin/Sakit Guru</h4>
+    <div class="status-form">
+      <div class="row">
+        <div>
+          <label><b>NIP Guru:</b></label>
+          <input type="text" id="statusNipGuru" placeholder="Masukkan NIP Guru...">
+        </div>
+        <div>
+          <label><b>Tanggal:</b></label>
+          <input type="date" id="statusTanggalGuru">
+        </div>
+        <div>
+          <label><b>Status:</b></label>
+          <select id="statusPilihGuru">
+            <option value="Izin">📝 Izin</option>
+            <option value="Sakit">🤒 Sakit</option>
+            <option value="Alpa">❌ Alpa</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label><b>Keterangan (Opsional):</b></label>
+        <input type="text" id="statusKeteranganGuru" placeholder="Contoh: Izin keluarga, Demam, dll...">
+      </div>
+      <button class="btn-orange" onclick="inputStatusGuru()">💾 Simpan Status Guru</button>
+      <div id="statusResultGuru" style="margin-top:10px;"></div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h5 style="margin-top:0;">📋 Daftar Status Guru Hari Ini</h5>
+    <button class="btn-secondary" onclick="loadStatusGuruHariIni()">🔄 Refresh</button>
+    <div id="statusListGuru" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
           
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <button class="btn-purple" onclick="loadRekapGuru()" style="flex:2;">📊 Tampilkan Rekap Guru</button>
@@ -383,7 +435,7 @@
 
 <script>
   // ⚠️ GANTI URL INI DENGAN URL WEB APP ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLVUaNKwhmkFna08pWumhg0JEhyhIaKIWHZgnPAdNG3yXCvaZtJq1mY7uNHZsdPyaVkw/exec"; 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnAz3lqBUfXUVEs5DtAg-oDTaq52_qKQGxtcxIAhLICqt8Q9e6X7P-6wv_jC3x8JOOsA/exec"; 
   const PIN_GURU = "1234";
   const PIN_ADMIN = "9999";
 
