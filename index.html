@@ -235,10 +235,10 @@
         <div id="debugConsole" class="no-print">🔍 Debug Console:\nMenunggu aktivitas...</div>
       </div>
 
-      <!-- Menu Input Status -->
+      <!-- Menu Input Status Siswa -->
       <div id="guruStatusView" class="hidden">
         <div class="card">
-          <h4 style="margin-top:0; color:#ff6d00;">📝 Input Status Khusus (Izin/Sakit/Alpa)</h4>
+          <h4 style="margin-top:0; color:#ff6d00;">📝 Input Status Khusus Siswa (Izin/Sakit/Alpa)</h4>
           <div class="status-form">
             <div class="row">
               <div>
@@ -369,57 +369,6 @@
               <input type="date" id="adminTglAkhir">
             </div>
           </div>
-
-
-          <!-- Menu Input Status Guru -->
-<div id="adminStatusView" class="hidden">
-  <div class="card">
-    <h4 style="margin-top:0; color:#ff6d00;">📝 Input Izin/Sakit Guru</h4>
-    <div class="status-form">
-      <div class="row">
-        <div>
-          <label><b>NIP Guru:</b></label>
-          <input type="text" id="statusNipGuru" placeholder="Masukkan NIP Guru...">
-        </div>
-        <div>
-          <label><b>Tanggal:</b></label>
-          <input type="date" id="statusTanggalGuru">
-        </div>
-        <div>
-          <label><b>Status:</b></label>
-          <select id="statusPilihGuru">
-            <option value="Izin">📝 Izin</option>
-            <option value="Sakit">🤒 Sakit</option>
-            <option value="Alpa">❌ Alpa</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label><b>Keterangan (Opsional):</b></label>
-        <input type="text" id="statusKeteranganGuru" placeholder="Contoh: Izin keluarga, Demam, dll...">
-      </div>
-      <button class="btn-orange" onclick="inputStatusGuru()">💾 Simpan Status Guru</button>
-      <div id="statusResultGuru" style="margin-top:10px;"></div>
-    </div>
-  </div>
-  
-  <div class="card">
-    <h5 style="margin-top:0;">📋 Daftar Status Guru Hari Ini</h5>
-    <button class="btn-secondary" onclick="loadStatusGuruHariIni()">🔄 Refresh</button>
-    <div id="statusListGuru" style="margin-top:10px;"></div>
-  </div>
-</div>
-
-
-
-
-
-
-
-
-
-
-
           
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <button class="btn-purple" onclick="loadRekapGuru()" style="flex:2;">📊 Tampilkan Rekap Guru</button>
@@ -429,13 +378,52 @@
         </div>
         <div id="resultRekapGuru"></div>
       </div>
+
+      <!-- Menu Input Status Guru -->
+      <div id="adminStatusView" class="hidden">
+        <div class="card">
+          <h4 style="margin-top:0; color:#ff6d00;">📝 Input Izin/Sakit Guru</h4>
+          <div class="status-form">
+            <div class="row">
+              <div>
+                <label><b>NIP Guru:</b></label>
+                <input type="text" id="statusNipGuru" placeholder="Masukkan NIP Guru...">
+              </div>
+              <div>
+                <label><b>Tanggal:</b></label>
+                <input type="date" id="statusTanggalGuru">
+              </div>
+              <div>
+                <label><b>Status:</b></label>
+                <select id="statusPilihGuru">
+                  <option value="Izin">📝 Izin</option>
+                  <option value="Sakit">🤒 Sakit</option>
+                  <option value="Alpa">❌ Alpa</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label><b>Keterangan (Opsional):</b></label>
+              <input type="text" id="statusKeteranganGuru" placeholder="Contoh: Izin keluarga, Demam, dll...">
+            </div>
+            <button class="btn-orange" onclick="inputStatusGuru()">💾 Simpan Status Guru</button>
+            <div id="statusResultGuru" style="margin-top:10px;"></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h5 style="margin-top:0;">📋 Daftar Status Guru Hari Ini</h5>
+          <button class="btn-secondary" onclick="loadStatusGuruHariIni()">🔄 Refresh</button>
+          <div id="statusListGuru" style="margin-top:10px;"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
   // ⚠️ GANTI URL INI DENGAN URL WEB APP ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnAz3lqBUfXUVEs5DtAg-oDTaq52_qKQGxtcxIAhLICqt8Q9e6X7P-6wv_jC3x8JOOsA/exec"; 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdaP9YqaX5rrrnmoxFtYxHQOS6vb4caSir66tVJo5QTbcPTi_NViq9qaWSHFkA6C4v/exec"; 
   const PIN_GURU = "1234";
   const PIN_ADMIN = "9999";
 
@@ -456,6 +444,7 @@
   document.getElementById('statusTanggal').value = today;
   document.getElementById('adminTglAwal').value = today;
   document.getElementById('adminTglAkhir').value = today;
+  document.getElementById('statusTanggalGuru').value = today;
   
   const firstDayMonth = new Date();
   firstDayMonth.setDate(1);
@@ -589,6 +578,46 @@
     document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
     document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
     debugLog('🎓 Set range: Tahun Ajaran', 'success');
+  }
+
+  // === FUNGSI ADMIN ===
+  function toggleAdminMenu(view) {
+    if (view === 'rekapGuru' && isScanningAdmin) {
+      stopCameraAdmin();
+    }
+    
+    document.getElementById('adminScanView').classList.add('hidden');
+    document.getElementById('adminRekapView').classList.add('hidden');
+    document.getElementById('adminStatusView').classList.add('hidden');
+    
+    if(view === 'scanGuru') {
+      document.getElementById('adminScanView').classList.remove('hidden');
+      debugLogAdmin('📷 Beralih ke Scan QR Guru', 'info');
+    } else if (view === 'statusGuru') {
+      document.getElementById('adminStatusView').classList.remove('hidden');
+      loadStatusGuruHariIni();
+      debugLogAdmin('📝 Beralih ke Input Izin/Sakit Guru', 'info');
+    } else {
+      document.getElementById('adminRekapView').classList.remove('hidden');
+      debugLogAdmin('📊 Beralih ke Rekap Guru', 'info');
+    }
+  }
+
+  function verifyAdminPin() {
+    const pin = document.getElementById('adminPin').value;
+    if (pin === PIN_ADMIN) {
+      document.getElementById('adminAuth').classList.add('hidden');
+      document.getElementById('adminDashboard').classList.remove('hidden');
+      document.getElementById('adminScanView').classList.remove('hidden');
+      document.getElementById('adminRekapView').classList.add('hidden');
+      document.getElementById('adminStatusView').classList.add('hidden');
+      debugLogAdmin('✅ Verifikasi PIN Admin berhasil', 'success');
+    } else {
+      alert("PIN Admin Salah!");
+      document.getElementById('adminPin').value = '';
+      document.getElementById('adminPin').focus();
+      debugLogAdmin('❌ PIN Admin salah', 'error');
+    }
   }
 
   // === FUNGSI ORANG TUA ===
@@ -783,40 +812,6 @@
 
   function onScanFailure(error) {}
 
-  // === FUNGSI ADMIN ===
-  function verifyAdminPin() {
-    const pin = document.getElementById('adminPin').value;
-    if (pin === PIN_ADMIN) {
-      document.getElementById('adminAuth').classList.add('hidden');
-      document.getElementById('adminDashboard').classList.remove('hidden');
-      document.getElementById('adminScanView').classList.remove('hidden');
-      document.getElementById('adminRekapView').classList.add('hidden');
-      debugLogAdmin('✅ Verifikasi PIN Admin berhasil', 'success');
-    } else {
-      alert("PIN Admin Salah!");
-      document.getElementById('adminPin').value = '';
-      document.getElementById('adminPin').focus();
-      debugLogAdmin('❌ PIN Admin salah', 'error');
-    }
-  }
-
-  function toggleAdminMenu(view) {
-    if (view === 'rekapGuru' && isScanningAdmin) {
-      stopCameraAdmin();
-    }
-    
-    document.getElementById('adminScanView').classList.add('hidden');
-    document.getElementById('adminRekapView').classList.add('hidden');
-    
-    if(view === 'scanGuru') {
-      document.getElementById('adminScanView').classList.remove('hidden');
-      debugLogAdmin('📷 Beralih ke Scan QR Guru', 'info');
-    } else {
-      document.getElementById('adminRekapView').classList.remove('hidden');
-      debugLogAdmin('📊 Beralih ke Rekap Guru', 'info');
-    }
-  }
-
   // === FUNGSI KAMERA ADMIN ===
   function startCameraAdmin() {
     if (isScanningAdmin) return;
@@ -979,6 +974,53 @@
   function loadStatusHariIni() {
     const listDiv = document.getElementById('statusList');
     listDiv.innerHTML = '<p style="color:#666;">📋 Status yang sudah diinput akan muncul di rekap absensi.</p>';
+  }
+
+  // === FUNGSI INPUT STATUS GURU ===
+  function inputStatusGuru() {
+    const nip = document.getElementById('statusNipGuru').value.trim();
+    const tanggal = document.getElementById('statusTanggalGuru').value;
+    const status = document.getElementById('statusPilihGuru').value;
+    const keterangan = document.getElementById('statusKeteranganGuru').value.trim();
+    const resultDiv = document.getElementById('statusResultGuru');
+
+    if (!nip) {
+      resultDiv.innerHTML = '<p style="color:red;">❌ Harap isi NIP Guru!</p>';
+      return;
+    }
+    if (!tanggal) {
+      resultDiv.innerHTML = '<p style="color:red;">❌ Harap pilih tanggal!</p>';
+      return;
+    }
+
+    resultDiv.innerHTML = '<p style="color:blue;">⏳ Menyimpan status...</p>';
+    debugLogAdmin(`📝 Input status guru: ${status} untuk NIP ${nip} (${tanggal})`, 'info');
+
+    fetch(`${SCRIPT_URL}?action=setStatusGuru&nip=${encodeURIComponent(nip)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&admin=Admin`, {
+      method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        resultDiv.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
+        debugLogAdmin(`✅ ${data.message}`, 'success');
+        loadStatusGuruHariIni();
+        document.getElementById('statusNipGuru').value = '';
+        document.getElementById('statusKeteranganGuru').value = '';
+      } else {
+        resultDiv.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
+        debugLogAdmin(`❌ ${data.message}`, 'error');
+      }
+    })
+    .catch(error => {
+      resultDiv.innerHTML = `<p style="color:red;">❌ Error: ${error.message}</p>`;
+      debugLogAdmin(`❌ Error: ${error.message}`, 'error');
+    });
+  }
+
+  function loadStatusGuruHariIni() {
+    const listDiv = document.getElementById('statusListGuru');
+    listDiv.innerHTML = '<p style="color:#666;">📋 Status yang sudah diinput akan muncul di rekap absensi guru.</p>';
   }
 
   // === FUNGSI REKAP HARIAN ===
@@ -1213,6 +1255,8 @@
                 <th style="text-align:left;">Nama</th>
                 <th>Jabatan</th>
                 <th>✅ Hadir</th>
+                <th>📝 Izin</th>
+                <th>🤒 Sakit</th>
                 <th>❌ Alpa</th>
                 <th>📈 % Hadir</th>
               </tr>
@@ -1228,13 +1272,15 @@
                 <td style="text-align:left;">${row.nama}</td>
                 <td>${row.jabatan || '-'}</td>
                 <td><span class="badge-success">${row.totalHadir}</span></td>
+                <td><span class="badge-izin">${row.totalIzin || 0}</span></td>
+                <td><span class="badge-sakit">${row.totalSakit || 0}</span></td>
                 <td><span class="badge-danger">${row.totalAlpa}</span></td>
                 <td><span class="badge-info">${row.persentaseKehadiran}%</span></td>
               </tr>
             `;
           });
         } else {
-          html += `<tr><td colspan="6">Tidak ada data guru.</td></tr>`;
+          html += `<tr><td colspan="8">Tidak ada data guru.</td></tr>`;
         }
 
         html += `</tbody></table>`;
@@ -1274,82 +1320,6 @@
     debugLog(`📥 Export CSV: ${filename}.csv`, 'success');
   }
 
-// ==========================================
-// FUNGSI STATUS KHUSUS GURU
-// ==========================================
-
-function toggleAdminMenu(view) {
-  if (view === 'rekapGuru' && isScanningAdmin) {
-    stopCameraAdmin();
-  }
-  
-  document.getElementById('adminScanView').classList.add('hidden');
-  document.getElementById('adminRekapView').classList.add('hidden');
-  document.getElementById('adminStatusView').classList.add('hidden');
-  
-  if(view === 'scanGuru') {
-    document.getElementById('adminScanView').classList.remove('hidden');
-    debugLogAdmin('📷 Beralih ke Scan QR Guru', 'info');
-  } else if (view === 'statusGuru') {
-    document.getElementById('adminStatusView').classList.remove('hidden');
-    loadStatusGuruHariIni();
-    debugLogAdmin('📝 Beralih ke Input Izin/Sakit Guru', 'info');
-  } else {
-    document.getElementById('adminRekapView').classList.remove('hidden');
-    debugLogAdmin('📊 Beralih ke Rekap Guru', 'info');
-  }
-}
-
-function inputStatusGuru() {
-  const nip = document.getElementById('statusNipGuru').value.trim();
-  const tanggal = document.getElementById('statusTanggalGuru').value;
-  const status = document.getElementById('statusPilihGuru').value;
-  const keterangan = document.getElementById('statusKeteranganGuru').value.trim();
-  const resultDiv = document.getElementById('statusResultGuru');
-
-  if (!nip) {
-    resultDiv.innerHTML = '<p style="color:red;">❌ Harap isi NIP Guru!</p>';
-    return;
-  }
-  if (!tanggal) {
-    resultDiv.innerHTML = '<p style="color:red;">❌ Harap pilih tanggal!</p>';
-    return;
-  }
-
-  resultDiv.innerHTML = '<p style="color:blue;">⏳ Menyimpan status...</p>';
-  debugLogAdmin(`📝 Input status guru: ${status} untuk NIP ${nip} (${tanggal})`, 'info');
-
-  fetch(`${SCRIPT_URL}?action=setStatusGuru&nip=${encodeURIComponent(nip)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&admin=Admin`, {
-    method: 'GET'
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      resultDiv.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
-      debugLogAdmin(`✅ ${data.message}`, 'success');
-      loadStatusGuruHariIni();
-      document.getElementById('statusNipGuru').value = '';
-      document.getElementById('statusKeteranganGuru').value = '';
-    } else {
-      resultDiv.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
-      debugLogAdmin(`❌ ${data.message}`, 'error');
-    }
-  })
-  .catch(error => {
-    resultDiv.innerHTML = `<p style="color:red;">❌ Error: ${error.message}</p>`;
-    debugLogAdmin(`❌ Error: ${error.message}`, 'error');
-  });
-}
-
-function loadStatusGuruHariIni() {
-  const listDiv = document.getElementById('statusListGuru');
-  listDiv.innerHTML = '<p style="color:#666;">📋 Status yang sudah diinput akan muncul di rekap absensi guru.</p>';
-}
-
-// Set default tanggal untuk status guru
-document.getElementById('statusTanggalGuru').value = today;
-
-  
   // === FUNGSI BADGE ===
   function getBadgeClass(status) {
     if (status === 'Hadir Tepat Waktu') return 'badge-success';
@@ -1358,6 +1328,7 @@ document.getElementById('statusTanggalGuru').value = today;
     if (status.includes('Bolos')) return 'badge-purple';
     if (status === 'Izin') return 'badge-izin';
     if (status === 'Sakit') return 'badge-sakit';
+    if (status.includes('Libur')) return 'badge-secondary';
     return 'badge-secondary';
   }
 
