@@ -1274,6 +1274,82 @@
     debugLog(`📥 Export CSV: ${filename}.csv`, 'success');
   }
 
+// ==========================================
+// FUNGSI STATUS KHUSUS GURU
+// ==========================================
+
+function toggleAdminMenu(view) {
+  if (view === 'rekapGuru' && isScanningAdmin) {
+    stopCameraAdmin();
+  }
+  
+  document.getElementById('adminScanView').classList.add('hidden');
+  document.getElementById('adminRekapView').classList.add('hidden');
+  document.getElementById('adminStatusView').classList.add('hidden');
+  
+  if(view === 'scanGuru') {
+    document.getElementById('adminScanView').classList.remove('hidden');
+    debugLogAdmin('📷 Beralih ke Scan QR Guru', 'info');
+  } else if (view === 'statusGuru') {
+    document.getElementById('adminStatusView').classList.remove('hidden');
+    loadStatusGuruHariIni();
+    debugLogAdmin('📝 Beralih ke Input Izin/Sakit Guru', 'info');
+  } else {
+    document.getElementById('adminRekapView').classList.remove('hidden');
+    debugLogAdmin('📊 Beralih ke Rekap Guru', 'info');
+  }
+}
+
+function inputStatusGuru() {
+  const nip = document.getElementById('statusNipGuru').value.trim();
+  const tanggal = document.getElementById('statusTanggalGuru').value;
+  const status = document.getElementById('statusPilihGuru').value;
+  const keterangan = document.getElementById('statusKeteranganGuru').value.trim();
+  const resultDiv = document.getElementById('statusResultGuru');
+
+  if (!nip) {
+    resultDiv.innerHTML = '<p style="color:red;">❌ Harap isi NIP Guru!</p>';
+    return;
+  }
+  if (!tanggal) {
+    resultDiv.innerHTML = '<p style="color:red;">❌ Harap pilih tanggal!</p>';
+    return;
+  }
+
+  resultDiv.innerHTML = '<p style="color:blue;">⏳ Menyimpan status...</p>';
+  debugLogAdmin(`📝 Input status guru: ${status} untuk NIP ${nip} (${tanggal})`, 'info');
+
+  fetch(`${SCRIPT_URL}?action=setStatusGuru&nip=${encodeURIComponent(nip)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&admin=Admin`, {
+    method: 'GET'
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      resultDiv.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
+      debugLogAdmin(`✅ ${data.message}`, 'success');
+      loadStatusGuruHariIni();
+      document.getElementById('statusNipGuru').value = '';
+      document.getElementById('statusKeteranganGuru').value = '';
+    } else {
+      resultDiv.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
+      debugLogAdmin(`❌ ${data.message}`, 'error');
+    }
+  })
+  .catch(error => {
+    resultDiv.innerHTML = `<p style="color:red;">❌ Error: ${error.message}</p>`;
+    debugLogAdmin(`❌ Error: ${error.message}`, 'error');
+  });
+}
+
+function loadStatusGuruHariIni() {
+  const listDiv = document.getElementById('statusListGuru');
+  listDiv.innerHTML = '<p style="color:#666;">📋 Status yang sudah diinput akan muncul di rekap absensi guru.</p>';
+}
+
+// Set default tanggal untuk status guru
+document.getElementById('statusTanggalGuru').value = today;
+
+  
   // === FUNGSI BADGE ===
   function getBadgeClass(status) {
     if (status === 'Hadir Tepat Waktu') return 'badge-success';
