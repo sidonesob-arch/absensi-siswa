@@ -3,1328 +3,594 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Absensi Resmi Sekolah</title>
+  <title>Portal Absensi Sekolah</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #f4f6f9; margin: 0; padding: 15px; }
-    .container { max-width: 750px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    
-    .header-sekolah {
+    /* ===== RESET & BASE ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #f0f2f5; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ===== TOGGLED SIDEBAR ===== */
+    .sidebar-toggle { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 8px 12px; }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      background: linear-gradient(135deg, #1a237e, #0d47a1);
+      color: white;
+      padding: 12px 24px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 15px;
-      border-bottom: 3px double #1a73e8;
-      padding-bottom: 15px;
-      margin-bottom: 20px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
-    .logo-sekolah {
-      width: 70px;
-      height: 70px;
-      object-fit: contain;
+    .topbar .left { display: flex; align-items: center; gap: 12px; }
+    .topbar .left img { height: 45px; width: 45px; object-fit: contain; border-radius: 50%; background: white; padding: 3px; }
+    .topbar .left h2 { font-size: 18px; margin: 0; letter-spacing: 0.5px; }
+    .topbar .left span { font-size: 12px; opacity: 0.8; display: block; }
+    .topbar .right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .topbar .right .clock { background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+    .topbar .right .mode-badge { background: #ff6f00; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+
+    /* ===== LAYOUT: SIDEBAR + CONTENT ===== */
+    .app-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
     }
-    .title-container { text-align: left; }
-    .title-container h2 {
-      margin: 0;
-      color: #1a73e8;
-      font-size: 20px;
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 250px;
+      background: #1e2a4a;
+      color: #e0e0e0;
+      padding: 20px 0;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      position: sticky;
+      top: 70px;
+      height: calc(100vh - 70px);
+      box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    }
+    .sidebar .menu-label {
+      padding: 10px 20px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      color: #8899bb;
+      letter-spacing: 1px;
+      margin-top: 8px;
     }
-    .title-container p {
-      margin: 3px 0 0 0;
-      color: #5f6368;
-      font-size: 13px;
-      font-weight: 500;
+    .sidebar .menu-item {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+      border-left: 3px solid transparent;
+      font-size: 14px;
+      color: #c8d0e0;
+    }
+    .sidebar .menu-item:hover { background: #2a3a5a; color: white; border-left-color: #42a5f5; }
+    .sidebar .menu-item.active { background: #2a3a5a; color: white; border-left-color: #ffca28; font-weight: 600; }
+    .sidebar .menu-item i { width: 22px; text-align: center; font-size: 16px; }
+
+    /* ===== MAIN CONTENT ===== */
+    .main-content {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      background: #f0f2f5;
+      min-height: calc(100vh - 70px);
     }
 
-    .btn-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; min-width: 120px; }
-    .btn-primary { background-color: #1a73e8; color: white; }
-    .btn-secondary { background-color: #5f6368; color: white; }
-    .btn-success { background-color: #34a853; color: white; }
-    .btn-danger { background-color: #ea4335; color: white; }
-    .btn-warning { background-color: #fbbc04; color: #333; }
-    .btn-purple { background-color: #7c3aed; color: white; }
-    .btn-orange { background-color: #ff6d00; color: white; }
-    
-    .btn-action { padding: 8px 12px; font-size: 12px; border-radius: 6px; margin-top: 10px; display: inline-block; cursor: pointer; border: none; font-weight: bold; }
-    .btn-pdf { background-color: #ea4335; color: white; margin-right: 5px; }
-    .btn-excel { background-color: #34a853; color: white; }
-    
-    button:hover, .btn-action:hover { opacity: 0.9; transform: scale(1.02); }
-    .card { background: #f8f9fa; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-    input, select, textarea { width: 100%; padding: 10px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; }
-    input:focus, select:focus, textarea:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 5px rgba(26,115,232,0.3); }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background-color: #1a73e8; color: white; }
-    .badge-success { background: #e6f4ea; color: #137333; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .badge-warning { background: #fef7e0; color: #b06000; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .badge-danger { background: #fce8e6; color: #c5221f; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .badge-purple { background: #f3e8fd; color: #681da8; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .badge-secondary { background: #e8eaed; color: #3c4043; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .badge-info { background: #e8f0fe; color: #1a73e8; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .badge-izin { background: #fff3e0; color: #e65100; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .badge-sakit { background: #fce4ec; color: #c62828; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .hidden { display: none; }
+    /* ===== DASHBOARD STATS ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-left: 5px solid #1a73e8;
+    }
+    .stat-card .icon { font-size: 32px; color: #1a73e8; width: 48px; text-align: center; }
+    .stat-card .info h3 { font-size: 22px; margin: 0; }
+    .stat-card .info p { margin: 0; color: #666; font-size: 13px; }
+    .stat-card.orange { border-left-color: #ff6f00; }
+    .stat-card.green { border-left-color: #2e7d32; }
+    .stat-card.red { border-left-color: #c62828; }
+    .stat-card.purple { border-left-color: #6a1b9a; }
+    .stat-card.teal { border-left-color: #00695c; }
+    .stat-card.amber { border-left-color: #f57f17; }
 
+    /* ===== PANELS ===== */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .panel h3 { margin-bottom: 16px; color: #1a237e; display: flex; align-items: center; gap: 10px; }
+    .hidden { display: none !important; }
+
+    /* ===== TABEL ===== */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e8e8e8; }
+    th { background: #f5f7fb; color: #1a237e; font-weight: 600; }
+    .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+    .badge-success { background: #e8f5e9; color: #1b5e20; }
+    .badge-warning { background: #fff8e1; color: #e65100; }
+    .badge-danger { background: #fce4ec; color: #c62828; }
+    .badge-purple { background: #f3e5f5; color: #4a148c; }
+    .badge-izin { background: #fff3e0; color: #bf360c; }
+    .badge-sakit { background: #fce4ec; color: #b71c1c; }
+    .badge-info { background: #e3f2fd; color: #0d47a1; }
+    .badge-secondary { background: #f5f5f5; color: #424242; }
+
+    /* ===== CAMERA ===== */
     #reader, #readerAdmin {
       width: 100%;
-      min-height: 250px;
-      background: #eee;
+      min-height: 220px;
+      background: #1a1a2e;
+      border-radius: 10px;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 8px;
-      overflow: hidden;
+      color: #ccc;
       position: relative;
     }
-    #reader video, #readerAdmin video {
-      width: 100% !important;
-      height: auto !important;
-    }
+    #reader video, #readerAdmin video { width: 100% !important; height: auto !important; }
+    .camera-controls { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .camera-controls button { flex: 1; min-width: 100px; }
+    .scan-result { padding: 10px; border-radius: 8px; margin-top: 10px; font-weight: 600; text-align: center; }
+    .scan-success { background: #e8f5e9; color: #1b5e20; }
+    .scan-error { background: #fce4ec; color: #c62828; }
+    .scan-info { background: #e3f2fd; color: #0d47a1; }
 
-    .camera-controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .camera-controls button {
-      flex: 1;
-    }
+    /* ===== BUTTONS ===== */
+    button { padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    button:hover { opacity: 0.9; transform: scale(1.02); }
+    .btn-primary { background: #1a73e8; color: white; }
+    .btn-secondary { background: #5f6368; color: white; }
+    .btn-success { background: #2e7d32; color: white; }
+    .btn-danger { background: #c62828; color: white; }
+    .btn-warning { background: #f57f17; color: white; }
+    .btn-purple { background: #6a1b9a; color: white; }
+    .btn-orange { background: #e65100; color: white; }
+    .btn-teal { background: #00695c; color: white; }
+    .btn-outline { background: transparent; border: 2px solid #1a73e8; color: #1a73e8; }
 
-    .scan-result {
-      text-align: center;
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 6px;
-      font-weight: bold;
-    }
-    .scan-success { background: #e6f4ea; color: #137333; }
-    .scan-error { background: #fce8e6; color: #c5221f; }
-    .scan-info { background: #e8f0fe; color: #1a73e8; }
-
-    .sub-menu {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
-    .sub-menu button {
-      flex: 0 1 auto;
-      padding: 8px 20px;
-      font-size: 13px;
-    }
-
-    #debugConsole, #debugConsoleAdmin {
-      background: #1e1e1e;
-      color: #d4d4d4;
-      padding: 10px;
-      border-radius: 6px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      max-height: 150px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      margin-top: 10px;
-    }
-
-    .status-form {
-      background: #fff8e1;
-      border: 2px solid #ffb300;
-      padding: 15px;
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
       border-radius: 8px;
-      margin-top: 10px;
+      margin: 6px 0 12px 0;
+      font-size: 14px;
     }
-    .status-form select {
-      width: auto;
-      min-width: 150px;
+    input:focus, select:focus, textarea:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 6px rgba(26,115,232,0.25); }
+
+    .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+    .row > * { flex: 1; min-width: 140px; }
+
+    /* ===== SCROLL ===== */
+    .main-content::-webkit-scrollbar { width: 6px; }
+    .main-content::-webkit-scrollbar-thumb { background: #b0b8c8; border-radius: 10px; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 820px) {
+      .sidebar-toggle { display: block; }
+      .sidebar {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        height: calc(100vh - 70px);
+        transform: translateX(-100%);
+        width: 260px;
+        z-index: 1000;
+        box-shadow: 2px 0 20px rgba(0,0,0,0.3);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .topbar .left h2 { font-size: 15px; }
+      .topbar .right .clock { font-size: 12px; padding: 4px 12px; }
+      .main-content { padding: 14px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
-    .status-form .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .status-form .row > * {
-      flex: 1;
-      min-width: 120px;
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .topbar .left h2 { font-size: 13px; }
+      .topbar .left span { font-size: 10px; }
     }
 
-    @media print {
-      body { background: white; padding: 0; }
-      .container { box-shadow: none; border: none; max-width: 100%; width: 100%; padding: 0; }
-      .btn-group, .card, #modeSelector, .btn-action, #guruAuth, #adminAuth, #reader, #readerAdmin, .no-print, .camera-controls, .sub-menu, #debugConsole, #debugConsoleAdmin, .status-form { display: none !important; }
-      .header-sekolah { border-bottom: 2px solid #000; }
-      table { width: 100%; font-size: 12pt; }
-      th { background-color: #f2f2f2 !important; color: black !important; }
-      .badge-success, .badge-warning, .badge-danger, .badge-purple, .badge-secondary, .badge-info, .badge-izin, .badge-sakit { background: none !important; color: black !important; }
+    /* ===== FOOTER ===== */
+    .footer {
+      background: #1a237e;
+      color: #aaa;
+      text-align: center;
+      padding: 14px 20px;
+      font-size: 13px;
+      border-top: 1px solid #2a3a6a;
+      flex-shrink: 0;
     }
+    .footer a { color: #90caf9; text-decoration: none; }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <!-- HEADER -->
-  <div class="header-sekolah">
-    <img class="logo-sekolah" src="https://lh3.googleusercontent.com/d/11YsPOKyrRxyFEseGmrMQoe8Iem44OiUH" alt="Logo Sekolah">
-    <div class="title-container">
+<!-- ========================= TOPBAR ========================= -->
+<header class="topbar">
+  <div class="left">
+    <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <img src="https://lh3.googleusercontent.com/d/11YsPOKyrRxyFEseGmrMQoe8Iem44OiUH" alt="Logo">
+    <div>
       <h2>SMP NEGERI 1 SOBANG</h2>
-      <p>Sistem Absensi Digital Online</p>
+      <span>Sistem Absensi Digital</span>
     </div>
   </div>
-
-  <div class="btn-group no-print" id="modeSelector">
-    <button class="btn-primary" onclick="switchMode('ortu')">👨‍👩‍👧 Mode Orang Tua</button>
-    <button class="btn-secondary" onclick="switchMode('guru')">👨‍🏫 Mode Guru</button>
-    <button class="btn-purple" onclick="switchMode('admin')">👔 Mode Admin Guru</button>
+  <div class="right">
+    <span class="clock" id="clockDisplay"><i class="far fa-clock"></i> Loading...</span>
+    <span class="mode-badge" id="modeBadge">👨‍👩‍👧 Orang Tua</span>
   </div>
+</header>
 
-  <!-- SECTION ORANG TUA -->
-  <div id="sectionOrtu" class="hidden">
-    <div class="card no-print">
-      <h3 style="text-align:center; color:#1a73e8; margin-top:0;">Pencarian Absensi Siswa</h3>
-      <label><b>NISN Siswa:</b></label>
-      <input type="text" id="ortuNisn" placeholder="Masukkan NISN Siswa...">
-      
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:150px;">
-          <label><b>Dari Tanggal:</b></label>
-          <input type="date" id="ortuTglAwal">
-        </div>
-        <div style="flex:1; min-width:150px;">
-          <label><b>Sampai Tanggal:</b></label>
-          <input type="date" id="ortuTglAkhir">
-        </div>
-      </div>
-      <button class="btn-primary" onclick="cariAbsensiOrtu()">🔍 Cari Data Absensi</button>
-    </div>
-    <div id="resultOrtu"></div>
-  </div>
+<!-- ========================= LAYOUT ========================= -->
+<div class="app-layout">
 
-  <!-- SECTION GURU -->
-  <div id="sectionGuru" class="hidden">
-    <div id="guruAuth" class="card no-print">
-      <h3 style="text-align:center; color:#1a73e8; margin-top:0;">Verifikasi Guru</h3>
-      <label>Masukkan PIN Akses Guru</label>
-      <input type="password" id="guruPin" placeholder="Masukkan PIN...">
-      <button class="btn-success" onclick="verifyPin()">Masuk Mode Guru</button>
+  <!-- ===== SIDEBAR ===== -->
+  <nav class="sidebar" id="sidebar">
+    <div class="menu-label">📋 Dashboard</div>
+    <div class="menu-item active" data-mode="dashboard" onclick="navigateTo('dashboard')">
+      <i class="fas fa-chart-pie"></i> Dashboard
     </div>
 
-    <div id="guruDashboard" class="hidden">
-      <div class="btn-group no-print">
-        <button class="btn-primary" onclick="toggleGuruMenu('scan')">📷 Scanner QR</button>
-        <button class="btn-secondary" onclick="toggleGuruMenu('rekap')">📊 Rekap Absensi</button>
-        <button class="btn-orange" onclick="toggleGuruMenu('status')">📝 Input Izin/Sakit</button>
-      </div>
-
-      <!-- Menu Scan -->
-      <div id="guruScanView">
-        <div class="camera-controls no-print">
-          <button id="btnStartCamera" class="btn-success" onclick="startCamera()">📷 Buka Kamera</button>
-          <button id="btnStopCamera" class="btn-danger" onclick="stopCamera()" disabled>🛑 Tutup Kamera</button>
-        </div>
-
-        <div id="reader">
-          <span id="cameraPlaceholder" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>
-        </div>
-        <div id="scanMsg" class="scan-result scan-info">📷 Siap memindai QR Code</div>
-        <div id="debugConsole" class="no-print">🔍 Debug Console:\nMenunggu aktivitas...</div>
-      </div>
-
-      <!-- Menu Input Status Siswa -->
-      <div id="guruStatusView" class="hidden">
-        <div class="card">
-          <h4 style="margin-top:0; color:#ff6d00;">📝 Input Status Khusus Siswa (Izin/Sakit/Alpa)</h4>
-          <div class="status-form">
-            <div class="row">
-              <div>
-                <label><b>NISN:</b></label>
-                <input type="text" id="statusNisn" placeholder="Masukkan NISN...">
-              </div>
-              <div>
-                <label><b>Tanggal:</b></label>
-                <input type="date" id="statusTanggal">
-              </div>
-              <div>
-                <label><b>Status:</b></label>
-                <select id="statusPilih">
-                  <option value="Izin">📝 Izin</option>
-                  <option value="Sakit">🤒 Sakit</option>
-                  <option value="Alpa">❌ Alpa</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label><b>Keterangan (Opsional):</b></label>
-              <input type="text" id="statusKeterangan" placeholder="Contoh: Izin keluarga, Demam, dll...">
-            </div>
-            <button class="btn-orange" onclick="inputStatusSiswa()">💾 Simpan Status</button>
-            <div id="statusResult" style="margin-top:10px;"></div>
-          </div>
-        </div>
-        
-        <div class="card">
-          <h5 style="margin-top:0;">📋 Daftar Status Hari Ini</h5>
-          <button class="btn-secondary" onclick="loadStatusHariIni()">🔄 Refresh</button>
-          <div id="statusList" style="margin-top:10px;"></div>
-        </div>
-      </div>
-
-      <!-- Menu Rekap -->
-      <div id="guruRekapView" class="hidden">
-        <div class="sub-menu no-print">
-          <button class="btn-primary" onclick="toggleRekapMode('harian')">📅 Harian</button>
-          <button class="btn-purple" onclick="toggleRekapMode('bulanan')">📆 Bulanan</button>
-          <button class="btn-success" onclick="toggleRekapMode('tahunan')">📚 Tahunan</button>
-        </div>
-
-        <div id="rekapHarianView">
-          <div class="card no-print">
-            <h4 style="margin-top:0; color:#1a73e8;">📅 Rekap Absensi Harian</h4>
-            <label><b>Pilih Kelas:</b></label>
-            <input type="text" id="guruKelas" placeholder="Contoh: 8A, 7B...">
-            <label><b>Pilih Tanggal:</b></label>
-            <input type="date" id="guruTanggal">
-            <button class="btn-primary" onclick="loadRekapHarian()">Tampilkan Rekap</button>
-          </div>
-        </div>
-
-        <div id="rekapRangeView" class="hidden">
-          <div class="card no-print">
-            <h4 id="rangeTitle" style="margin-top:0; color:#7c3aed;">📆 Rekap Absensi Bulanan</h4>
-            <label><b>Pilih Kelas:</b></label>
-            <input type="text" id="guruKelasRange" placeholder="Contoh: 8A, 7B...">
-            
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              <div style="flex:1; min-width:150px;">
-                <label><b>Dari Tanggal:</b></label>
-                <input type="date" id="guruTglAwalRange">
-              </div>
-              <div style="flex:1; min-width:150px;">
-                <label><b>Sampai Tanggal:</b></label>
-                <input type="date" id="guruTglAkhirRange">
-              </div>
-            </div>
-            
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              <button class="btn-purple" onclick="loadRekapRange()" style="flex:2;">📊 Tampilkan Rekap</button>
-              <button class="btn-success" onclick="setRangeBulanIni()" style="flex:1;">📅 Bulan Ini</button>
-              <button class="btn-primary" onclick="setRangeSemester()" style="flex:1;">📚 Semester</button>
-              <button class="btn-secondary" onclick="setRangeTahunAjaran()" style="flex:1;">🎓 Tahun Ajaran</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="resultRekapKelas"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SECTION ADMIN GURU -->
-  <div id="sectionAdmin" class="hidden">
-    <div id="adminAuth" class="card no-print">
-      <h3 style="text-align:center; color:#7c3aed; margin-top:0;">🔐 Verifikasi Admin Guru</h3>
-      <label>Masukkan PIN Admin</label>
-      <input type="password" id="adminPin" placeholder="Masukkan PIN Admin...">
-      <button class="btn-purple" onclick="verifyAdminPin()">Masuk Mode Admin</button>
+    <div class="menu-label">👨‍👩‍👧 Orang Tua</div>
+    <div class="menu-item" data-mode="ortu" onclick="navigateTo('ortu')">
+      <i class="fas fa-user-graduate"></i> Cek Absensi Siswa
     </div>
 
-    <div id="adminDashboard" class="hidden">
-      <div class="btn-group no-print">
-        <button class="btn-purple" onclick="toggleAdminMenu('scanGuru')">📷 Scan QR Guru</button>
-        <button class="btn-secondary" onclick="toggleAdminMenu('rekapGuru')">📊 Rekap Absensi Guru</button>
-        <button class="btn-orange" onclick="toggleAdminMenu('statusGuru')">📝 Izin/Sakit Guru</button>
+    <div class="menu-label">👨‍🏫 Guru</div>
+    <div class="menu-item" data-mode="guru" onclick="navigateTo('guru')">
+      <i class="fas fa-chalkboard-teacher"></i> Mode Guru
+    </div>
+    <div class="menu-item" data-mode="guruScan" onclick="navigateTo('guruScan')">
+      <i class="fas fa-qrcode"></i> Scan QR Siswa
+    </div>
+    <div class="menu-item" data-mode="guruRekap" onclick="navigateTo('guruRekap')">
+      <i class="fas fa-table"></i> Rekap Siswa
+    </div>
+    <div class="menu-item" data-mode="guruStatus" onclick="navigateTo('guruStatus')">
+      <i class="fas fa-pen"></i> Izin/Sakit Siswa
+    </div>
+
+    <div class="menu-label">👔 Admin Guru</div>
+    <div class="menu-item" data-mode="admin" onclick="navigateTo('admin')">
+      <i class="fas fa-user-shield"></i> Mode Admin
+    </div>
+    <div class="menu-item" data-mode="adminScan" onclick="navigateTo('adminScan')">
+      <i class="fas fa-qrcode"></i> Scan QR Guru
+    </div>
+    <div class="menu-item" data-mode="adminRekap" onclick="navigateTo('adminRekap')">
+      <i class="fas fa-users"></i> Rekap Guru
+    </div>
+    <div class="menu-item" data-mode="adminStatus" onclick="navigateTo('adminStatus')">
+      <i class="fas fa-pen"></i> Izin/Sakit Guru
+    </div>
+  </nav>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main-content" id="mainContent">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="panelDashboard">
+      <!-- STATS -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="icon"><i class="fas fa-user-graduate"></i></div><div class="info"><h3 id="statSiswa">0</h3><p>Total Siswa</p></div></div>
+        <div class="stat-card green"><div class="icon"><i class="fas fa-user-check"></i></div><div class="info"><h3 id="statHadir">0</h3><p>Hadir Hari Ini</p></div></div>
+        <div class="stat-card orange"><div class="icon"><i class="fas fa-clock"></i></div><div class="info"><h3 id="statTerlambat">0</h3><p>Terlambat</p></div></div>
+        <div class="stat-card red"><div class="icon"><i class="fas fa-user-slash"></i></div><div class="info"><h3 id="statAlpa">0</h3><p>Alpa / Bolos</p></div></div>
+        <div class="stat-card amber"><div class="icon"><i class="fas fa-file-signature"></i></div><div class="info"><h3 id="statIzin">0</h3><p>Izin</p></div></div>
+        <div class="stat-card purple"><div class="icon"><i class="fas fa-notes-medical"></i></div><div class="info"><h3 id="statSakit">0</h3><p>Sakit</p></div></div>
+        <div class="stat-card teal"><div class="icon"><i class="fas fa-chalkboard-teacher"></i></div><div class="info"><h3 id="statGuru">0</h3><p>Guru Aktif</p></div></div>
       </div>
 
-      <!-- Menu Scan QR Guru -->
-      <div id="adminScanView">
-        <div class="camera-controls no-print">
-          <button id="btnStartCameraAdmin" class="btn-success" onclick="startCameraAdmin()">📷 Buka Kamera</button>
-          <button id="btnStopCameraAdmin" class="btn-danger" onclick="stopCameraAdmin()" disabled>🛑 Tutup Kamera</button>
+      <!-- INFO SINGKAT -->
+      <div class="panel">
+        <h3><i class="fas fa-info-circle" style="color:#1a73e8;"></i> Informasi Operasional</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; font-size:14px; background:#f5f7fb; padding:16px; border-radius:10px;">
+          <div><b>📥 Masuk Tepat Waktu</b><br>06:00 – 07:30</div>
+          <div><b>⚠️ Masuk Terlambat</b><br>07:30 – 08:30</div>
+          <div><b>🚫 Scan Ditolak</b><br>08:30 – 12:00</div>
+          <div><b>📥 Masuk (Sesi 2)</b><br>12:00 – 12:30</div>
+          <div><b>⚠️ Terlambat Sesi 2</b><br>12:30 – 12:40</div>
+          <div><b>🚫 Scan Ditolak</b><br>12:40 – 14:00</div>
+          <div><b>📤 Pulang Tepat</b><br>14:00 – 14:30</div>
+          <div><b>📤 Pulang Terlambat</b><br>14:30 – 17:00</div>
         </div>
-
-        <div id="readerAdmin">
-          <span id="cameraPlaceholderAdmin" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai QR Guru.</span>
-        </div>
-        <div id="scanMsgAdmin" class="scan-result scan-info">📷 Siap memindai QR Code Guru</div>
-        <div id="debugConsoleAdmin" class="no-print">🔍 Debug Console Admin:\nMenunggu aktivitas...</div>
+        <p style="margin-top:12px; font-size:13px; color:#555;"><i class="fas fa-info-circle"></i> Siswa yang tidak scan sampai 08:30 = <b>Alpa</b> | Tidak scan setelah istirahat = <b>Bolos</b></p>
       </div>
 
-      <!-- Menu Rekap Guru -->
-      <div id="adminRekapView" class="hidden">
-        <div class="card no-print">
-          <h4 style="margin-top:0; color:#7c3aed;">📊 Rekap Absensi Guru</h4>
-          
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <div style="flex:1; min-width:150px;">
-              <label><b>Dari Tanggal:</b></label>
-              <input type="date" id="adminTglAwal">
-            </div>
-            <div style="flex:1; min-width:150px;">
-              <label><b>Sampai Tanggal:</b></label>
-              <input type="date" id="adminTglAkhir">
-            </div>
-          </div>
-          
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn-purple" onclick="loadRekapGuru()" style="flex:2;">📊 Tampilkan Rekap Guru</button>
-            <button class="btn-success" onclick="setRangeBulanIniAdmin()" style="flex:1;">📅 Bulan Ini</button>
-            <button class="btn-primary" onclick="setRangeBulanLaluAdmin()" style="flex:1;">📅 Bulan Lalu</button>
-          </div>
-        </div>
-        <div id="resultRekapGuru"></div>
-      </div>
-
-      <!-- Menu Input Status Guru -->
-      <div id="adminStatusView" class="hidden">
-        <div class="card">
-          <h4 style="margin-top:0; color:#ff6d00;">📝 Input Izin/Sakit Guru</h4>
-          <div class="status-form">
-            <div class="row">
-              <div>
-                <label><b>NIP Guru:</b></label>
-                <input type="text" id="statusNipGuru" placeholder="Masukkan NIP Guru...">
-              </div>
-              <div>
-                <label><b>Tanggal:</b></label>
-                <input type="date" id="statusTanggalGuru">
-              </div>
-              <div>
-                <label><b>Status:</b></label>
-                <select id="statusPilihGuru">
-                  <option value="Izin">📝 Izin</option>
-                  <option value="Sakit">🤒 Sakit</option>
-                  <option value="Alpa">❌ Alpa</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label><b>Keterangan (Opsional):</b></label>
-              <input type="text" id="statusKeteranganGuru" placeholder="Contoh: Izin keluarga, Demam, dll...">
-            </div>
-            <button class="btn-orange" onclick="inputStatusGuru()">💾 Simpan Status Guru</button>
-            <div id="statusResultGuru" style="margin-top:10px;"></div>
-          </div>
-        </div>
-        
-        <div class="card">
-          <h5 style="margin-top:0;">📋 Daftar Status Guru Hari Ini</h5>
-          <button class="btn-secondary" onclick="loadStatusGuruHariIni()">🔄 Refresh</button>
-          <div id="statusListGuru" style="margin-top:10px;"></div>
-        </div>
+      <!-- REKAP CEPAT -->
+      <div class="panel">
+        <h3><i class="fas fa-chart-bar" style="color:#2e7d32;"></i> Rekap Hari Ini</h3>
+        <div id="rekapCepat" style="font-size:14px; color:#555;">⏳ Memuat data...</div>
       </div>
     </div>
-  </div>
+
+    <!-- ===== PANELS (disembunyikan, akan ditampilkan via JS) ===== -->
+    <div id="panelOrtu" class="panel hidden">
+      <h3><i class="fas fa-search"></i> Cek Absensi Siswa</h3>
+      <div class="row">
+        <div><label>NISN</label><input type="text" id="ortuNisn" placeholder="Masukkan NISN..."></div>
+        <div><label>Dari</label><input type="date" id="ortuTglAwal"></div>
+        <div><label>Sampai</label><input type="date" id="ortuTglAkhir"></div>
+      </div>
+      <button class="btn-primary" onclick="cariAbsensiOrtu()"><i class="fas fa-search"></i> Cari</button>
+      <div id="resultOrtu" style="margin-top:16px;"></div>
+    </div>
+
+    <div id="panelGuru" class="panel hidden">
+      <h3><i class="fas fa-chalkboard-teacher"></i> Verifikasi Guru</h3>
+      <div style="max-width:320px;">
+        <label>PIN Guru</label>
+        <input type="password" id="guruPin" placeholder="Masukkan PIN...">
+        <button class="btn-success" onclick="verifyPin()"><i class="fas fa-unlock"></i> Masuk</button>
+        <div id="guruAuthMsg" style="margin-top:8px;color:#c62828;"></div>
+      </div>
+    </div>
+
+    <div id="panelGuruScan" class="panel hidden">
+      <h3><i class="fas fa-qrcode"></i> Scan QR Siswa</h3>
+      <div class="camera-controls">
+        <button class="btn-success" onclick="startCamera()"><i class="fas fa-camera"></i> Buka Kamera</button>
+        <button class="btn-danger" onclick="stopCamera()" id="btnStopCamera" disabled><i class="fas fa-stop"></i> Tutup</button>
+      </div>
+      <div id="reader"><span style="color:#999;">Kamera non-aktif</span></div>
+      <div id="scanMsg" class="scan-result scan-info">📷 Siap memindai</div>
+      <div id="debugConsole" style="background:#1a1a2e;color:#b0bec5;padding:10px;border-radius:6px;font-size:12px;max-height:120px;overflow-y:auto;margin-top:10px;font-family:monospace;">🔍 Debug Console...</div>
+    </div>
+
+    <div id="panelGuruRekap" class="panel hidden">
+      <h3><i class="fas fa-table"></i> Rekap Absensi Siswa</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn-primary" onclick="setRekapMode('harian')"><i class="fas fa-calendar-day"></i> Harian</button>
+        <button class="btn-purple" onclick="setRekapMode('bulanan')"><i class="fas fa-calendar-alt"></i> Bulanan</button>
+        <button class="btn-teal" onclick="setRekapMode('tahunan')"><i class="fas fa-calendar-plus"></i> Tahunan</button>
+      </div>
+      <div id="rekapForm">
+        <div class="row">
+          <div><label>Kelas</label><input type="text" id="guruKelas" placeholder="Contoh: 8A"></div>
+          <div id="rekapDateWrap"><label>Tanggal</label><input type="date" id="guruTanggal"></div>
+          <div id="rekapRangeWrap" class="hidden">
+            <label>Dari</label><input type="date" id="guruTglAwalRange">
+          </div>
+          <div id="rekapRangeWrap2" class="hidden">
+            <label>Sampai</label><input type="date" id="guruTglAkhirRange">
+          </div>
+        </div>
+        <button class="btn-primary" onclick="loadRekap()"><i class="fas fa-eye"></i> Tampilkan</button>
+      </div>
+      <div id="resultRekapKelas" style="margin-top:16px;"></div>
+    </div>
+
+    <div id="panelGuruStatus" class="panel hidden">
+      <h3><i class="fas fa-pen"></i> Input Status Siswa (Izin/Sakit/Alpa)</h3>
+      <div class="row">
+        <div><label>NISN</label><input type="text" id="statusNisn" placeholder="NISN"></div>
+        <div><label>Tanggal</label><input type="date" id="statusTanggal"></div>
+        <div><label>Status</label>
+          <select id="statusPilih"><option value="Izin">📝 Izin</option><option value="Sakit">🤒 Sakit</option><option value="Alpa">❌ Alpa</option></select>
+        </div>
+      </div>
+      <div><label>Keterangan</label><input type="text" id="statusKeterangan" placeholder="Opsional..."></div>
+      <button class="btn-orange" onclick="inputStatusSiswa()"><i class="fas fa-save"></i> Simpan</button>
+      <div id="statusResult" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="panelAdmin" class="panel hidden">
+      <h3><i class="fas fa-user-shield"></i> Verifikasi Admin Guru</h3>
+      <div style="max-width:320px;">
+        <label>PIN Admin</label>
+        <input type="password" id="adminPin" placeholder="Masukkan PIN Admin...">
+        <button class="btn-purple" onclick="verifyAdminPin()"><i class="fas fa-unlock"></i> Masuk</button>
+        <div id="adminAuthMsg" style="margin-top:8px;color:#c62828;"></div>
+      </div>
+    </div>
+
+    <div id="panelAdminScan" class="panel hidden">
+      <h3><i class="fas fa-qrcode"></i> Scan QR Guru</h3>
+      <div class="camera-controls">
+        <button class="btn-success" onclick="startCameraAdmin()"><i class="fas fa-camera"></i> Buka Kamera</button>
+        <button class="btn-danger" onclick="stopCameraAdmin()" id="btnStopCameraAdmin" disabled><i class="fas fa-stop"></i> Tutup</button>
+      </div>
+      <div id="readerAdmin"><span style="color:#999;">Kamera non-aktif</span></div>
+      <div id="scanMsgAdmin" class="scan-result scan-info">📷 Siap memindai QR Guru</div>
+      <div id="debugConsoleAdmin" style="background:#1a1a2e;color:#b0bec5;padding:10px;border-radius:6px;font-size:12px;max-height:120px;overflow-y:auto;margin-top:10px;font-family:monospace;">🔍 Debug Console Admin...</div>
+    </div>
+
+    <div id="panelAdminRekap" class="panel hidden">
+      <h3><i class="fas fa-users"></i> Rekap Absensi Guru</h3>
+      <div class="row">
+        <div><label>Dari</label><input type="date" id="adminTglAwal"></div>
+        <div><label>Sampai</label><input type="date" id="adminTglAkhir"></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-purple" onclick="loadRekapGuru()"><i class="fas fa-eye"></i> Tampilkan</button>
+        <button class="btn-success" onclick="setRangeBulanIniAdmin()"><i class="fas fa-calendar-alt"></i> Bulan Ini</button>
+        <button class="btn-secondary" onclick="setRangeBulanLaluAdmin()"><i class="fas fa-chevron-left"></i> Bulan Lalu</button>
+      </div>
+      <div id="resultRekapGuru" style="margin-top:16px;"></div>
+    </div>
+
+    <div id="panelAdminStatus" class="panel hidden">
+      <h3><i class="fas fa-pen"></i> Input Izin/Sakit Guru</h3>
+      <div class="row">
+        <div><label>NIP</label><input type="text" id="statusNipGuru" placeholder="NIP Guru"></div>
+        <div><label>Tanggal</label><input type="date" id="statusTanggalGuru"></div>
+        <div><label>Status</label>
+          <select id="statusPilihGuru"><option value="Izin">📝 Izin</option><option value="Sakit">🤒 Sakit</option><option value="Alpa">❌ Alpa</option></select>
+        </div>
+      </div>
+      <div><label>Keterangan</label><input type="text" id="statusKeteranganGuru" placeholder="Opsional..."></div>
+      <button class="btn-orange" onclick="inputStatusGuru()"><i class="fas fa-save"></i> Simpan</button>
+      <div id="statusResultGuru" style="margin-top:10px;"></div>
+    </div>
+
+  </main>
 </div>
 
+<!-- ========================= FOOTER ========================= -->
+<footer class="footer">
+  &copy; 2026 SMP Negeri 1 Sobang &mdash; Sistem Absensi Digital
+</footer>
+
+<!-- ========================= SCRIPTS ========================= -->
 <script>
-  // ⚠️ GANTI URL INI DENGAN URL WEB APP ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdaP9YqaX5rrrnmoxFtYxHQOS6vb4caSir66tVJo5QTbcPTi_NViq9qaWSHFkA6C4v/exec"; 
+  // ===== KONFIGURASI =====
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdaP9YqaX5rrrnmoxFtYxHQOS6vb4caSir66tVJo5QTbcPTi_NViq9qaWSHFkA6C4v/exec";
   const PIN_GURU = "1234";
   const PIN_ADMIN = "9999";
 
-  let html5QrCode = null;
-  let isScanning = false;
-  let isProcessingScan = false;
+  // ===== STATE =====
+  let currentMode = 'dashboard';
   let rekapMode = 'harian';
+  let html5QrCode = null, isScanning = false, isProcessing = false;
+  let html5QrCodeAdmin = null, isScanningAdmin = false, isProcessingAdmin = false;
 
-  let html5QrCodeAdmin = null;
-  let isScanningAdmin = false;
-  let isProcessingScanAdmin = false;
+  // ===== DOM REFS =====
+  const sidebar = document.getElementById('sidebar');
+  const clockEl = document.getElementById('clockDisplay');
+  const modeBadge = document.getElementById('modeBadge');
 
-  // Set tanggal default
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('ortuTglAwal').value = today;
-  document.getElementById('ortuTglAkhir').value = today;
-  document.getElementById('guruTanggal').value = today;
-  document.getElementById('statusTanggal').value = today;
-  document.getElementById('adminTglAwal').value = today;
-  document.getElementById('adminTglAkhir').value = today;
-  document.getElementById('statusTanggalGuru').value = today;
-  
-  const firstDayMonth = new Date();
-  firstDayMonth.setDate(1);
-  document.getElementById('guruTglAwalRange').value = firstDayMonth.toISOString().split('T')[0];
-  document.getElementById('guruTglAkhirRange').value = today;
-
-  // === DEBUG FUNCTION ===
-  function debugLog(msg, type) {
-    type = type || 'info';
-    const debugEl = document.getElementById('debugConsole');
-    if (debugEl) {
-      const time = new Date().toLocaleTimeString();
-      const lines = debugEl.textContent.split('\n');
-      if (lines.length > 20) lines.pop();
-      const newContent = `[${time}] ${msg}`;
-      lines.unshift(newContent);
-      debugEl.textContent = lines.join('\n');
-    }
-  }
-
-  function debugLogAdmin(msg, type) {
-    type = type || 'info';
-    const debugEl = document.getElementById('debugConsoleAdmin');
-    if (debugEl) {
-      const time = new Date().toLocaleTimeString();
-      const lines = debugEl.textContent.split('\n');
-      if (lines.length > 20) lines.pop();
-      const newContent = `[${time}] ${msg}`;
-      lines.unshift(newContent);
-      debugEl.textContent = lines.join('\n');
-    }
-  }
-
-  // === FUNGSI SWITCH MODE ===
-  function switchMode(mode) {
-    if (isScanning) stopCamera();
-    if (isScanningAdmin) stopCameraAdmin();
-    
-    document.getElementById('sectionOrtu').classList.add('hidden');
-    document.getElementById('sectionGuru').classList.add('hidden');
-    document.getElementById('sectionAdmin').classList.add('hidden');
-
-    if (mode === 'ortu') {
-      document.getElementById('sectionOrtu').classList.remove('hidden');
-      document.getElementById('resultOrtu').innerHTML = '';
-      debugLog('👨‍👩‍👧 Mode Orang Tua diaktifkan', 'info');
-    } else if (mode === 'admin') {
-      document.getElementById('sectionAdmin').classList.remove('hidden');
-      document.getElementById('adminAuth').classList.remove('hidden');
-      document.getElementById('adminDashboard').classList.add('hidden');
-      document.getElementById('adminPin').value = '';
-      debugLog('👔 Mode Admin Guru diaktifkan', 'info');
-    } else {
-      document.getElementById('sectionGuru').classList.remove('hidden');
-      document.getElementById('guruAuth').classList.remove('hidden');
-      document.getElementById('guruDashboard').classList.add('hidden');
-      document.getElementById('guruPin').value = '';
-      debugLog('👨‍🏫 Mode Guru diaktifkan', 'info');
-    }
-  }
-
-  // === FUNGSI TOGGLE GURU MENU ===
-  function toggleGuruMenu(view) {
-    if (view === 'rekap' && isScanning) stopCamera();
-    
-    document.getElementById('guruScanView').classList.add('hidden');
-    document.getElementById('guruRekapView').classList.add('hidden');
-    document.getElementById('guruStatusView').classList.add('hidden');
-    
-    if(view === 'scan') {
-      document.getElementById('guruScanView').classList.remove('hidden');
-      debugLog('📷 Beralih ke Scanner QR', 'info');
-    } else if (view === 'status') {
-      document.getElementById('guruStatusView').classList.remove('hidden');
-      loadStatusHariIni();
-      debugLog('📝 Beralih ke Input Status', 'info');
-    } else {
-      document.getElementById('guruRekapView').classList.remove('hidden');
-      debugLog('📊 Beralih ke Rekap Absensi', 'info');
-    }
-  }
-
-  // === FUNGSI TOGGLE REKAP MODE ===
-  function toggleRekapMode(mode) {
-    rekapMode = mode;
-    document.getElementById('rekapHarianView').classList.add('hidden');
-    document.getElementById('rekapRangeView').classList.add('hidden');
-    
-    if (mode === 'harian') {
-      document.getElementById('rekapHarianView').classList.remove('hidden');
-      debugLog('📅 Mode Rekap Harian', 'info');
-    } else {
-      document.getElementById('rekapRangeView').classList.remove('hidden');
-      document.getElementById('rangeTitle').textContent = mode === 'bulanan' ? '📆 Rekap Absensi Bulanan' : '📚 Rekap Absensi Tahunan';
-      debugLog(`📊 Mode Rekap ${mode === 'bulanan' ? 'Bulanan' : 'Tahunan'}`, 'info');
-    }
-    document.getElementById('resultRekapKelas').innerHTML = '';
-  }
-
-  // === FUNGSI SET RANGE OTOMATIS ===
-  function setRangeBulanIni() {
+  // ===== CLOCK =====
+  function updateClock() {
     const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
-    document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
-    debugLog('📅 Set range: Bulan Ini', 'success');
+    clockEl.textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ===== SIDEBAR TOGGLE =====
+  function toggleSidebar() { sidebar.classList.toggle('open'); }
+
+  // ===== NAVIGASI =====
+  function navigateTo(mode) {
+    // Tutup sidebar di mobile
+    sidebar.classList.remove('open');
+
+    // Update menu active
+    document.querySelectorAll('.sidebar .menu-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.sidebar .menu-item[data-mode="${mode}"]`)?.classList.add('active');
+
+    // Sembunyikan semua panel
+    document.querySelectorAll('.main-content > div').forEach(el => el.classList.add('hidden'));
+
+    // Tampilkan panel sesuai mode
+    const panelMap = {
+      'dashboard': 'panelDashboard',
+      'ortu': 'panelOrtu',
+      'guru': 'panelGuru',
+      'guruScan': 'panelGuruScan',
+      'guruRekap': 'panelGuruRekap',
+      'guruStatus': 'panelGuruStatus',
+      'admin': 'panelAdmin',
+      'adminScan': 'panelAdminScan',
+      'adminRekap': 'panelAdminRekap',
+      'adminStatus': 'panelAdminStatus'
+    };
+    const panelId = panelMap[mode] || 'panelDashboard';
+    document.getElementById(panelId)?.classList.remove('hidden');
+
+    // Update badge
+    const labelMap = {
+      'dashboard': '📊 Dashboard',
+      'ortu': '👨‍👩‍👧 Orang Tua',
+      'guru': '👨‍🏫 Guru',
+      'guruScan': '📷 Scan Siswa',
+      'guruRekap': '📊 Rekap Siswa',
+      'guruStatus': '📝 Izin/Sakit Siswa',
+      'admin': '👔 Admin',
+      'adminScan': '📷 Scan Guru',
+      'adminRekap': '📊 Rekap Guru',
+      'adminStatus': '📝 Izin/Sakit Guru'
+    };
+    modeBadge.textContent = labelMap[mode] || 'Dashboard';
+
+    // Jika masuk ke dashboard, refresh stat
+    if (mode === 'dashboard') refreshDashboard();
+
+    // Jika masuk ke rekap, set default
+    if (mode === 'guruRekap') setRekapMode(rekapMode);
+
+    currentMode = mode;
   }
 
-  function setRangeSemester() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    let startMonth = month >= 0 && month <= 5 ? 0 : 6;
-    let startYear = month >= 0 && month <= 5 ? year : year;
-    const firstDay = new Date(startYear, startMonth, 1);
-    const lastDay = new Date(startYear, startMonth + 6, 0);
-    document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
-    document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
-    debugLog('📚 Set range: Semester', 'success');
-  }
-
-  function setRangeTahunAjaran() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    let startYear = month >= 6 ? year : year - 1;
-    let endYear = startYear + 1;
-    const firstDay = new Date(startYear, 6, 1);
-    const lastDay = new Date(endYear, 5, 30);
-    document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
-    document.getElementById('guruTglAkhirRange').value = lastDay.toISOString().split('T')[0];
-    debugLog('🎓 Set range: Tahun Ajaran', 'success');
-  }
-
-  // === FUNGSI ADMIN ===
-  function toggleAdminMenu(view) {
-    if (view === 'rekapGuru' && isScanningAdmin) {
-      stopCameraAdmin();
-    }
-    
-    document.getElementById('adminScanView').classList.add('hidden');
-    document.getElementById('adminRekapView').classList.add('hidden');
-    document.getElementById('adminStatusView').classList.add('hidden');
-    
-    if(view === 'scanGuru') {
-      document.getElementById('adminScanView').classList.remove('hidden');
-      debugLogAdmin('📷 Beralih ke Scan QR Guru', 'info');
-    } else if (view === 'statusGuru') {
-      document.getElementById('adminStatusView').classList.remove('hidden');
-      loadStatusGuruHariIni();
-      debugLogAdmin('📝 Beralih ke Input Izin/Sakit Guru', 'info');
-    } else {
-      document.getElementById('adminRekapView').classList.remove('hidden');
-      debugLogAdmin('📊 Beralih ke Rekap Guru', 'info');
-    }
-  }
-
-  function verifyAdminPin() {
-    const pin = document.getElementById('adminPin').value;
-    if (pin === PIN_ADMIN) {
-      document.getElementById('adminAuth').classList.add('hidden');
-      document.getElementById('adminDashboard').classList.remove('hidden');
-      document.getElementById('adminScanView').classList.remove('hidden');
-      document.getElementById('adminRekapView').classList.add('hidden');
-      document.getElementById('adminStatusView').classList.add('hidden');
-      debugLogAdmin('✅ Verifikasi PIN Admin berhasil', 'success');
-    } else {
-      alert("PIN Admin Salah!");
-      document.getElementById('adminPin').value = '';
-      document.getElementById('adminPin').focus();
-      debugLogAdmin('❌ PIN Admin salah', 'error');
-    }
-  }
-
-  // === FUNGSI ORANG TUA ===
-  function cariAbsensiOrtu() {
-    const nisn = document.getElementById('ortuNisn').value.trim();
-    const tglAwal = document.getElementById('ortuTglAwal').value;
-    const tglAkhir = document.getElementById('ortuTglAkhir').value;
-    const resDiv = document.getElementById('resultOrtu');
-
-    if (!nisn) { alert("Harap isi NISN!"); return; }
-    if (!tglAwal || !tglAkhir) { alert("Harap pilih rentang tanggal!"); return; }
-
-    resDiv.innerHTML = "<p style='text-align:center;'>⏳ Mengambil data...</p>";
-    debugLog(`🔍 Mencari absensi NISN: ${nisn} (${tglAwal} - ${tglAkhir})`, 'info');
-
-    fetch(`${SCRIPT_URL}?action=getRiwayatSiswa&nisn=${encodeURIComponent(nisn)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
-      .then(res => res.json())
+  // ===== DASHBOARD REFRESH =====
+  function refreshDashboard() {
+    const today = new Date().toISOString().split('T')[0];
+    // Ambil data rekap singkat
+    fetch(`${SCRIPT_URL}?action=getRekapKelasRange&kelas=all&tglAwal=${today}&tglAkhir=${today}`)
+      .then(r => r.json())
       .then(data => {
-        if (!data.success) {
-          resDiv.innerHTML = `<p style='color:red; text-align:center;'>${data.message}</p>`;
-          debugLog(`❌ Error: ${data.message}`, 'error');
-          return;
-        }
-
-        debugLog(`✅ Data ditemukan untuk ${data.siswa.nama}`, 'success');
-
-        let html = `
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;" class="no-print">
-            <h4 style="margin:0;">Hasil Laporan Absensi</h4>
-            <button class="btn-action btn-pdf" onclick="window.print()">🖨️ Cetak / Download PDF</button>
-          </div>
-          <div class="card" style="margin-top:10px;">
-            <b>Nama:</b> ${data.siswa.nama}<br>
-            <b>NISN:</b> ${data.siswa.nisn}<br>
-            <b>Kelas:</b> ${data.siswa.kelas}
-          </div>
-          <table id="tableOrtu">
-            <thead><tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead>
-            <tbody>
-        `;
-
-        if(data.riwayat.length === 0) {
-          html += `<tr><td colspan="4">Tidak ada data absensi pada rentang tanggal ini.</td></tr>`;
-        } else {
-          data.riwayat.forEach(row => {
-            let badge = getBadgeClass(row.status);
-            html += `<tr><td>${row.tanggal}</td><td>${row.jamMasuk}</td><td>${row.jamPulang}</td><td><span class="${badge}">${row.status}</span></td></tr>`;
+        if (data.success && data.data) {
+          let totalHadir = 0, totalTerlambat = 0, totalAlpa = 0, totalBolos = 0, totalIzin = 0, totalSakit = 0;
+          data.data.forEach(s => {
+            totalHadir += s.totalHadir || 0;
+            totalTerlambat += s.totalTerlambat || 0;
+            totalAlpa += s.totalAlpa || 0;
+            totalBolos += s.totalBolos || 0;
+            totalIzin += s.totalIzin || 0;
+            totalSakit += s.totalSakit || 0;
           });
-        }
+          document.getElementById('statHadir').textContent = totalHadir + totalTerlambat;
+          document.getElementById('statTerlambat').textContent = totalTerlambat;
+          document.getElementById('statAlpa').textContent = totalAlpa + totalBolos;
+          document.getElementById('statIzin').textContent = totalIzin;
+          document.getElementById('statSakit').textContent = totalSakit;
 
-        html += `</tbody></table>`;
-        resDiv.innerHTML = html;
-      })
-      .catch(err => {
-        resDiv.innerHTML = `<p style='color:red; text-align:center;'>Error: ${err.message}</p>`;
-        debugLog(`❌ Fetch Error: ${err.message}`, 'error');
-      });
-  }
-
-  // === FUNGSI GURU ===
-  function verifyPin() {
-    const pin = document.getElementById('guruPin').value;
-    if (pin === PIN_GURU) {
-      document.getElementById('guruAuth').classList.add('hidden');
-      document.getElementById('guruDashboard').classList.remove('hidden');
-      document.getElementById('guruScanView').classList.remove('hidden');
-      document.getElementById('guruRekapView').classList.add('hidden');
-      document.getElementById('guruStatusView').classList.add('hidden');
-      toggleRekapMode('harian');
-      debugLog('✅ Verifikasi PIN berhasil', 'success');
-    } else {
-      alert("PIN Salah!");
-      document.getElementById('guruPin').value = '';
-      document.getElementById('guruPin').focus();
-      debugLog('❌ PIN salah', 'error');
-    }
-  }
-
-  // === FUNGSI KAMERA ===
-  function startCamera() {
-    if (isScanning) return;
-
-    const readerDiv = document.getElementById('reader');
-    const placeholder = document.getElementById('cameraPlaceholder');
-    if (placeholder) placeholder.style.display = 'none';
-
-    readerDiv.innerHTML = '';
-
-    if (!html5QrCode) {
-      html5QrCode = new Html5Qrcode("reader");
-    }
-
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-    html5QrCode.start(
-      { facingMode: "environment" },
-      config,
-      onScanSuccess,
-      onScanFailure
-    ).then(() => {
-      isScanning = true;
-      document.getElementById('btnStartCamera').disabled = true;
-      document.getElementById('btnStartCamera').style.opacity = '0.5';
-      document.getElementById('btnStopCamera').disabled = false;
-      document.getElementById('btnStopCamera').style.opacity = '1';
-      document.getElementById('scanMsg').className = 'scan-result scan-info';
-      document.getElementById('scanMsg').textContent = '📷 Kamera Aktif, Siap Memindai...';
-      debugLog('📷 Kamera berhasil dibuka', 'success');
-    }).catch(err => {
-      alert("Gagal membuka kamera: " + err);
-      readerDiv.innerHTML = `<span id="cameraPlaceholder" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>`;
-      document.getElementById('btnStartCamera').disabled = false;
-      document.getElementById('btnStartCamera').style.opacity = '1';
-      debugLog(`❌ Gagal buka kamera: ${err}`, 'error');
-    });
-  }
-
-  function stopCamera() {
-    if (html5QrCode && isScanning) {
-      html5QrCode.stop().then(() => {
-        isScanning = false;
-        updateCameraUIStopped();
-        debugLog('🛑 Kamera ditutup', 'info');
-      }).catch(err => {
-        isScanning = false;
-        updateCameraUIStopped();
-      });
-    } else {
-      updateCameraUIStopped();
-    }
-  }
-
-  function updateCameraUIStopped() {
-    const readerDiv = document.getElementById('reader');
-    readerDiv.innerHTML = `<span id="cameraPlaceholder" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>`;
-    
-    document.getElementById('btnStartCamera').disabled = false;
-    document.getElementById('btnStartCamera').style.opacity = '1';
-    document.getElementById('btnStopCamera').disabled = true;
-    document.getElementById('btnStopCamera').style.opacity = '0.5';
-    document.getElementById('scanMsg').className = 'scan-result scan-info';
-    document.getElementById('scanMsg').textContent = '📷 Siap memindai QR Code';
-  }
-
-  // === FUNGSI SCAN QR SISWA ===
-  function onScanSuccess(decodedText) {
-    if (isProcessingScan) return;
-    isProcessingScan = true;
-
-    const scanMsg = document.getElementById('scanMsg');
-    scanMsg.className = 'scan-result scan-info';
-    scanMsg.textContent = `⏳ Memproses NISN: ${decodedText}...`;
-    debugLog(`📱 Scan QR: ${decodedText}`, 'info');
-
-    fetch(`${SCRIPT_URL}?action=absen&nisn=${encodeURIComponent(decodedText)}`, {
-      method: 'GET'
-    })
-    .then(response => {
-      debugLog(`📡 Response status: ${response.status}`, 'info');
-      return response.json();
-    })
-    .then(data => {
-      debugLog(`📩 Response: ${JSON.stringify(data)}`, 'info');
-      if (data.success) {
-        scanMsg.className = 'scan-result scan-success';
-        scanMsg.textContent = `✅ ${data.message}`;
-        debugLog(`✅ ${data.message}`, 'success');
-      } else {
-        scanMsg.className = 'scan-result scan-error';
-        scanMsg.textContent = `❌ ${data.message}`;
-        debugLog(`❌ ${data.message}`, 'error');
-      }
-    })
-    .catch(error => {
-      debugLog(`❌ Error: ${error.message}`, 'error');
-      scanMsg.className = 'scan-result scan-error';
-      scanMsg.textContent = `❌ Error: ${error.message}`;
-    })
-    .finally(() => {
-      setTimeout(() => {
-        if (isScanning) {
-          try { html5QrCode.resume(); } catch(e) {}
-        }
-        isProcessingScan = false;
-      }, 3000);
-    });
-
-    if (html5QrCode && isScanning) {
-      try { html5QrCode.pause(); } catch(e) {}
-    }
-  }
-
-  function onScanFailure(error) {}
-
-  // === FUNGSI KAMERA ADMIN ===
-  function startCameraAdmin() {
-    if (isScanningAdmin) return;
-
-    const readerDiv = document.getElementById('readerAdmin');
-    const placeholder = document.getElementById('cameraPlaceholderAdmin');
-    if (placeholder) placeholder.style.display = 'none';
-
-    readerDiv.innerHTML = '';
-
-    if (!html5QrCodeAdmin) {
-      html5QrCodeAdmin = new Html5Qrcode("readerAdmin");
-    }
-
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-    html5QrCodeAdmin.start(
-      { facingMode: "environment" },
-      config,
-      onScanSuccessAdmin,
-      onScanFailureAdmin
-    ).then(() => {
-      isScanningAdmin = true;
-      document.getElementById('btnStartCameraAdmin').disabled = true;
-      document.getElementById('btnStartCameraAdmin').style.opacity = '0.5';
-      document.getElementById('btnStopCameraAdmin').disabled = false;
-      document.getElementById('btnStopCameraAdmin').style.opacity = '1';
-      document.getElementById('scanMsgAdmin').className = 'scan-result scan-info';
-      document.getElementById('scanMsgAdmin').textContent = '📷 Kamera Aktif, Siap Memindai QR Guru...';
-      debugLogAdmin('📷 Kamera Admin berhasil dibuka', 'success');
-    }).catch(err => {
-      alert("Gagal membuka kamera: " + err);
-      readerDiv.innerHTML = `<span id="cameraPlaceholderAdmin" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai.</span>`;
-      document.getElementById('btnStartCameraAdmin').disabled = false;
-      document.getElementById('btnStartCameraAdmin').style.opacity = '1';
-      debugLogAdmin(`❌ Gagal buka kamera: ${err}`, 'error');
-    });
-  }
-
-  function stopCameraAdmin() {
-    if (html5QrCodeAdmin && isScanningAdmin) {
-      html5QrCodeAdmin.stop().then(() => {
-        isScanningAdmin = false;
-        updateCameraAdminUIStopped();
-        debugLogAdmin('🛑 Kamera Admin ditutup', 'info');
-      }).catch(err => {
-        isScanningAdmin = false;
-        updateCameraAdminUIStopped();
-      });
-    } else {
-      updateCameraAdminUIStopped();
-    }
-  }
-
-  function updateCameraAdminUIStopped() {
-    const readerDiv = document.getElementById('readerAdmin');
-    readerDiv.innerHTML = `<span id="cameraPlaceholderAdmin" style="color: #666;">Kamera Non-Aktif. Klik "Buka Kamera" untuk memindai QR Guru.</span>`;
-    
-    document.getElementById('btnStartCameraAdmin').disabled = false;
-    document.getElementById('btnStartCameraAdmin').style.opacity = '1';
-    document.getElementById('btnStopCameraAdmin').disabled = true;
-    document.getElementById('btnStopCameraAdmin').style.opacity = '0.5';
-    document.getElementById('scanMsgAdmin').className = 'scan-result scan-info';
-    document.getElementById('scanMsgAdmin').textContent = '📷 Siap memindai QR Code Guru';
-  }
-
-  // === FUNGSI SCAN QR GURU ===
-  function onScanSuccessAdmin(decodedText) {
-    if (isProcessingScanAdmin) return;
-    isProcessingScanAdmin = true;
-
-    const scanMsg = document.getElementById('scanMsgAdmin');
-    scanMsg.className = 'scan-result scan-info';
-    scanMsg.textContent = `⏳ Memproses NIP: ${decodedText}...`;
-    debugLogAdmin(`📱 Scan QR Guru: ${decodedText}`, 'info');
-
-    fetch(`${SCRIPT_URL}?action=absenGuru&nip=${encodeURIComponent(decodedText)}`, {
-      method: 'GET'
-    })
-    .then(response => {
-      debugLogAdmin(`📡 Response status: ${response.status}`, 'info');
-      return response.json();
-    })
-    .then(data => {
-      debugLogAdmin(`📩 Response: ${JSON.stringify(data)}`, 'info');
-      if (data.success) {
-        scanMsg.className = 'scan-result scan-success';
-        scanMsg.textContent = `✅ ${data.message}`;
-        debugLogAdmin(`✅ ${data.message}`, 'success');
-      } else {
-        scanMsg.className = 'scan-result scan-error';
-        scanMsg.textContent = `❌ ${data.message}`;
-        debugLogAdmin(`❌ ${data.message}`, 'error');
-      }
-    })
-    .catch(error => {
-      debugLogAdmin(`❌ Error: ${error.message}`, 'error');
-      scanMsg.className = 'scan-result scan-error';
-      scanMsg.textContent = `❌ Error: ${error.message}`;
-    })
-    .finally(() => {
-      setTimeout(() => {
-        if (isScanningAdmin) {
-          try { html5QrCodeAdmin.resume(); } catch(e) {}
-        }
-        isProcessingScanAdmin = false;
-      }, 3000);
-    });
-
-    if (html5QrCodeAdmin && isScanningAdmin) {
-      try { html5QrCodeAdmin.pause(); } catch(e) {}
-    }
-  }
-
-  function onScanFailureAdmin(error) {}
-
-  // === FUNGSI INPUT STATUS SISWA ===
-  function inputStatusSiswa() {
-    const nisn = document.getElementById('statusNisn').value.trim();
-    const tanggal = document.getElementById('statusTanggal').value;
-    const status = document.getElementById('statusPilih').value;
-    const keterangan = document.getElementById('statusKeterangan').value.trim();
-    const resultDiv = document.getElementById('statusResult');
-
-    if (!nisn) {
-      resultDiv.innerHTML = '<p style="color:red;">❌ Harap isi NISN!</p>';
-      return;
-    }
-    if (!tanggal) {
-      resultDiv.innerHTML = '<p style="color:red;">❌ Harap pilih tanggal!</p>';
-      return;
-    }
-
-    resultDiv.innerHTML = '<p style="color:blue;">⏳ Menyimpan status...</p>';
-    debugLog(`📝 Input status: ${status} untuk NISN ${nisn} (${tanggal})`, 'info');
-
-    fetch(`${SCRIPT_URL}?action=setStatus&nisn=${encodeURIComponent(nisn)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&guru=Guru`, {
-      method: 'GET'
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        resultDiv.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
-        debugLog(`✅ ${data.message}`, 'success');
-        loadStatusHariIni();
-        document.getElementById('statusNisn').value = '';
-        document.getElementById('statusKeterangan').value = '';
-      } else {
-        resultDiv.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
-        debugLog(`❌ ${data.message}`, 'error');
-      }
-    })
-    .catch(error => {
-      resultDiv.innerHTML = `<p style="color:red;">❌ Error: ${error.message}</p>`;
-      debugLog(`❌ Error: ${error.message}`, 'error');
-    });
-  }
-
-  // === FUNGSI LOAD STATUS HARI INI ===
-  function loadStatusHariIni() {
-    const listDiv = document.getElementById('statusList');
-    listDiv.innerHTML = '<p style="color:#666;">📋 Status yang sudah diinput akan muncul di rekap absensi.</p>';
-  }
-
-  // === FUNGSI INPUT STATUS GURU ===
-  function inputStatusGuru() {
-    const nip = document.getElementById('statusNipGuru').value.trim();
-    const tanggal = document.getElementById('statusTanggalGuru').value;
-    const status = document.getElementById('statusPilihGuru').value;
-    const keterangan = document.getElementById('statusKeteranganGuru').value.trim();
-    const resultDiv = document.getElementById('statusResultGuru');
-
-    if (!nip) {
-      resultDiv.innerHTML = '<p style="color:red;">❌ Harap isi NIP Guru!</p>';
-      return;
-    }
-    if (!tanggal) {
-      resultDiv.innerHTML = '<p style="color:red;">❌ Harap pilih tanggal!</p>';
-      return;
-    }
-
-    resultDiv.innerHTML = '<p style="color:blue;">⏳ Menyimpan status...</p>';
-    debugLogAdmin(`📝 Input status guru: ${status} untuk NIP ${nip} (${tanggal})`, 'info');
-
-    fetch(`${SCRIPT_URL}?action=setStatusGuru&nip=${encodeURIComponent(nip)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&admin=Admin`, {
-      method: 'GET'
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        resultDiv.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
-        debugLogAdmin(`✅ ${data.message}`, 'success');
-        loadStatusGuruHariIni();
-        document.getElementById('statusNipGuru').value = '';
-        document.getElementById('statusKeteranganGuru').value = '';
-      } else {
-        resultDiv.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
-        debugLogAdmin(`❌ ${data.message}`, 'error');
-      }
-    })
-    .catch(error => {
-      resultDiv.innerHTML = `<p style="color:red;">❌ Error: ${error.message}</p>`;
-      debugLogAdmin(`❌ Error: ${error.message}`, 'error');
-    });
-  }
-
-  function loadStatusGuruHariIni() {
-    const listDiv = document.getElementById('statusListGuru');
-    listDiv.innerHTML = '<p style="color:#666;">📋 Status yang sudah diinput akan muncul di rekap absensi guru.</p>';
-  }
-
-  // === FUNGSI REKAP HARIAN ===
-  function loadRekapHarian() {
-    const kelas = document.getElementById('guruKelas').value.trim();
-    const tanggal = document.getElementById('guruTanggal').value;
-    const resDiv = document.getElementById('resultRekapKelas');
-
-    if(!kelas) { alert("Isi nama kelas!"); return; }
-    if(!tanggal) { alert("Pilih tanggal!"); return; }
-
-    resDiv.innerHTML = "<p style='text-align:center;'>⏳ Memuat data kelas...</p>";
-    debugLog(`📊 Memuat rekap harian: Kelas ${kelas}, Tanggal ${tanggal}`, 'info');
-
-    fetch(`${SCRIPT_URL}?action=getRekapKelas&kelas=${encodeURIComponent(kelas)}&tanggal=${tanggal}`)
-      .then(res => res.json())
-      .then(data => {
-        if (!data.success) {
-          resDiv.innerHTML = `<p style='color:red; text-align:center;'>${data.message || 'Gagal memuat data'}</p>`;
-          debugLog(`❌ ${data.message || 'Gagal memuat data'}`, 'error');
-          return;
-        }
-
-        debugLog(`✅ Data rekap harian ditemukan (${data.data ? data.data.length : 0} siswa)`, 'success');
-
-        let html = `
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;" class="no-print">
-            <h4 style="margin:0;">Rekap Harian Kelas ${kelas} (${tanggal})</h4>
-            <div>
-              <button class="btn-action btn-pdf" onclick="window.print()">🖨️ Cetak / PDF</button>
-              <button class="btn-action btn-excel" onclick="exportToCSV('tableGuru', 'Rekap_Harian_${kelas}_${tanggal}')">📥 Excel/CSV</button>
-            </div>
-          </div>
-          <table id="tableGuru">
-            <thead><tr><th>NISN</th><th>Nama</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead>
-            <tbody>
-        `;
-
-        if (data.data && data.data.length > 0) {
-          data.data.forEach(row => {
-            let badge = getBadgeClass(row.status);
-            html += `<tr><td>${row.nisn}</td><td style="text-align:left;">${row.nama}</td><td>${row.jamMasuk}</td><td>${row.jamPulang}</td><td><span class="${badge}">${row.status}</span></td></tr>`;
+          // Rekap cepat
+          let html = `<table><thead><tr><th>Nama</th><th>Status</th></tr></thead><tbody>`;
+          data.data.forEach(s => {
+            let status = s.detail && s.detail.length ? s.detail[0].status : 'Belum Absen';
+            let badge = getBadgeClass(status);
+            html += `<tr><td>${s.nama}</td><td><span class="badge ${badge}">${status}</span></td></tr>`;
           });
-        } else {
-          html += `<tr><td colspan="5">Tidak ada data siswa di kelas ini.</td></tr>`;
-        }
-
-        html += `</tbody></table>`;
-        resDiv.innerHTML = html;
-      })
-      .catch(err => {
-        resDiv.innerHTML = `<p style='color:red; text-align:center;'>Error: ${err.message}</p>`;
-        debugLog(`❌ Error: ${err.message}`, 'error');
-      });
-  }
-
-  // === FUNGSI REKAP RANGE ===
-  function loadRekapRange() {
-    const kelas = document.getElementById('guruKelasRange').value.trim();
-    const tglAwal = document.getElementById('guruTglAwalRange').value;
-    const tglAkhir = document.getElementById('guruTglAkhirRange').value;
-    const resDiv = document.getElementById('resultRekapKelas');
-
-    if(!kelas) { alert("Isi nama kelas!"); return; }
-    if(!tglAwal || !tglAkhir) { alert("Pilih rentang tanggal!"); return; }
-    if(tglAwal > tglAkhir) { alert("Tanggal awal tidak boleh lebih besar dari tanggal akhir!"); return; }
-
-    resDiv.innerHTML = "<p style='text-align:center;'>⏳ Memuat data rekap...</p>";
-    debugLog(`📊 Memuat rekap ${rekapMode}: Kelas ${kelas}, ${tglAwal} - ${tglAkhir}`, 'info');
-
-    fetch(`${SCRIPT_URL}?action=getRekapKelasRange&kelas=${encodeURIComponent(kelas)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
-      .then(res => res.json())
-      .then(data => {
-        if (!data.success) {
-          resDiv.innerHTML = `<p style='color:red; text-align:center;'>${data.message || 'Gagal memuat data'}</p>`;
-          debugLog(`❌ ${data.message || 'Gagal memuat data'}`, 'error');
-          return;
-        }
-
-        debugLog(`✅ Data rekap ditemukan (${data.data ? data.data.length : 0} siswa)`, 'success');
-
-        let html = `
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;" class="no-print">
-            <h4 style="margin:0;">Rekap ${rekapMode === 'bulanan' ? 'Bulanan' : 'Tahunan'} Kelas ${kelas}</h4>
-            <div>
-              <button class="btn-action btn-pdf" onclick="window.print()">🖨️ Cetak / PDF</button>
-              <button class="btn-action btn-excel" onclick="exportToCSV('tableRange', 'Rekap_${rekapMode}_${kelas}')">📥 Excel/CSV</button>
-            </div>
-          </div>
-          <div class="card" style="margin-top:10px;">
-            <b>Periode:</b> ${data.tglAwal} s/d ${data.tglAkhir}
-          </div>
-        `;
-
-        if (data.data && data.data.length > 0) {
-          html += `
-            <h5 style="margin:15px 0 10px 0;">📊 Ringkasan Kehadiran</h5>
-            <table id="tableRange">
-              <thead>
-                <tr>
-                  <th>NISN</th>
-                  <th style="text-align:left;">Nama</th>
-                  <th>✅ Hadir</th>
-                  <th>⚠️ Terlambat</th>
-                  <th>❌ Alpa</th>
-                  <th>🟣 Bolos</th>
-                  <th>📝 Izin</th>
-                  <th>🤒 Sakit</th>
-                  <th>📈 % Hadir</th>
-                </tr>
-              </thead>
-              <tbody>
-          `;
-
-          data.data.forEach(row => {
-            html += `<tr>
-              <td>${row.nisn}</td>
-              <td style="text-align:left;">${row.nama}</td>
-              <td><span class="badge-success">${row.totalHadir}</span></td>
-              <td><span class="badge-warning">${row.totalTerlambat}</span></td>
-              <td><span class="badge-danger">${row.totalAlpa}</span></td>
-              <td><span class="badge-purple">${row.totalBolos}</span></td>
-              <td><span class="badge-izin">${row.totalIzin || 0}</span></td>
-              <td><span class="badge-sakit">${row.totalSakit || 0}</span></td>
-              <td><span class="badge-info">${row.persentaseKehadiran}%</span></td>
-            </tr>`;
-          });
-
           html += `</tbody></table>`;
-
-          html += `
-            <h5 style="margin:20px 0 10px 0;">📋 Detail Harian</h5>
-            <div style="overflow-x:auto;">
-          `;
-
-          data.data.forEach((row) => {
-            html += `
-              <details style="margin-bottom:10px; border:1px solid #ddd; border-radius:6px; padding:10px;">
-                <summary style="font-weight:bold; cursor:pointer;">
-                  ${row.nama} (${row.nisn}) - Hadir: ${row.totalHadir}, Terlambat: ${row.totalTerlambat}, Alpa: ${row.totalAlpa}
-                </summary>
-                <table style="margin-top:10px; font-size:12px;">
-                  <thead><tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead>
-                  <tbody>
-            `;
-
-            if (row.detail && row.detail.length > 0) {
-              row.detail.forEach(d => {
-                let badge = getBadgeClass(d.status);
-                html += `<tr><td>${d.tanggal}</td><td>${d.jamMasuk}</td><td>${d.jamPulang}</td><td><span class="${badge}">${d.status}</span></td></tr>`;
-              });
-            }
-
-            html += `</tbody></table></details>`;
-          });
-
-          html += `</div>`;
-        } else {
-          html += `<p style="text-align:center; color:#666;">Tidak ada data siswa di kelas ini.</p>`;
+          document.getElementById('rekapCepat').innerHTML = html;
         }
+      }).catch(() => {});
 
-        resDiv.innerHTML = html;
-      })
-      .catch(err => {
-        resDiv.innerHTML = `<p style='color:red; text-align:center;'>Error: ${err.message}</p>`;
-        debugLog(`❌ Error: ${err.message}`, 'error');
-      });
-  }
-
-  // === FUNGSI REKAP GURU ===
-  function setRangeBulanIniAdmin() {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    document.getElementById('adminTglAwal').value = firstDay.toISOString().split('T')[0];
-    document.getElementById('adminTglAkhir').value = lastDay.toISOString().split('T')[0];
-    debugLogAdmin('📅 Set range: Bulan Ini', 'success');
-  }
-
-  function setRangeBulanLaluAdmin() {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
-    document.getElementById('adminTglAwal').value = firstDay.toISOString().split('T')[0];
-    document.getElementById('adminTglAkhir').value = lastDay.toISOString().split('T')[0];
-    debugLogAdmin('📅 Set range: Bulan Lalu', 'success');
-  }
-
-  function loadRekapGuru() {
-    const tglAwal = document.getElementById('adminTglAwal').value;
-    const tglAkhir = document.getElementById('adminTglAkhir').value;
-    const resDiv = document.getElementById('resultRekapGuru');
-
-    if(!tglAwal || !tglAkhir) {
-      alert("Pilih rentang tanggal!");
-      return;
-    }
-    if(tglAwal > tglAkhir) {
-      alert("Tanggal awal tidak boleh lebih besar dari tanggal akhir!");
-      return;
-    }
-
-    resDiv.innerHTML = "<p style='text-align:center;'>⏳ Memuat data rekap guru...</p>";
-    debugLogAdmin(`📊 Memuat rekap guru: ${tglAwal} - ${tglAkhir}`, 'info');
-
-    fetch(`${SCRIPT_URL}?action=getRekapGuru&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
-      .then(res => res.json())
+    // Ambil total siswa & guru
+    fetch(`${SCRIPT_URL}?action=getRekapKelasRange&kelas=all&tglAwal=${today}&tglAkhir=${today}`)
+      .then(r => r.json())
       .then(data => {
-        if (!data.success) {
-          resDiv.innerHTML = `<p style='color:red; text-align:center;'>${data.message || 'Gagal memuat data'}</p>`;
-          debugLogAdmin(`❌ ${data.message || 'Gagal memuat data'}`, 'error');
-          return;
+        if (data.success && data.data) {
+          document.getElementById('statSiswa').textContent = data.data.length;
         }
-
-        debugLogAdmin(`✅ Data rekap guru ditemukan (${data.data ? data.data.length : 0} guru)`, 'success');
-
-        let html = `
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;" class="no-print">
-            <h4 style="margin:0;">📊 Rekap Absensi Guru</h4>
-            <div>
-              <button class="btn-action btn-pdf" onclick="window.print()">🖨️ Cetak / PDF</button>
-              <button class="btn-action btn-excel" onclick="exportToCSV('tableGuruRekap', 'Rekap_Guru')">📥 Excel/CSV</button>
-            </div>
-          </div>
-          <div class="card" style="margin-top:10px;">
-            <b>Periode:</b> ${data.tglAwal} s/d ${data.tglAkhir}
-          </div>
-          <table id="tableGuruRekap">
-            <thead>
-              <tr>
-                <th>NIP</th>
-                <th style="text-align:left;">Nama</th>
-                <th>Jabatan</th>
-                <th>✅ Hadir</th>
-                <th>📝 Izin</th>
-                <th>🤒 Sakit</th>
-                <th>❌ Alpa</th>
-                <th>📈 % Hadir</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
-        if (data.data && data.data.length > 0) {
-          data.data.forEach(row => {
-            html += `
-              <tr>
-                <td>${row.nip}</td>
-                <td style="text-align:left;">${row.nama}</td>
-                <td>${row.jabatan || '-'}</td>
-                <td><span class="badge-success">${row.totalHadir}</span></td>
-                <td><span class="badge-izin">${row.totalIzin || 0}</span></td>
-                <td><span class="badge-sakit">${row.totalSakit || 0}</span></td>
-                <td><span class="badge-danger">${row.totalAlpa}</span></td>
-                <td><span class="badge-info">${row.persentaseKehadiran}%</span></td>
-              </tr>
-            `;
-          });
-        } else {
-          html += `<tr><td colspan="8">Tidak ada data guru.</td></tr>`;
-        }
-
-        html += `</tbody></table>`;
-        resDiv.innerHTML = html;
-      })
-      .catch(err => {
-        resDiv.innerHTML = `<p style='color:red; text-align:center;'>Error: ${err.message}</p>`;
-        debugLogAdmin(`❌ Error: ${err.message}`, 'error');
-      });
+      }).catch(() => {});
   }
 
-  // === FUNGSI EXPORT CSV ===
-  function exportToCSV(tableId, filename) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-    
-    const rows = table.querySelectorAll('tr');
-    let csv = [];
-    
-    for (let i = 0; i < rows.length; i++) {
-      const row = [];
-      const cols = rows[i].querySelectorAll('td, th');
-      for (let j = 0; j < cols.length; j++) {
-        let text = cols[j].innerText.replace(/"/g, '""').trim();
-        row.push('"' + text + '"');
-      }
-      csv.push(row.join(','));
-    }
-
-    const csvFile = new Blob(['\uFEFF' + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const downloadLink = document.createElement('a');
-    downloadLink.download = filename + '.csv';
-    downloadLink.href = URL.createObjectURL(csvFile);
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    debugLog(`📥 Export CSV: ${filename}.csv`, 'success');
-  }
-
-  // === FUNGSI BADGE ===
+  // ===== BADGE HELPER =====
   function getBadgeClass(status) {
     if (status === 'Hadir Tepat Waktu') return 'badge-success';
     if (status === 'Terlambat') return 'badge-warning';
-    if (status === 'Alpa') return 'badge-danger';
+    if (status === 'Alpa' || status === 'Alpa (Input Admin)') return 'badge-danger';
     if (status.includes('Bolos')) return 'badge-purple';
     if (status === 'Izin') return 'badge-izin';
     if (status === 'Sakit') return 'badge-sakit';
@@ -1332,11 +598,322 @@
     return 'badge-secondary';
   }
 
-  // === INIT ===
-  switchMode('ortu');
-  debugLog('🚀 Aplikasi siap digunakan', 'success');
-  debugLogAdmin('🚀 Mode Admin siap digunakan', 'success');
-</script>
+  // ===== REKAP MODE =====
+  function setRekapMode(mode) {
+    rekapMode = mode;
+    const isRange = mode !== 'harian';
+    document.getElementById('rekapDateWrap').classList.toggle('hidden', isRange);
+    document.getElementById('rekapRangeWrap').classList.toggle('hidden', !isRange);
+    document.getElementById('rekapRangeWrap2').classList.toggle('hidden', !isRange);
+    // Set default range
+    const now = new Date();
+    if (mode === 'bulanan') {
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      document.getElementById('guruTglAwalRange').value = first.toISOString().split('T')[0];
+      document.getElementById('guruTglAkhirRange').value = last.toISOString().split('T')[0];
+    } else if (mode === 'tahunan') {
+      const first = new Date(now.getFullYear(), 0, 1);
+      const last = new Date(now.getFullYear(), 11, 31);
+      document.getElementById('guruTglAwalRange').value = first.toISOString().split('T')[0];
+      document.getElementById('guruTglAkhirRange').value = last.toISOString().split('T')[0];
+    }
+  }
 
+  // ===== LOAD REKAP =====
+  function loadRekap() {
+    const kelas = document.getElementById('guruKelas').value.trim();
+    const resDiv = document.getElementById('resultRekapKelas');
+    if (!kelas) { alert('Masukkan kelas!'); return; }
+
+    let url = '';
+    if (rekapMode === 'harian') {
+      const tgl = document.getElementById('guruTanggal').value;
+      if (!tgl) { alert('Pilih tanggal!'); return; }
+      url = `${SCRIPT_URL}?action=getRekapKelas&kelas=${encodeURIComponent(kelas)}&tanggal=${tgl}`;
+    } else {
+      const tglAwal = document.getElementById('guruTglAwalRange').value;
+      const tglAkhir = document.getElementById('guruTglAkhirRange').value;
+      if (!tglAwal || !tglAkhir) { alert('Pilih rentang tanggal!'); return; }
+      url = `${SCRIPT_URL}?action=getRekapKelasRange&kelas=${encodeURIComponent(kelas)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`;
+    }
+
+    resDiv.innerHTML = '⏳ Memuat...';
+    fetch(url).then(r => r.json()).then(data => {
+      if (!data.success) { resDiv.innerHTML = `<p style="color:red;">${data.message}</p>`; return; }
+      let html = `<table><thead><tr>`;
+      if (rekapMode === 'harian') {
+        html += `<th>NISN</th><th>Nama</th><th>Datang</th><th>Pulang</th><th>Status</th>`;
+      } else {
+        html += `<th>NISN</th><th>Nama</th><th>✅ Hadir</th><th>⚠️ Terlambat</th><th>❌ Alpa</th><th>🟣 Bolos</th><th>📝 Izin</th><th>🤒 Sakit</th><th>📈 % Hadir</th>`;
+      }
+      html += `</tr></thead><tbody>`;
+
+      if (data.data && data.data.length) {
+        data.data.forEach(row => {
+          if (rekapMode === 'harian') {
+            let badge = getBadgeClass(row.status);
+            html += `<tr><td>${row.nisn}</td><td>${row.nama}</td><td>${row.jamMasuk}</td><td>${row.jamPulang}</td><td><span class="badge ${badge}">${row.status}</span></td></tr>`;
+          } else {
+            const pct = row.persentaseKehadiran || 0;
+            html += `<tr><td>${row.nisn}</td><td>${row.nama}</td>
+              <td><span class="badge badge-success">${row.totalHadir||0}</span></td>
+              <td><span class="badge badge-warning">${row.totalTerlambat||0}</span></td>
+              <td><span class="badge badge-danger">${row.totalAlpa||0}</span></td>
+              <td><span class="badge badge-purple">${row.totalBolos||0}</span></td>
+              <td><span class="badge badge-izin">${row.totalIzin||0}</span></td>
+              <td><span class="badge badge-sakit">${row.totalSakit||0}</span></td>
+              <td><span class="badge badge-info">${pct}%</span></td></tr>`;
+          }
+        });
+      } else {
+        html += `<tr><td colspan="5">Tidak ada data</td></tr>`;
+      }
+      html += `</tbody></table>`;
+      resDiv.innerHTML = html;
+    }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
+  }
+
+  // ===== ORANG TUA =====
+  function cariAbsensiOrtu() {
+    const nisn = document.getElementById('ortuNisn').value.trim();
+    const tglAwal = document.getElementById('ortuTglAwal').value;
+    const tglAkhir = document.getElementById('ortuTglAkhir').value;
+    const resDiv = document.getElementById('resultOrtu');
+    if (!nisn || !tglAwal || !tglAkhir) { alert('Isi semua field!'); return; }
+    resDiv.innerHTML = '⏳ Memuat...';
+    fetch(`${SCRIPT_URL}?action=getRiwayatSiswa&nisn=${encodeURIComponent(nisn)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
+      .then(r => r.json()).then(data => {
+        if (!data.success) { resDiv.innerHTML = `<p style="color:red;">${data.message}</p>`; return; }
+        let html = `<div style="margin-bottom:10px;"><b>${data.siswa.nama}</b> (${data.siswa.nisn}) - Kelas ${data.siswa.kelas}</div>`;
+        html += `<table><thead><tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead><tbody>`;
+        data.riwayat.forEach(r => {
+          let badge = getBadgeClass(r.status);
+          html += `<tr><td>${r.tanggal}</td><td>${r.jamMasuk}</td><td>${r.jamPulang}</td><td><span class="badge ${badge}">${r.status}</span></td></tr>`;
+        });
+        html += `</tbody></table>`;
+        resDiv.innerHTML = html;
+      }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
+  }
+
+  // ===== GURU =====
+  function verifyPin() {
+    const pin = document.getElementById('guruPin').value;
+    const msg = document.getElementById('guruAuthMsg');
+    if (pin === PIN_GURU) {
+      msg.textContent = '✅ Verifikasi berhasil!';
+      navigateTo('guruScan');
+    } else {
+      msg.textContent = '❌ PIN salah!';
+    }
+  }
+
+  // ===== ADMIN =====
+  function verifyAdminPin() {
+    const pin = document.getElementById('adminPin').value;
+    const msg = document.getElementById('adminAuthMsg');
+    if (pin === PIN_ADMIN) {
+      msg.textContent = '✅ Verifikasi berhasil!';
+      navigateTo('adminScan');
+    } else {
+      msg.textContent = '❌ PIN Admin salah!';
+    }
+  }
+
+  // ===== KAMERA SISWA =====
+  function startCamera() {
+    if (isScanning) return;
+    const reader = document.getElementById('reader');
+    reader.innerHTML = '';
+    if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 250 } },
+      onScanSuccess, onScanFailure
+    ).then(() => {
+      isScanning = true;
+      document.getElementById('btnStopCamera').disabled = false;
+      document.getElementById('scanMsg').className = 'scan-result scan-info';
+      document.getElementById('scanMsg').textContent = '📷 Kamera aktif';
+    }).catch(e => alert('Gagal buka kamera: ' + e));
+  }
+
+  function stopCamera() {
+    if (html5QrCode && isScanning) {
+      html5QrCode.stop().then(() => { isScanning = false; document.getElementById('btnStopCamera').disabled = true; });
+    }
+  }
+
+  function onScanSuccess(text) {
+    if (isProcessing) return;
+    isProcessing = true;
+    const msg = document.getElementById('scanMsg');
+    msg.className = 'scan-result scan-info';
+    msg.textContent = `⏳ Memproses NISN: ${text}...`;
+    debugLog(`Scan: ${text}`);
+
+    fetch(`${SCRIPT_URL}?action=absen&nisn=${encodeURIComponent(text)}`)
+      .then(r => r.json()).then(data => {
+        if (data.success) { msg.className = 'scan-result scan-success'; msg.textContent = `✅ ${data.message}`; }
+        else { msg.className = 'scan-result scan-error'; msg.textContent = `❌ ${data.message}`; }
+        debugLog(data.message);
+      }).catch(e => { msg.className = 'scan-result scan-error'; msg.textContent = `❌ Error`; debugLog(e.message); })
+      .finally(() => { setTimeout(() => { isProcessing = false; if (isScanning) try { html5QrCode.resume(); } catch(e){} }, 2000); });
+
+    if (isScanning) try { html5QrCode.pause(); } catch(e){}
+  }
+
+  function onScanFailure(e) {}
+
+  function debugLog(msg) {
+    const el = document.getElementById('debugConsole');
+    if (el) { el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.textContent.split('\n').slice(0, 15).join('\n'); }
+  }
+
+  // ===== KAMERA ADMIN =====
+  function startCameraAdmin() {
+    if (isScanningAdmin) return;
+    const reader = document.getElementById('readerAdmin');
+    reader.innerHTML = '';
+    if (!html5QrCodeAdmin) html5QrCodeAdmin = new Html5Qrcode("readerAdmin");
+    html5QrCodeAdmin.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 250 } },
+      onScanSuccessAdmin, onScanFailureAdmin
+    ).then(() => {
+      isScanningAdmin = true;
+      document.getElementById('btnStopCameraAdmin').disabled = false;
+      document.getElementById('scanMsgAdmin').className = 'scan-result scan-info';
+      document.getElementById('scanMsgAdmin').textContent = '📷 Kamera aktif';
+    }).catch(e => alert('Gagal buka kamera: ' + e));
+  }
+
+  function stopCameraAdmin() {
+    if (html5QrCodeAdmin && isScanningAdmin) {
+      html5QrCodeAdmin.stop().then(() => { isScanningAdmin = false; document.getElementById('btnStopCameraAdmin').disabled = true; });
+    }
+  }
+
+  function onScanSuccessAdmin(text) {
+    if (isProcessingAdmin) return;
+    isProcessingAdmin = true;
+    const msg = document.getElementById('scanMsgAdmin');
+    msg.className = 'scan-result scan-info';
+    msg.textContent = `⏳ Memproses NIP: ${text}...`;
+    debugLogAdmin(`Scan Guru: ${text}`);
+
+    fetch(`${SCRIPT_URL}?action=absenGuru&nip=${encodeURIComponent(text)}`)
+      .then(r => r.json()).then(data => {
+        if (data.success) { msg.className = 'scan-result scan-success'; msg.textContent = `✅ ${data.message}`; }
+        else { msg.className = 'scan-result scan-error'; msg.textContent = `❌ ${data.message}`; }
+        debugLogAdmin(data.message);
+      }).catch(e => { msg.className = 'scan-result scan-error'; msg.textContent = `❌ Error`; debugLogAdmin(e.message); })
+      .finally(() => { setTimeout(() => { isProcessingAdmin = false; if (isScanningAdmin) try { html5QrCodeAdmin.resume(); } catch(e){} }, 2000); });
+
+    if (isScanningAdmin) try { html5QrCodeAdmin.pause(); } catch(e){}
+  }
+
+  function onScanFailureAdmin(e) {}
+
+  function debugLogAdmin(msg) {
+    const el = document.getElementById('debugConsoleAdmin');
+    if (el) { el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.textContent.split('\n').slice(0, 15).join('\n'); }
+  }
+
+  // ===== INPUT STATUS SISWA =====
+  function inputStatusSiswa() {
+    const nisn = document.getElementById('statusNisn').value.trim();
+    const tanggal = document.getElementById('statusTanggal').value;
+    const status = document.getElementById('statusPilih').value;
+    const keterangan = document.getElementById('statusKeterangan').value.trim();
+    const res = document.getElementById('statusResult');
+    if (!nisn || !tanggal) { res.innerHTML = '<p style="color:red;">Isi NISN dan tanggal!</p>'; return; }
+    res.innerHTML = '⏳ Menyimpan...';
+    fetch(`${SCRIPT_URL}?action=setStatus&nisn=${encodeURIComponent(nisn)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&guru=Guru`)
+      .then(r => r.json()).then(data => {
+        if (data.success) res.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
+        else res.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
+      }).catch(e => res.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
+  }
+
+  // ===== INPUT STATUS GURU =====
+  function inputStatusGuru() {
+    const nip = document.getElementById('statusNipGuru').value.trim();
+    const tanggal = document.getElementById('statusTanggalGuru').value;
+    const status = document.getElementById('statusPilihGuru').value;
+    const keterangan = document.getElementById('statusKeteranganGuru').value.trim();
+    const res = document.getElementById('statusResultGuru');
+    if (!nip || !tanggal) { res.innerHTML = '<p style="color:red;">Isi NIP dan tanggal!</p>'; return; }
+    res.innerHTML = '⏳ Menyimpan...';
+    fetch(`${SCRIPT_URL}?action=setStatusGuru&nip=${encodeURIComponent(nip)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&admin=Admin`)
+      .then(r => r.json()).then(data => {
+        if (data.success) res.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
+        else res.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
+      }).catch(e => res.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
+  }
+
+  // ===== REKAP GURU =====
+  function setRangeBulanIniAdmin() {
+    const now = new Date();
+    document.getElementById('adminTglAwal').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    document.getElementById('adminTglAkhir').value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  }
+  function setRangeBulanLaluAdmin() {
+    const now = new Date();
+    document.getElementById('adminTglAwal').value = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+    document.getElementById('adminTglAkhir').value = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+  }
+
+  function loadRekapGuru() {
+    const tglAwal = document.getElementById('adminTglAwal').value;
+    const tglAkhir = document.getElementById('adminTglAkhir').value;
+    const resDiv = document.getElementById('resultRekapGuru');
+    if (!tglAwal || !tglAkhir) { alert('Pilih rentang tanggal!'); return; }
+    resDiv.innerHTML = '⏳ Memuat...';
+    fetch(`${SCRIPT_URL}?action=getRekapGuru&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
+      .then(r => r.json()).then(data => {
+        if (!data.success) { resDiv.innerHTML = `<p style="color:red;">${data.message}</p>`; return; }
+        let html = `<table><thead><tr><th>NIP</th><th>Nama</th><th>Jabatan</th><th>✅ Hadir</th><th>📝 Izin</th><th>🤒 Sakit</th><th>❌ Alpa</th><th>📈 % Hadir</th></tr></thead><tbody>`;
+        if (data.data && data.data.length) {
+          data.data.forEach(r => {
+            html += `<tr><td>${r.nip}</td><td>${r.nama}</td><td>${r.jabatan||'-'}</td>
+              <td><span class="badge badge-success">${r.totalHadir||0}</span></td>
+              <td><span class="badge badge-izin">${r.totalIzin||0}</span></td>
+              <td><span class="badge badge-sakit">${r.totalSakit||0}</span></td>
+              <td><span class="badge badge-danger">${r.totalAlpa||0}</span></td>
+              <td><span class="badge badge-info">${r.persentaseKehadiran||0}%</span></td></tr>`;
+          });
+        } else html += `<tr><td colspan="8">Tidak ada data</td></tr>`;
+        html += `</tbody></table>`;
+        resDiv.innerHTML = html;
+      }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
+  }
+
+  // ===== INIT =====
+  // Set default dates
+  const todayStr = new Date().toISOString().split('T')[0];
+  document.getElementById('ortuTglAwal').value = todayStr;
+  document.getElementById('ortuTglAkhir').value = todayStr;
+  document.getElementById('guruTanggal').value = todayStr;
+  document.getElementById('statusTanggal').value = todayStr;
+  document.getElementById('statusTanggalGuru').value = todayStr;
+  document.getElementById('adminTglAwal').value = todayStr;
+  document.getElementById('adminTglAkhir').value = todayStr;
+  const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
+  document.getElementById('guruTglAkhirRange').value = todayStr;
+
+  // Navigasi ke dashboard
+  navigateTo('dashboard');
+  refreshDashboard();
+
+  // Auto refresh dashboard setiap 60 detik
+  setInterval(() => { if (currentMode === 'dashboard') refreshDashboard(); }, 60000);
+
+  // Tutup sidebar saat klik di luar (mobile)
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 820) {
+      if (!sidebar.contains(e.target) && !e.target.closest('.sidebar-toggle')) {
+        sidebar.classList.remove('open');
+      }
+    }
+  });
+</script>
 </body>
 </html>
