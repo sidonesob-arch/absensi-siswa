@@ -26,21 +26,20 @@
     }
     .topbar .left { display: flex; align-items: center; gap: 12px; }
     .topbar .left img { height: 45px; width: 45px; object-fit: contain; border-radius: 50%; background: white; padding: 3px; }
-    .topbar .left .profile-img { 
-      height: 45px; 
-      width: 45px; 
-      object-fit: cover; 
+    .topbar .left .admin-photo { 
+      height: 40px; 
+      width: 40px; 
       border-radius: 50%; 
-      border: 2px solid rgba(255,255,255,0.5);
-      background: #2a3a5a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 20px;
+      background: #ffca28; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 18px; 
+      font-weight: bold; 
+      color: #1a237e;
+      border: 2px solid white;
+      cursor: pointer;
     }
-    .topbar .left .profile-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-    .topbar .left .brand { line-height: 1.2; }
     .topbar .left h2 { font-size: 18px; margin: 0; letter-spacing: 0.5px; }
     .topbar .left span { font-size: 12px; opacity: 0.8; display: block; }
     .topbar .right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -119,6 +118,7 @@
 
     .panel { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .panel h3 { margin-bottom: 16px; color: #1a237e; display: flex; align-items: center; gap: 10px; }
+    .panel h3 .subtitle { font-size: 13px; font-weight: normal; color: #666; margin-left: 8px; }
     .hidden { display: none !important; }
 
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -203,51 +203,52 @@
     .info-box .time-list .value.warning { color: #e65100; }
     .info-box .time-list .value.danger { color: #c62828; }
 
-    /* SETTINGS STYLES */
+    /* SETTINGS PANEL */
     .settings-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
     .settings-group {
-      background: #f5f7fb;
+      background: #f8f9fa;
       padding: 16px;
       border-radius: 10px;
-      border: 1px solid #e0e0e0;
+      border: 1px solid #e8e8e8;
     }
     .settings-group h4 {
       color: #1a237e;
       margin-bottom: 12px;
       font-size: 14px;
-      border-bottom: 2px solid #1a73e8;
+      border-bottom: 1px solid #e8e8e8;
       padding-bottom: 8px;
     }
     .settings-group .setting-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .settings-group .setting-row label {
-      flex: 1;
+      min-width: 150px;
       font-size: 13px;
       color: #333;
     }
     .settings-group .setting-row input {
       flex: 1;
-      max-width: 120px;
       padding: 6px 10px;
       font-size: 13px;
       margin: 0;
     }
-    .settings-group .setting-row input:focus {
-      border-color: #1a73e8;
-      outline: none;
+    .settings-group .setting-row .current-value {
+      font-size: 12px;
+      color: #666;
+      background: #e8e8e8;
+      padding: 2px 8px;
+      border-radius: 4px;
     }
 
     @media (max-width: 1024px) {
       .stats-grid { grid-template-columns: repeat(4, 1fr); }
-      .settings-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 820px) {
       .sidebar-toggle { display: block; }
@@ -267,13 +268,12 @@
       .main-content { padding: 14px; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .info-grid { grid-template-columns: 1fr; }
+      .settings-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 480px) {
       .stats-grid { grid-template-columns: 1fr 1fr; }
       .topbar .left h2 { font-size: 13px; }
       .info-box .time-list { grid-template-columns: 1fr; }
-      .settings-group .setting-row { flex-direction: column; align-items: stretch; }
-      .settings-group .setting-row input { max-width: 100%; }
     }
 
     /* FOOTER FIXED */
@@ -296,6 +296,26 @@
     .main-content::-webkit-scrollbar-thumb { background: #b0b8c8; border-radius: 10px; }
     .sidebar::-webkit-scrollbar { width: 4px; }
     .sidebar::-webkit-scrollbar-thumb { background: #4a5a7a; border-radius: 10px; }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      padding: 14px 24px;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      z-index: 9999;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transform: translateX(120%);
+      transition: transform 0.4s ease;
+      max-width: 400px;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast.success { background: #2e7d32; }
+    .toast.error { background: #c62828; }
+    .toast.warning { background: #e65100; }
   </style>
 </head>
   
@@ -304,12 +324,13 @@
   <header class="topbar">
     <div class="left">
       <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-      <div class="profile-img" id="profileImage">
-        <i class="fas fa-user-graduate"></i>
-      </div>
-      <div class="brand">
+      <img src="https://lh3.googleusercontent.com/d/11YsPOKyrRxyFEseGmrMQoe8Iem44OiUH" alt="Logo">
+      <div>
         <h2>SMP NEGERI 1 SOBANG</h2>
         <span>Sistem Absensi Digital</span>
+      </div>
+      <div class="admin-photo" id="adminPhoto" title="Admin" style="display:none;">
+        <i class="fas fa-user-shield"></i>
       </div>
     </div>
     <div class="right">
@@ -318,365 +339,396 @@
     </div>
   </header>
 
-<div class="app-layout">
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
 
-  <nav class="sidebar" id="sidebar">
-    <div class="menu-label">📋 Dashboard</div>
-    <div class="menu-item active" data-mode="dashboard" onclick="navigateTo('dashboard')">
-      <i class="fas fa-chart-pie"></i> Dashboard
-    </div>
+  <div class="app-layout">
 
-    <div class="menu-label">👨‍👩‍👧 Orang Tua</div>
-    <div class="menu-item" data-mode="ortu" onclick="navigateTo('ortu')">
-      <i class="fas fa-user-graduate"></i> Cek Absensi Siswa
-    </div>
-
-    <div class="menu-label">👨‍🏫 Guru</div>
-    <div class="menu-item" data-mode="guru" onclick="navigateTo('guru')">
-      <i class="fas fa-chalkboard-teacher"></i> Login Guru
-    </div>
-    <div class="menu-item disabled" data-mode="guruScan" onclick="navigateTo('guruScan')">
-      <i class="fas fa-qrcode"></i> Scan QR Siswa
-    </div>
-    <div class="menu-item disabled" data-mode="guruRekap" onclick="navigateTo('guruRekap')">
-      <i class="fas fa-table"></i> Rekap Siswa
-    </div>
-    <div class="menu-item disabled" data-mode="guruStatus" onclick="navigateTo('guruStatus')">
-      <i class="fas fa-pen"></i> Izin/Sakit Siswa
-    </div>
-
-    <div class="menu-label">👔 Admin Guru</div>
-    <div class="menu-item" data-mode="admin" onclick="navigateTo('admin')">
-      <i class="fas fa-user-shield"></i> Login Admin
-    </div>
-    <div class="menu-item disabled" data-mode="adminScan" onclick="navigateTo('adminScan')">
-      <i class="fas fa-qrcode"></i> Scan QR Guru
-    </div>
-    <div class="menu-item disabled" data-mode="adminRekap" onclick="navigateTo('adminRekap')">
-      <i class="fas fa-users"></i> Rekap Guru
-    </div>
-    <div class="menu-item disabled" data-mode="adminStatus" onclick="navigateTo('adminStatus')">
-      <i class="fas fa-pen"></i> Izin/Sakit Guru
-    </div>
-    <div class="menu-item disabled" data-mode="adminSettings" onclick="navigateTo('adminSettings')">
-      <i class="fas fa-cog"></i> Pengaturan
-    </div>
-  </nav>
-
-  <main class="main-content" id="mainContent">
-
-    <!-- DASHBOARD -->
-    <div id="panelDashboard">
-      <div class="stats-grid" id="statsGrid">
-        <div class="stat-card">
-          <div class="icon"><i class="fas fa-user-graduate"></i></div>
-          <div class="info"><h3 id="statSiswa">0</h3><p>Total Siswa</p></div>
-        </div>
-        <div class="stat-card green">
-          <div class="icon"><i class="fas fa-user-check"></i></div>
-          <div class="info"><h3 id="statHadir">0</h3><p>Hadir Hari Ini</p></div>
-        </div>
-        <div class="stat-card orange">
-          <div class="icon"><i class="fas fa-clock"></i></div>
-          <div class="info"><h3 id="statTerlambat">0</h3><p>Terlambat</p></div>
-        </div>
-        <div class="stat-card red">
-          <div class="icon"><i class="fas fa-user-slash"></i></div>
-          <div class="info"><h3 id="statAlpa">0</h3><p>Alpa</p></div>
-        </div>
-        <div class="stat-card purple">
-          <div class="icon"><i class="fas fa-user-times"></i></div>
-          <div class="info"><h3 id="statBolos">0</h3><p>Bolos</p></div>
-        </div>
-        <div class="stat-card amber">
-          <div class="icon"><i class="fas fa-file-signature"></i></div>
-          <div class="info"><h3 id="statIzin">0</h3><p>Izin</p></div>
-        </div>
-        <div class="stat-card teal">
-          <div class="icon"><i class="fas fa-notes-medical"></i></div>
-          <div class="info"><h3 id="statSakit">0</h3><p>Sakit</p></div>
-        </div>
-        <div class="stat-card">
-          <div class="icon"><i class="fas fa-chalkboard-teacher"></i></div>
-          <div class="info"><h3 id="statGuru">0</h3><p>Total Guru</p></div>
-        </div>
+    <nav class="sidebar" id="sidebar">
+      <div class="menu-label">📋 Dashboard</div>
+      <div class="menu-item active" data-mode="dashboard" onclick="navigateTo('dashboard')">
+        <i class="fas fa-chart-pie"></i> Dashboard
       </div>
 
-      <!-- INFO OPERASIONAL - DUA KOTAK -->
-      <div class="panel">
-        <h3><i class="fas fa-info-circle" style="color:#1a73e8;"></i> Informasi Operasional</h3>
-        <div class="info-grid">
-          <div class="info-box" style="border-left-color: #1a73e8;">
-            <h4><i class="fas fa-hourglass-start"></i> Batas Scan</h4>
-            <div class="time-list">
-              <span class="label">📥 Masuk Tepat</span>
-              <span class="value" id="batasMasukTepat">06:00 – 07:30</span>
-              <span class="label">⚠️ Masuk Terlambat</span>
-              <span class="value warning" id="batasMasukTerlambat">07:30 – 08:30</span>
-              <span class="label">🚫 Scan Ditolak</span>
-              <span class="value danger" id="batasScanDitolak">08:30 – 12:00</span>
-              <span class="label">📤 Pulang Tepat</span>
-              <span class="value" id="batasPulangTepat">14:00 – 14:30</span>
-              <span class="label">📤 Pulang Terlambat</span>
-              <span class="value warning" id="batasPulangTerlambat">14:30 – 17:00</span>
-            </div>
+      <div class="menu-label">👨‍👩‍👧 Orang Tua</div>
+      <div class="menu-item" data-mode="ortu" onclick="navigateTo('ortu')">
+        <i class="fas fa-user-graduate"></i> Cek Absensi Siswa
+      </div>
+
+      <div class="menu-label">👨‍🏫 Guru</div>
+      <div class="menu-item" data-mode="guru" onclick="navigateTo('guru')">
+        <i class="fas fa-chalkboard-teacher"></i> Login Guru
+      </div>
+      <div class="menu-item disabled" data-mode="guruScan" onclick="navigateTo('guruScan')">
+        <i class="fas fa-qrcode"></i> Scan QR Siswa
+      </div>
+      <div class="menu-item disabled" data-mode="guruRekap" onclick="navigateTo('guruRekap')">
+        <i class="fas fa-table"></i> Rekap Siswa
+      </div>
+      <div class="menu-item disabled" data-mode="guruStatus" onclick="navigateTo('guruStatus')">
+        <i class="fas fa-pen"></i> Izin/Sakit Siswa
+      </div>
+
+      <div class="menu-label">👔 Admin Guru</div>
+      <div class="menu-item" data-mode="admin" onclick="navigateTo('admin')">
+        <i class="fas fa-user-shield"></i> Login Admin
+      </div>
+      <div class="menu-item disabled" data-mode="adminScan" onclick="navigateTo('adminScan')">
+        <i class="fas fa-qrcode"></i> Scan QR Guru
+      </div>
+      <div class="menu-item disabled" data-mode="adminRekap" onclick="navigateTo('adminRekap')">
+        <i class="fas fa-users"></i> Rekap Guru
+      </div>
+      <div class="menu-item disabled" data-mode="adminStatus" onclick="navigateTo('adminStatus')">
+        <i class="fas fa-pen"></i> Izin/Sakit Guru
+      </div>
+      <div class="menu-item disabled" data-mode="adminSettings" onclick="navigateTo('adminSettings')">
+        <i class="fas fa-cog"></i> Pengaturan
+      </div>
+    </nav>
+
+    <main class="main-content" id="mainContent">
+
+      <!-- DASHBOARD -->
+      <div id="panelDashboard">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="icon"><i class="fas fa-user-graduate"></i></div>
+            <div class="info"><h3 id="statSiswa">0</h3><p>Total Siswa</p></div>
           </div>
-          <div class="info-box" style="border-left-color: #6a1b9a;">
-            <h4><i class="fas fa-hourglass-half"></i> Scan Berikutnya</h4>
-            <div class="time-list">
-              <span class="label">📥 Sesi 2</span>
-              <span class="value" id="scanSesi2">12:00 – 12:30</span>
-              <span class="label">⚠️ Terlambat Sesi 2</span>
-              <span class="value warning" id="scanSesi2Terlambat">12:30 – 12:40</span>
-              <span class="label">🚫 Scan Ditolak</span>
-              <span class="value danger" id="scanSesi2Ditolak">12:40 – 14:00</span>
-              <span class="label" style="color:#2e7d32;">🟢 Status Saat Ini</span>
-              <span class="value active" id="statusSaatIni">Belum Waktu Scan</span>
-            </div>
+          <div class="stat-card green">
+            <div class="icon"><i class="fas fa-user-check"></i></div>
+            <div class="info"><h3 id="statHadir">0</h3><p>Hadir Hari Ini</p></div>
+          </div>
+          <div class="stat-card orange">
+            <div class="icon"><i class="fas fa-clock"></i></div>
+            <div class="info"><h3 id="statTerlambat">0</h3><p>Terlambat</p></div>
+          </div>
+          <div class="stat-card red">
+            <div class="icon"><i class="fas fa-user-slash"></i></div>
+            <div class="info"><h3 id="statAlpa">0</h3><p>Alpa</p></div>
+          </div>
+          <div class="stat-card purple">
+            <div class="icon"><i class="fas fa-user-times"></i></div>
+            <div class="info"><h3 id="statBolos">0</h3><p>Bolos</p></div>
+          </div>
+          <div class="stat-card amber">
+            <div class="icon"><i class="fas fa-file-signature"></i></div>
+            <div class="info"><h3 id="statIzin">0</h3><p>Izin</p></div>
+          </div>
+          <div class="stat-card teal">
+            <div class="icon"><i class="fas fa-notes-medical"></i></div>
+            <div class="info"><h3 id="statSakit">0</h3><p>Sakit</p></div>
+          </div>
+          <div class="stat-card">
+            <div class="icon"><i class="fas fa-chalkboard-teacher"></i></div>
+            <div class="info"><h3 id="statGuru">0</h3><p>Total Guru</p></div>
           </div>
         </div>
-        <p style="margin-top:12px; font-size:12px; color:#555;">
-          <i class="fas fa-info-circle"></i> 
-          Tidak scan sampai 08:30 = <b>Alpa</b> | Tidak scan Sesi 2 setelah 12:40 = <b>Bolos</b>
-        </p>
+
+        <!-- INFO OPERASIONAL - DUA KOTAK -->
+        <div class="panel">
+          <h3><i class="fas fa-info-circle" style="color:#1a73e8;"></i> Informasi Operasional</h3>
+          <div class="info-grid">
+            <div class="info-box" style="border-left-color: #1a73e8;">
+              <h4><i class="fas fa-hourglass-start"></i> Batas Scan</h4>
+              <div class="time-list">
+                <span class="label">📥 Masuk Tepat</span>
+                <span class="value" id="batasMasukTepat">06:00 – 07:30</span>
+                <span class="label">⚠️ Masuk Terlambat</span>
+                <span class="value warning" id="batasMasukTerlambat">07:30 – 08:30</span>
+                <span class="label">🚫 Scan Ditolak</span>
+                <span class="value danger" id="batasScanDitolak">08:30 – 12:00</span>
+                <span class="label">📤 Pulang Tepat</span>
+                <span class="value" id="batasPulangTepat">14:00 – 14:30</span>
+                <span class="label">📤 Pulang Terlambat</span>
+                <span class="value warning" id="batasPulangTerlambat">14:30 – 17:00</span>
+              </div>
+            </div>
+            <div class="info-box" style="border-left-color: #6a1b9a;">
+              <h4><i class="fas fa-hourglass-half"></i> Scan Berikutnya</h4>
+              <div class="time-list">
+                <span class="label">📥 Sesi 2</span>
+                <span class="value" id="scanSesi2">12:00 – 12:30</span>
+                <span class="label">⚠️ Terlambat Sesi 2</span>
+                <span class="value warning" id="scanSesi2Terlambat">12:30 – 12:40</span>
+                <span class="label">🚫 Scan Ditolak</span>
+                <span class="value danger" id="scanSesi2Ditolak">12:40 – 14:00</span>
+                <span class="label" style="color:#2e7d32;">🟢 Status Saat Ini</span>
+                <span class="value active" id="statusSaatIni">Belum Waktu Scan</span>
+              </div>
+            </div>
+          </div>
+          <p style="margin-top:12px; font-size:12px; color:#555;">
+            <i class="fas fa-info-circle"></i> 
+            Tidak scan sampai 08:30 = <b>Alpa</b> | Tidak scan Sesi 2 setelah 12:40 = <b>Bolos</b>
+          </p>
+        </div>
+
+        <div class="panel">
+          <h3><i class="fas fa-chart-bar" style="color:#2e7d32;"></i> Rekap Hari Ini</h3>
+          <div id="rekapCepat" style="font-size:14px; color:#555;">⏳ Memuat data...</div>
+        </div>
       </div>
 
-      <div class="panel">
-        <h3><i class="fas fa-chart-bar" style="color:#2e7d32;"></i> Rekap Hari Ini</h3>
-        <div id="rekapCepat" style="font-size:14px; color:#555;">⏳ Memuat data...</div>
-      </div>
-    </div>
-
-    <!-- PANEL ORTU -->
-    <div id="panelOrtu" class="panel hidden">
-      <h3><i class="fas fa-search"></i> Cek Absensi Siswa</h3>
-      <div class="row">
-        <div><label>NISN</label><input type="text" id="ortuNisn" placeholder="Masukkan NISN..."></div>
-        <div><label>Dari</label><input type="date" id="ortuTglAwal"></div>
-        <div><label>Sampai</label><input type="date" id="ortuTglAkhir"></div>
-      </div>
-      <button class="btn-primary" onclick="cariAbsensiOrtu()"><i class="fas fa-search"></i> Cari</button>
-      <div id="resultOrtu" style="margin-top:16px;"></div>
-    </div>
-
-    <!-- PANEL GURU LOGIN -->
-    <div id="panelGuru" class="panel hidden">
-      <h3><i class="fas fa-chalkboard-teacher"></i> Verifikasi Guru</h3>
-      <div style="max-width:320px;">
-        <label>PIN Guru</label>
-        <input type="password" id="guruPin" placeholder="Masukkan PIN..." onkeydown="if(event.key==='Enter') verifyPin()">
-        <button class="btn-success" onclick="verifyPin()"><i class="fas fa-unlock"></i> Masuk</button>
-        <div id="guruAuthMsg" style="margin-top:8px;color:#c62828;"></div>
-      </div>
-    </div>
-
-    <!-- PANEL GURU SCAN -->
-    <div id="panelGuruScan" class="panel hidden">
-      <h3><i class="fas fa-qrcode"></i> Scan QR Siswa</h3>
-      <div class="camera-controls">
-        <button class="btn-success" onclick="startCamera()"><i class="fas fa-camera"></i> Buka Kamera</button>
-        <button class="btn-danger" onclick="stopCamera()" id="btnStopCamera" disabled><i class="fas fa-stop"></i> Tutup</button>
-      </div>
-      <div id="reader"><span style="color:#999;">Kamera non-aktif</span></div>
-      <div id="scanMsg" class="scan-result scan-info">📷 Siap memindai</div>
-    </div>
-
-    <!-- PANEL GURU REKAP -->
-    <div id="panelGuruRekap" class="panel hidden">
-      <h3><i class="fas fa-table"></i> Rekap Absensi Siswa</h3>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-        <button class="btn-primary" onclick="setRekapMode('harian')"><i class="fas fa-calendar-day"></i> Harian</button>
-        <button class="btn-purple" onclick="setRekapMode('bulanan')"><i class="fas fa-calendar-alt"></i> Bulanan</button>
-        <button class="btn-teal" onclick="setRekapMode('tahunan')"><i class="fas fa-calendar-plus"></i> Tahunan</button>
-      </div>
-      <div id="rekapForm">
+      <!-- PANEL ORTU -->
+      <div id="panelOrtu" class="panel hidden">
+        <h3><i class="fas fa-search"></i> Cek Absensi Siswa</h3>
         <div class="row">
-          <div><label>Kelas</label><input type="text" id="guruKelas" placeholder="Contoh: 8A" onkeydown="if(event.key==='Enter') loadRekap()"></div>
-          <div id="rekapDateWrap"><label>Tanggal</label><input type="date" id="guruTanggal"></div>
-          <div id="rekapRangeWrap" class="hidden"><label>Dari</label><input type="date" id="guruTglAwalRange"></div>
-          <div id="rekapRangeWrap2" class="hidden"><label>Sampai</label><input type="date" id="guruTglAkhirRange"></div>
+          <div><label>NISN</label><input type="text" id="ortuNisn" placeholder="Masukkan NISN..."></div>
+          <div><label>Dari</label><input type="date" id="ortuTglAwal"></div>
+          <div><label>Sampai</label><input type="date" id="ortuTglAkhir"></div>
         </div>
-        <button class="btn-primary" onclick="loadRekap()"><i class="fas fa-eye"></i> Tampilkan</button>
+        <button class="btn-primary" onclick="cariAbsensiOrtu()"><i class="fas fa-search"></i> Cari</button>
+        <div id="resultOrtu" style="margin-top:16px;"></div>
       </div>
-      <div id="resultRekapKelas" style="margin-top:16px;"></div>
-    </div>
 
-    <!-- PANEL GURU STATUS -->
-    <div id="panelGuruStatus" class="panel hidden">
-      <h3><i class="fas fa-pen"></i> Input Status Siswa (Izin/Sakit/Alpa)</h3>
-      <div class="row">
-        <div><label>NISN</label><input type="text" id="statusNisn" placeholder="NISN"></div>
-        <div><label>Tanggal</label><input type="date" id="statusTanggal"></div>
-        <div><label>Status</label>
-          <select id="statusPilih">
-            <option value="Izin">📝 Izin</option>
-            <option value="Sakit">🤒 Sakit</option>
-            <option value="Alpa">❌ Alpa</option>
-          </select>
+      <!-- PANEL GURU LOGIN -->
+      <div id="panelGuru" class="panel hidden">
+        <h3><i class="fas fa-chalkboard-teacher"></i> Verifikasi Guru</h3>
+        <div style="max-width:320px;">
+          <label>PIN Guru</label>
+          <input type="password" id="guruPin" placeholder="Masukkan PIN..." onkeydown="if(event.key==='Enter') verifyPin()">
+          <button class="btn-success" onclick="verifyPin()"><i class="fas fa-unlock"></i> Masuk</button>
+          <div id="guruAuthMsg" style="margin-top:8px;color:#c62828;"></div>
         </div>
       </div>
-      <div><label>Keterangan</label><input type="text" id="statusKeterangan" placeholder="Opsional..."></div>
-      <button class="btn-orange" onclick="inputStatusSiswa()"><i class="fas fa-save"></i> Simpan</button>
-      <div id="statusResult" style="margin-top:10px;"></div>
-    </div>
 
-    <!-- PANEL ADMIN LOGIN -->
-    <div id="panelAdmin" class="panel hidden">
-      <h3><i class="fas fa-user-shield"></i> Verifikasi Admin Guru</h3>
-      <div style="max-width:320px;">
-        <label>PIN Admin</label>
-        <input type="password" id="adminPin" placeholder="Masukkan PIN Admin..." onkeydown="if(event.key==='Enter') verifyAdminPin()">
-        <button class="btn-purple" onclick="verifyAdminPin()"><i class="fas fa-unlock"></i> Masuk</button>
-        <div id="adminAuthMsg" style="margin-top:8px;color:#c62828;"></div>
-      </div>
-    </div>
-
-    <!-- PANEL ADMIN SCAN -->
-    <div id="panelAdminScan" class="panel hidden">
-      <h3><i class="fas fa-qrcode"></i> Scan QR Guru</h3>
-      <div class="camera-controls">
-        <button class="btn-success" onclick="startCameraAdmin()"><i class="fas fa-camera"></i> Buka Kamera</button>
-        <button class="btn-danger" onclick="stopCameraAdmin()" id="btnStopCameraAdmin" disabled><i class="fas fa-stop"></i> Tutup</button>
-      </div>
-      <div id="readerAdmin"><span style="color:#999;">Kamera non-aktif</span></div>
-      <div id="scanMsgAdmin" class="scan-result scan-info">📷 Siap memindai QR Guru</div>
-    </div>
-
-    <!-- PANEL ADMIN REKAP -->
-    <div id="panelAdminRekap" class="panel hidden">
-      <h3><i class="fas fa-users"></i> Rekap Absensi Guru</h3>
-      <div class="row">
-        <div><label>Dari</label><input type="date" id="adminTglAwal"></div>
-        <div><label>Sampai</label><input type="date" id="adminTglAkhir"></div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn-purple" onclick="loadRekapGuru()"><i class="fas fa-eye"></i> Tampilkan</button>
-        <button class="btn-success" onclick="setRangeBulanIniAdmin()"><i class="fas fa-calendar-alt"></i> Bulan Ini</button>
-        <button class="btn-secondary" onclick="setRangeBulanLaluAdmin()"><i class="fas fa-chevron-left"></i> Bulan Lalu</button>
-      </div>
-      <div id="resultRekapGuru" style="margin-top:16px;"></div>
-    </div>
-
-    <!-- PANEL ADMIN STATUS -->
-    <div id="panelAdminStatus" class="panel hidden">
-      <h3><i class="fas fa-pen"></i> Input Izin/Sakit Guru</h3>
-      <div class="row">
-        <div><label>NIP</label><input type="text" id="statusNipGuru" placeholder="NIP Guru"></div>
-        <div><label>Tanggal</label><input type="date" id="statusTanggalGuru"></div>
-        <div><label>Status</label>
-          <select id="statusPilihGuru">
-            <option value="Izin">📝 Izin</option>
-            <option value="Sakit">🤒 Sakit</option>
-            <option value="Alpa">❌ Alpa</option>
-          </select>
+      <!-- PANEL GURU SCAN -->
+      <div id="panelGuruScan" class="panel hidden">
+        <h3><i class="fas fa-qrcode"></i> Scan QR Siswa</h3>
+        <div class="camera-controls">
+          <button class="btn-success" onclick="startCamera()"><i class="fas fa-camera"></i> Buka Kamera</button>
+          <button class="btn-danger" onclick="stopCamera()" id="btnStopCamera" disabled><i class="fas fa-stop"></i> Tutup</button>
         </div>
+        <div id="reader"><span style="color:#999;">Kamera non-aktif</span></div>
+        <div id="scanMsg" class="scan-result scan-info">📷 Siap memindai</div>
+        <div id="debugConsole" style="background:#1a1a2e;color:#b0bec5;padding:10px;border-radius:6px;font-size:12px;max-height:120px;overflow-y:auto;margin-top:10px;font-family:monospace;">🔍 Debug Console...</div>
       </div>
-      <div><label>Keterangan</label><input type="text" id="statusKeteranganGuru" placeholder="Opsional..."></div>
-      <button class="btn-orange" onclick="inputStatusGuru()"><i class="fas fa-save"></i> Simpan</button>
-      <div id="statusResultGuru" style="margin-top:10px;"></div>
-    </div>
 
-    <!-- PANEL ADMIN SETTINGS (BARU) -->
-    <div id="panelAdminSettings" class="panel hidden">
-      <h3><i class="fas fa-cog"></i> Pengaturan Sistem</h3>
-      
-      <div style="margin-bottom:16px; display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn-primary" onclick="loadSettings()"><i class="fas fa-sync"></i> Muat Pengaturan</button>
-        <button class="btn-success" onclick="saveAllSettings()"><i class="fas fa-save"></i> Simpan Semua</button>
+      <!-- PANEL GURU REKAP -->
+      <div id="panelGuruRekap" class="panel hidden">
+        <h3><i class="fas fa-table"></i> Rekap Absensi Siswa</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+          <button class="btn-primary" onclick="setRekapMode('harian')"><i class="fas fa-calendar-day"></i> Harian</button>
+          <button class="btn-purple" onclick="setRekapMode('bulanan')"><i class="fas fa-calendar-alt"></i> Bulanan</button>
+          <button class="btn-teal" onclick="setRekapMode('tahunan')"><i class="fas fa-calendar-plus"></i> Tahunan</button>
+        </div>
+        <div id="rekapForm">
+          <div class="row">
+            <div><label>Kelas</label><input type="text" id="guruKelas" placeholder="Contoh: 8A" onkeydown="if(event.key==='Enter') loadRekap()"></div>
+            <div id="rekapDateWrap"><label>Tanggal</label><input type="date" id="guruTanggal"></div>
+            <div id="rekapRangeWrap" class="hidden"><label>Dari</label><input type="date" id="guruTglAwalRange"></div>
+            <div id="rekapRangeWrap2" class="hidden"><label>Sampai</label><input type="date" id="guruTglAkhirRange"></div>
+          </div>
+          <button class="btn-primary" onclick="loadRekap()"><i class="fas fa-eye"></i> Tampilkan</button>
+        </div>
+        <div id="resultRekapKelas" style="margin-top:16px;"></div>
       </div>
-      
-      <div id="settingsMessage" style="margin-bottom:12px; padding:10px; border-radius:6px; display:none;"></div>
-      
-      <div class="settings-grid">
-        <!-- WAKTU SISWA -->
-        <div class="settings-group">
-          <h4><i class="fas fa-user-graduate"></i> Waktu Siswa</h4>
-          <div class="setting-row">
-            <label>Jam Buka Masuk</label>
-            <input type="time" id="sJamBukaMasuk" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Batas Tepat Waktu</label>
-            <input type="time" id="sBatasTepatWaktu" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Batas Scan Masuk</label>
-            <input type="time" id="sBatasScanMasuk" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Jam Buka Sesi 2</label>
-            <input type="time" id="sJamBukaSesi2" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Batas Tepat Sesi 2</label>
-            <input type="time" id="sBatasTepatWaktuSesi2" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Batas Scan Sesi 2</label>
-            <input type="time" id="sBatasScanSesi2" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Jam Buka Pulang</label>
-            <input type="time" id="sJamBukaPulang" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Batas Pulang Tepat</label>
-            <input type="time" id="sBatasPulangTepat" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Jam Tutup Pulang</label>
-            <input type="time" id="sJamTutupPulang" step="60">
+
+      <!-- PANEL GURU STATUS -->
+      <div id="panelGuruStatus" class="panel hidden">
+        <h3><i class="fas fa-pen"></i> Input Status Siswa (Izin/Sakit/Alpa)</h3>
+        <div class="row">
+          <div><label>NISN</label><input type="text" id="statusNisn" placeholder="NISN"></div>
+          <div><label>Tanggal</label><input type="date" id="statusTanggal"></div>
+          <div><label>Status</label>
+            <select id="statusPilih">
+              <option value="Izin">📝 Izin</option>
+              <option value="Sakit">🤒 Sakit</option>
+              <option value="Alpa">❌ Alpa</option>
+            </select>
           </div>
         </div>
+        <div><label>Keterangan</label><input type="text" id="statusKeterangan" placeholder="Opsional..."></div>
+        <button class="btn-orange" onclick="inputStatusSiswa()"><i class="fas fa-save"></i> Simpan</button>
+        <div id="statusResult" style="margin-top:10px;"></div>
+      </div>
 
-        <!-- WAKTU GURU & PIN -->
-        <div class="settings-group">
-          <h4><i class="fas fa-chalkboard-teacher"></i> Waktu Guru &amp; PIN</h4>
-          <div class="setting-row">
-            <label>Jam Buka Masuk Guru</label>
-            <input type="time" id="sJamBukaMasukGuru" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Batas Tepat Guru</label>
-            <input type="time" id="sBatasTepatWaktuGuru" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Batas Scan Masuk Guru</label>
-            <input type="time" id="sBatasScanMasukGuru" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Jam Buka Pulang Guru</label>
-            <input type="time" id="sJamBukaPulangGuru" step="60">
-          </div>
-          <div class="setting-row">
-            <label>Jam Tutup Pulang Guru</label>
-            <input type="time" id="sJamTutupPulangGuru" step="60">
-          </div>
-          <hr style="margin:16px 0; border-color:#ddd;">
-          <h4><i class="fas fa-key"></i> PIN</h4>
-          <div class="setting-row">
-            <label>PIN Guru</label>
-            <input type="password" id="sPinGuru" maxlength="4" placeholder="4 digit" style="max-width:100px;">
-          </div>
-          <div class="setting-row">
-            <label>PIN Admin</label>
-            <input type="password" id="sPinAdmin" maxlength="4" placeholder="4 digit" style="max-width:100px;">
-          </div>
+      <!-- PANEL ADMIN LOGIN -->
+      <div id="panelAdmin" class="panel hidden">
+        <h3><i class="fas fa-user-shield"></i> Verifikasi Admin Guru</h3>
+        <div style="max-width:320px;">
+          <label>PIN Admin</label>
+          <input type="password" id="adminPin" placeholder="Masukkan PIN Admin..." onkeydown="if(event.key==='Enter') verifyAdminPin()">
+          <button class="btn-purple" onclick="verifyAdminPin()"><i class="fas fa-unlock"></i> Masuk</button>
+          <div id="adminAuthMsg" style="margin-top:8px;color:#c62828;"></div>
         </div>
       </div>
-    </div>
 
-  </main>
-</div>
+      <!-- PANEL ADMIN SCAN -->
+      <div id="panelAdminScan" class="panel hidden">
+        <h3><i class="fas fa-qrcode"></i> Scan QR Guru</h3>
+        <div class="camera-controls">
+          <button class="btn-success" onclick="startCameraAdmin()"><i class="fas fa-camera"></i> Buka Kamera</button>
+          <button class="btn-danger" onclick="stopCameraAdmin()" id="btnStopCameraAdmin" disabled><i class="fas fa-stop"></i> Tutup</button>
+        </div>
+        <div id="readerAdmin"><span style="color:#999;">Kamera non-aktif</span></div>
+        <div id="scanMsgAdmin" class="scan-result scan-info">📷 Siap memindai QR Guru</div>
+        <div id="debugConsoleAdmin" style="background:#1a1a2e;color:#b0bec5;padding:10px;border-radius:6px;font-size:12px;max-height:120px;overflow-y:auto;margin-top:10px;font-family:monospace;">🔍 Debug Console Admin...</div>
+      </div>
 
-<footer class="footer">
-  &copy; 2026 SMP Negeri 1 Sobang &mdash; Design by M TAUPIK
-</footer>
+      <!-- PANEL ADMIN REKAP -->
+      <div id="panelAdminRekap" class="panel hidden">
+        <h3><i class="fas fa-users"></i> Rekap Absensi Guru</h3>
+        <div class="row">
+          <div><label>Dari</label><input type="date" id="adminTglAwal"></div>
+          <div><label>Sampai</label><input type="date" id="adminTglAkhir"></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-purple" onclick="loadRekapGuru()"><i class="fas fa-eye"></i> Tampilkan</button>
+          <button class="btn-success" onclick="setRangeBulanIniAdmin()"><i class="fas fa-calendar-alt"></i> Bulan Ini</button>
+          <button class="btn-secondary" onclick="setRangeBulanLaluAdmin()"><i class="fas fa-chevron-left"></i> Bulan Lalu</button>
+        </div>
+        <div id="resultRekapGuru" style="margin-top:16px;"></div>
+      </div>
 
-<script>
+      <!-- PANEL ADMIN STATUS -->
+      <div id="panelAdminStatus" class="panel hidden">
+        <h3><i class="fas fa-pen"></i> Input Izin/Sakit Guru</h3>
+        <div class="row">
+          <div><label>NIP</label><input type="text" id="statusNipGuru" placeholder="NIP Guru"></div>
+          <div><label>Tanggal</label><input type="date" id="statusTanggalGuru"></div>
+          <div><label>Status</label>
+            <select id="statusPilihGuru">
+              <option value="Izin">📝 Izin</option>
+              <option value="Sakit">🤒 Sakit</option>
+              <option value="Alpa">❌ Alpa</option>
+            </select>
+          </div>
+        </div>
+        <div><label>Keterangan</label><input type="text" id="statusKeteranganGuru" placeholder="Opsional..."></div>
+        <button class="btn-orange" onclick="inputStatusGuru()"><i class="fas fa-save"></i> Simpan</button>
+        <div id="statusResultGuru" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- PANEL ADMIN SETTINGS -->
+      <div id="panelAdminSettings" class="panel hidden">
+        <h3><i class="fas fa-cog"></i> Pengaturan Sistem <span class="subtitle">(Update real-time ke Google Sheet)</span></h3>
+        
+        <div id="settingsLoading" style="text-align:center;padding:20px;color:#666;">⏳ Memuat pengaturan...</div>
+        
+        <div id="settingsContent" class="hidden">
+          <div class="settings-grid">
+            <!-- SISWA -->
+            <div class="settings-group">
+              <h4><i class="fas fa-user-graduate"></i> Batas Waktu Siswa</h4>
+              <div class="setting-row">
+                <label>Jam Buka Masuk</label>
+                <input type="time" id="setJamBukaMasuk">
+                <span class="current-value" id="curJamBukaMasuk"></span>
+              </div>
+              <div class="setting-row">
+                <label>Batas Tepat Waktu</label>
+                <input type="time" id="setBatasTepatWaktu">
+                <span class="current-value" id="curBatasTepatWaktu"></span>
+              </div>
+              <div class="setting-row">
+                <label>Batas Scan Masuk</label>
+                <input type="time" id="setBatasScanMasuk">
+                <span class="current-value" id="curBatasScanMasuk"></span>
+              </div>
+              <div class="setting-row">
+                <label>Jam Buka Sesi 2</label>
+                <input type="time" id="setJamBukaSesi2">
+                <span class="current-value" id="curJamBukaSesi2"></span>
+              </div>
+              <div class="setting-row">
+                <label>Batas Tepat Sesi 2</label>
+                <input type="time" id="setBatasTepatWaktuSesi2">
+                <span class="current-value" id="curBatasTepatWaktuSesi2"></span>
+              </div>
+              <div class="setting-row">
+                <label>Batas Scan Sesi 2</label>
+                <input type="time" id="setBatasScanSesi2">
+                <span class="current-value" id="curBatasScanSesi2"></span>
+              </div>
+              <div class="setting-row">
+                <label>Jam Buka Pulang</label>
+                <input type="time" id="setJamBukaPulang">
+                <span class="current-value" id="curJamBukaPulang"></span>
+              </div>
+              <div class="setting-row">
+                <label>Batas Pulang Tepat</label>
+                <input type="time" id="setBatasPulangTepat">
+                <span class="current-value" id="curBatasPulangTepat"></span>
+              </div>
+              <div class="setting-row">
+                <label>Jam Tutup Pulang</label>
+                <input type="time" id="setJamTutupPulang">
+                <span class="current-value" id="curJamTutupPulang"></span>
+              </div>
+            </div>
+
+            <!-- GURU -->
+            <div class="settings-group">
+              <h4><i class="fas fa-chalkboard-teacher"></i> Batas Waktu Guru</h4>
+              <div class="setting-row">
+                <label>Jam Buka Masuk Guru</label>
+                <input type="time" id="setJamBukaMasukGuru">
+                <span class="current-value" id="curJamBukaMasukGuru"></span>
+              </div>
+              <div class="setting-row">
+                <label>Batas Tepat Waktu Guru</label>
+                <input type="time" id="setBatasTepatWaktuGuru">
+                <span class="current-value" id="curBatasTepatWaktuGuru"></span>
+              </div>
+              <div class="setting-row">
+                <label>Batas Scan Masuk Guru</label>
+                <input type="time" id="setBatasScanMasukGuru">
+                <span class="current-value" id="curBatasScanMasukGuru"></span>
+              </div>
+              <div class="setting-row">
+                <label>Jam Buka Pulang Guru</label>
+                <input type="time" id="setJamBukaPulangGuru">
+                <span class="current-value" id="curJamBukaPulangGuru"></span>
+              </div>
+              <div class="setting-row">
+                <label>Jam Tutup Pulang Guru</label>
+                <input type="time" id="setJamTutupPulangGuru">
+                <span class="current-value" id="curJamTutupPulangGuru"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PIN SETTINGS -->
+          <div class="settings-group" style="margin-top:16px;">
+            <h4><i class="fas fa-key"></i> PIN Akses</h4>
+            <div class="row">
+              <div>
+                <label>PIN Guru</label>
+                <input type="password" id="setPinGuru" placeholder="4 digit" maxlength="4" pattern="[0-9]{4}">
+                <span class="current-value" id="curPinGuru"></span>
+              </div>
+              <div>
+                <label>PIN Admin</label>
+                <input type="password" id="setPinAdmin" placeholder="4 digit" maxlength="4" pattern="[0-9]{4}">
+                <span class="current-value" id="curPinAdmin"></span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-success" onclick="saveSettings()"><i class="fas fa-save"></i> Simpan Semua Pengaturan</button>
+            <button class="btn-secondary" onclick="loadSettingsData()"><i class="fas fa-sync"></i> Muat Ulang</button>
+          </div>
+          <div id="settingsResult" style="margin-top:12px;"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <footer class="footer">
+    &copy; 2026 SMP Negeri 1 Sobang &mdash; Design by M TAUPIK
+  </footer>
+
+  <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxY86Gf5wzX5mywbG-3R6VIZurplfdBUlA8YGNFXbyR56XouY9WkkpzxtjIvpU3b7sWWA/exec";
-  
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKkBwy8A1JBHgnjPLzJhoRA3Cleh4UN_apS_m3cSb6vT-9Ep9c_EkBdE6DnRodqT9CxQ/exec";
+  let PIN_GURU = "1234";
+  let PIN_ADMIN = "9999";
+
   // ===== STATE =====
   let currentMode = 'dashboard';
   let rekapMode = 'harian';
@@ -684,11 +736,19 @@
   let isAdminLoggedIn = false;
   let html5QrCode = null, isScanning = false, isProcessing = false;
   let html5QrCodeAdmin = null, isScanningAdmin = false, isProcessingAdmin = false;
-  let currentSettings = {};
 
   const sidebar = document.getElementById('sidebar');
   const clockEl = document.getElementById('clockDisplay');
   const modeBadge = document.getElementById('modeBadge');
+
+  // ===== TOAST =====
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type;
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => toast.classList.remove('show'), 4000);
+  }
 
   // ===== CLOCK =====
   function updateClock() {
@@ -744,19 +804,8 @@
     }
   }
 
-  // ===== PROFILE IMAGE =====
-  function setProfileImage(adminName) {
-    const profileDiv = document.getElementById('profileImage');
-    if (adminName && adminName !== '') {
-      profileDiv.innerHTML = `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(adminName)}&background=1a237e&color=fff&size=45" alt="Admin">`;
-    } else {
-      profileDiv.innerHTML = `<i class="fas fa-user-graduate"></i>`;
-    }
-  }
-
   function toggleSidebar() { sidebar.classList.toggle('open'); }
 
-  // ===== UPDATE MENU STATE =====
   function updateMenuState() {
     const guruScan = document.querySelector('[data-mode="guruScan"]');
     const guruRekap = document.querySelector('[data-mode="guruRekap"]');
@@ -782,19 +831,20 @@
       adminRekap.classList.remove('disabled');
       adminStatus.classList.remove('disabled');
       adminSettings.classList.remove('disabled');
+      document.getElementById('adminPhoto').style.display = 'flex';
     } else {
       adminScan.classList.add('disabled');
       adminRekap.classList.add('disabled');
       adminStatus.classList.add('disabled');
       adminSettings.classList.add('disabled');
+      document.getElementById('adminPhoto').style.display = 'none';
     }
   }
 
-  // ===== NAVIGATE =====
   function navigateTo(mode) {
     const menuItem = document.querySelector(`.sidebar .menu-item[data-mode="${mode}"]`);
     if (menuItem && menuItem.classList.contains('disabled')) {
-      alert('🔒 Silakan login terlebih dahulu untuk mengakses menu ini!');
+      showToast('🔒 Silakan login terlebih dahulu!', 'warning');
       return;
     }
 
@@ -827,7 +877,7 @@
 
     if (mode === 'dashboard') refreshDashboard();
     if (mode === 'guruRekap') setRekapMode(rekapMode);
-    if (mode === 'adminSettings') loadSettings();
+    if (mode === 'adminSettings') loadSettingsData();
     currentMode = mode;
   }
 
@@ -898,17 +948,17 @@
   function loadRekap() {
     const kelas = document.getElementById('guruKelas').value.trim();
     const resDiv = document.getElementById('resultRekapKelas');
-    if (!kelas) { alert('Masukkan kelas!'); return; }
+    if (!kelas) { showToast('Masukkan kelas!', 'warning'); return; }
 
     let url = '';
     if (rekapMode === 'harian') {
       const tgl = document.getElementById('guruTanggal').value;
-      if (!tgl) { alert('Pilih tanggal!'); return; }
+      if (!tgl) { showToast('Pilih tanggal!', 'warning'); return; }
       url = `${SCRIPT_URL}?action=getRekapKelas&kelas=${encodeURIComponent(kelas)}&tanggal=${tgl}`;
     } else {
       const tglAwal = document.getElementById('guruTglAwalRange').value;
       const tglAkhir = document.getElementById('guruTglAkhirRange').value;
-      if (!tglAwal || !tglAkhir) { alert('Pilih rentang tanggal!'); return; }
+      if (!tglAwal || !tglAkhir) { showToast('Pilih rentang tanggal!', 'warning'); return; }
       url = `${SCRIPT_URL}?action=getRekapKelasRange&kelas=${encodeURIComponent(kelas)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`;
     }
 
@@ -954,7 +1004,7 @@
     const tglAwal = document.getElementById('ortuTglAwal').value;
     const tglAkhir = document.getElementById('ortuTglAkhir').value;
     const resDiv = document.getElementById('resultOrtu');
-    if (!nisn || !tglAwal || !tglAkhir) { alert('Isi semua field!'); return; }
+    if (!nisn || !tglAwal || !tglAkhir) { showToast('Isi semua field!', 'warning'); return; }
     resDiv.innerHTML = '⏳ Memuat...';
     fetch(`${SCRIPT_URL}?action=getRiwayatSiswa&nisn=${encodeURIComponent(nisn)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
       .then(r => r.json()).then(data => {
@@ -974,19 +1024,19 @@
   function verifyPin() {
     const pin = document.getElementById('guruPin').value;
     const msg = document.getElementById('guruAuthMsg');
-    // PIN diambil dari pengaturan
-    const guruPin = currentSettings.PIN_GURU || "1234";
-    if (pin === guruPin) {
+    if (pin === PIN_GURU) {
       isGuruLoggedIn = true;
       msg.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'guruScan\'); return false;">Klik untuk lanjut</a>';
       msg.style.color = '#2e7d32';
       updateMenuState();
       navigateTo('guruScan');
+      showToast('✅ Login Guru berhasil!', 'success');
     } else {
       msg.textContent = '❌ PIN salah!';
       msg.style.color = '#c62828';
       document.getElementById('guruPin').value = '';
       document.getElementById('guruPin').focus();
+      showToast('❌ PIN salah!', 'error');
     }
   }
 
@@ -994,24 +1044,23 @@
   function verifyAdminPin() {
     const pin = document.getElementById('adminPin').value;
     const msg = document.getElementById('adminAuthMsg');
-    const adminPin = currentSettings.PIN_ADMIN || "9999";
-    if (pin === adminPin) {
+    if (pin === PIN_ADMIN) {
       isAdminLoggedIn = true;
-      msg.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'adminScan\'); return false;">Klik untuk lanjut</a>';
+      msg.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'adminSettings\'); return false;">Klik untuk lanjut</a>';
       msg.style.color = '#2e7d32';
       updateMenuState();
-      // Set profile image
-      setProfileImage('Admin');
-      navigateTo('adminScan');
+      navigateTo('adminSettings');
+      showToast('✅ Login Admin berhasil!', 'success');
     } else {
       msg.textContent = '❌ PIN Admin salah!';
       msg.style.color = '#c62828';
       document.getElementById('adminPin').value = '';
       document.getElementById('adminPin').focus();
+      showToast('❌ PIN Admin salah!', 'error');
     }
   }
 
-  // ===== SCAN SISWA =====
+  // ===== CAMERA FUNCTIONS =====
   function startCamera() {
     if (isScanning) return;
     const reader = document.getElementById('reader');
@@ -1027,7 +1076,7 @@
       document.getElementById('btnStopCamera').disabled = false;
       document.getElementById('scanMsg').className = 'scan-result scan-info';
       document.getElementById('scanMsg').textContent = '📷 Kamera aktif, arahkan ke QR Code';
-    }).catch(e => alert('Gagal buka kamera: ' + e));
+    }).catch(e => showToast('Gagal buka kamera: ' + e, 'error'));
   }
 
   function stopCamera() {
@@ -1055,14 +1104,17 @@
         if (data.success) {
           msg.className = 'scan-result scan-success';
           msg.textContent = `✅ ${data.message}`;
+          showToast(`✅ ${data.message}`, 'success');
         } else {
           msg.className = 'scan-result scan-error';
           msg.textContent = `❌ ${data.message}`;
+          showToast(`❌ ${data.message}`, 'error');
         }
       })
       .catch(error => {
         msg.className = 'scan-result scan-error';
         msg.textContent = `❌ Error: ${error.message}`;
+        showToast(`❌ Error: ${error.message}`, 'error');
       })
       .finally(() => {
         setTimeout(() => {
@@ -1076,7 +1128,7 @@
 
   function onScanFailure(error) {}
 
-  // ===== SCAN GURU =====
+  // ===== ADMIN CAMERA =====
   function startCameraAdmin() {
     if (isScanningAdmin) return;
     const reader = document.getElementById('readerAdmin');
@@ -1092,7 +1144,7 @@
       document.getElementById('btnStopCameraAdmin').disabled = false;
       document.getElementById('scanMsgAdmin').className = 'scan-result scan-info';
       document.getElementById('scanMsgAdmin').textContent = '📷 Kamera aktif, arahkan ke QR Code Guru';
-    }).catch(e => alert('Gagal buka kamera: ' + e));
+    }).catch(e => showToast('Gagal buka kamera: ' + e, 'error'));
   }
 
   function stopCameraAdmin() {
@@ -1120,14 +1172,17 @@
         if (data.success) {
           msg.className = 'scan-result scan-success';
           msg.textContent = `✅ ${data.message}`;
+          showToast(`✅ ${data.message}`, 'success');
         } else {
           msg.className = 'scan-result scan-error';
           msg.textContent = `❌ ${data.message}`;
+          showToast(`❌ ${data.message}`, 'error');
         }
       })
       .catch(error => {
         msg.className = 'scan-result scan-error';
         msg.textContent = `❌ Error: ${error.message}`;
+        showToast(`❌ Error: ${error.message}`, 'error');
       })
       .finally(() => {
         setTimeout(() => {
@@ -1148,12 +1203,12 @@
     const status = document.getElementById('statusPilih').value;
     const keterangan = document.getElementById('statusKeterangan').value.trim();
     const res = document.getElementById('statusResult');
-    if (!nisn || !tanggal) { res.innerHTML = '<p style="color:red;">❌ Isi NISN dan tanggal!</p>'; return; }
+    if (!nisn || !tanggal) { showToast('Isi NISN dan tanggal!', 'warning'); return; }
     res.innerHTML = '⏳ Menyimpan...';
     fetch(`${SCRIPT_URL}?action=setStatus&nisn=${encodeURIComponent(nisn)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&guru=Guru`)
       .then(r => r.json()).then(data => {
-        if (data.success) { res.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`; }
-        else { res.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`; }
+        if (data.success) { res.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`; showToast(`✅ ${data.message}`, 'success'); }
+        else { res.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`; showToast(`❌ ${data.message}`, 'error'); }
       }).catch(e => res.innerHTML = `<p style="color:red;">❌ Error: ${e.message}</p>`);
   }
 
@@ -1164,12 +1219,12 @@
     const status = document.getElementById('statusPilihGuru').value;
     const keterangan = document.getElementById('statusKeteranganGuru').value.trim();
     const res = document.getElementById('statusResultGuru');
-    if (!nip || !tanggal) { res.innerHTML = '<p style="color:red;">❌ Isi NIP dan tanggal!</p>'; return; }
+    if (!nip || !tanggal) { showToast('Isi NIP dan tanggal!', 'warning'); return; }
     res.innerHTML = '⏳ Menyimpan...';
     fetch(`${SCRIPT_URL}?action=setStatusGuru&nip=${encodeURIComponent(nip)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&admin=Admin`)
       .then(r => r.json()).then(data => {
-        if (data.success) { res.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`; }
-        else { res.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`; }
+        if (data.success) { res.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`; showToast(`✅ ${data.message}`, 'success'); }
+        else { res.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`; showToast(`❌ ${data.message}`, 'error'); }
       }).catch(e => res.innerHTML = `<p style="color:red;">❌ Error: ${e.message}</p>`);
   }
 
@@ -1190,7 +1245,7 @@
     const tglAwal = document.getElementById('adminTglAwal').value;
     const tglAkhir = document.getElementById('adminTglAkhir').value;
     const resDiv = document.getElementById('resultRekapGuru');
-    if (!tglAwal || !tglAkhir) { alert('Pilih rentang tanggal!'); return; }
+    if (!tglAwal || !tglAkhir) { showToast('Pilih rentang tanggal!', 'warning'); return; }
     resDiv.innerHTML = '⏳ Memuat...';
     fetch(`${SCRIPT_URL}?action=getRekapGuru&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
       .then(r => r.json()).then(data => {
@@ -1217,129 +1272,168 @@
       }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
   }
 
-  // ===== SETTINGS FUNCTIONS =====
-  function loadSettings() {
-    const msg = document.getElementById('settingsMessage');
-    msg.style.display = 'block';
-    msg.className = 'scan-result scan-info';
-    msg.textContent = '⏳ Memuat pengaturan...';
+  // ===== SETTINGS =====
+  function loadSettingsData() {
+    const loading = document.getElementById('settingsLoading');
+    const content = document.getElementById('settingsContent');
+    const result = document.getElementById('settingsResult');
     
-    fetch(`${SCRIPT_URL}?action=getSettingsForAdmin`)
+    loading.classList.remove('hidden');
+    content.classList.add('hidden');
+    result.innerHTML = '';
+
+    fetch(`${SCRIPT_URL}?action=getSettings`)
       .then(r => r.json())
       .then(data => {
-        if (data.success) {
-          currentSettings = data.data;
-          
-          // Isi form waktu siswa
-          document.getElementById('sJamBukaMasuk').value = data.data.JamBukaMasuk || '06:00';
-          document.getElementById('sBatasTepatWaktu').value = data.data.BatasTepatWaktu || '07:30';
-          document.getElementById('sBatasScanMasuk').value = data.data.BatasScanMasuk || '08:30';
-          document.getElementById('sJamBukaSesi2').value = data.data.JamBukaSesi2 || '12:00';
-          document.getElementById('sBatasTepatWaktuSesi2').value = data.data.BatasTepatWaktuSesi2 || '12:30';
-          document.getElementById('sBatasScanSesi2').value = data.data.BatasScanSesi2 || '12:40';
-          document.getElementById('sJamBukaPulang').value = data.data.JamBukaPulang || '14:00';
-          document.getElementById('sBatasPulangTepat').value = data.data.BatasPulangTepat || '14:30';
-          document.getElementById('sJamTutupPulang').value = data.data.JamTutupPulang || '17:00';
-          
-          // Isi form waktu guru
-          document.getElementById('sJamBukaMasukGuru').value = data.data.JamBukaMasukGuru || '06:30';
-          document.getElementById('sBatasTepatWaktuGuru').value = data.data.BatasTepatWaktuGuru || '07:00';
-          document.getElementById('sBatasScanMasukGuru').value = data.data.BatasScanMasukGuru || '07:30';
-          document.getElementById('sJamBukaPulangGuru').value = data.data.JamBukaPulangGuru || '14:00';
-          document.getElementById('sJamTutupPulangGuru').value = data.data.JamTutupPulangGuru || '17:00';
-          
-          // Isi form PIN
-          document.getElementById('sPinGuru').value = data.data.PIN_GURU || '1234';
-          document.getElementById('sPinAdmin').value = data.data.PIN_ADMIN || '9999';
-          
-          msg.className = 'scan-result scan-success';
-          msg.textContent = '✅ Pengaturan berhasil dimuat!';
-          setTimeout(() => { msg.style.display = 'none'; }, 3000);
-        } else {
-          msg.className = 'scan-result scan-error';
-          msg.textContent = '❌ Gagal memuat pengaturan: ' + data.message;
+        loading.classList.add('hidden');
+        content.classList.remove('hidden');
+        
+        if (!data.success) {
+          result.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
+          return;
         }
+
+        const s = data.data;
+        
+        // Update PIN global
+        PIN_GURU = s.PIN_GURU || '1234';
+        PIN_ADMIN = s.PIN_ADMIN || '9999';
+
+        // Set nilai input dan current value
+        const fields = [
+          'JamBukaMasuk', 'BatasTepatWaktu', 'BatasScanMasuk',
+          'JamBukaSesi2', 'BatasTepatWaktuSesi2', 'BatasScanSesi2',
+          'JamBukaPulang', 'BatasPulangTepat', 'JamTutupPulang',
+          'JamBukaMasukGuru', 'BatasTepatWaktuGuru', 'BatasScanMasukGuru',
+          'JamBukaPulangGuru', 'JamTutupPulangGuru'
+        ];
+
+        fields.forEach(f => {
+          const input = document.getElementById('set' + f);
+          const cur = document.getElementById('cur' + f);
+          if (input && s[f]) {
+            input.value = s[f];
+          }
+          if (cur && s[f]) {
+            cur.textContent = s[f];
+          }
+        });
+
+        // PIN
+        if (document.getElementById('setPinGuru')) {
+          document.getElementById('setPinGuru').value = s.PIN_GURU || '';
+          document.getElementById('curPinGuru').textContent = s.PIN_GURU || '****';
+        }
+        if (document.getElementById('setPinAdmin')) {
+          document.getElementById('setPinAdmin').value = s.PIN_ADMIN || '';
+          document.getElementById('curPinAdmin').textContent = s.PIN_ADMIN || '****';
+        }
+
+        // Update info operasional di dashboard
+        updateOperationalInfoBatas(s);
+
+        result.innerHTML = `<p style="color:green;">✅ Pengaturan berhasil dimuat dari Google Sheet</p>`;
+        showToast('✅ Pengaturan berhasil dimuat!', 'success');
       })
       .catch(e => {
-        msg.className = 'scan-result scan-error';
-        msg.textContent = '❌ Error: ' + e.message;
+        loading.classList.add('hidden');
+        content.classList.remove('hidden');
+        result.innerHTML = `<p style="color:red;">❌ Error: ${e.message}</p>`;
+        showToast('❌ Gagal memuat pengaturan!', 'error');
       });
   }
 
-  function saveAllSettings() {
-    const msg = document.getElementById('settingsMessage');
-    msg.style.display = 'block';
-    msg.className = 'scan-result scan-info';
-    msg.textContent = '⏳ Menyimpan pengaturan...';
-    
-    // Kumpulkan data waktu siswa
-    const settingsData = {
-      JamBukaMasuk: document.getElementById('sJamBukaMasuk').value,
-      BatasTepatWaktu: document.getElementById('sBatasTepatWaktu').value,
-      BatasScanMasuk: document.getElementById('sBatasScanMasuk').value,
-      JamBukaSesi2: document.getElementById('sJamBukaSesi2').value,
-      BatasTepatWaktuSesi2: document.getElementById('sBatasTepatWaktuSesi2').value,
-      BatasScanSesi2: document.getElementById('sBatasScanSesi2').value,
-      JamBukaPulang: document.getElementById('sJamBukaPulang').value,
-      BatasPulangTepat: document.getElementById('sBatasPulangTepat').value,
-      JamTutupPulang: document.getElementById('sJamTutupPulang').value,
-      JamBukaMasukGuru: document.getElementById('sJamBukaMasukGuru').value,
-      BatasTepatWaktuGuru: document.getElementById('sBatasTepatWaktuGuru').value,
-      BatasScanMasukGuru: document.getElementById('sBatasScanMasukGuru').value,
-      JamBukaPulangGuru: document.getElementById('sJamBukaPulangGuru').value,
-      JamTutupPulangGuru: document.getElementById('sJamTutupPulangGuru').value
+  function updateOperationalInfoBatas(s) {
+    const map = {
+      'batasMasukTepat': { start: 'JamBukaMasuk', end: 'BatasTepatWaktu' },
+      'batasMasukTerlambat': { start: 'BatasTepatWaktu', end: 'BatasScanMasuk' },
+      'batasScanDitolak': { start: 'BatasScanMasuk', end: 'JamBukaSesi2' },
+      'batasPulangTepat': { start: 'JamBukaPulang', end: 'BatasPulangTepat' },
+      'batasPulangTerlambat': { start: 'BatasPulangTepat', end: 'JamTutupPulang' },
+      'scanSesi2': { start: 'JamBukaSesi2', end: 'BatasTepatWaktuSesi2' },
+      'scanSesi2Terlambat': { start: 'BatasTepatWaktuSesi2', end: 'BatasScanSesi2' },
+      'scanSesi2Ditolak': { start: 'BatasScanSesi2', end: 'JamBukaPulang' }
     };
-    
-    // Validasi
-    let isValid = true;
-    for (let key in settingsData) {
-      if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(settingsData[key])) {
-        isValid = false;
-        msg.className = 'scan-result scan-error';
-        msg.textContent = '❌ Format waktu tidak valid: ' + key + ' = ' + settingsData[key];
+
+    Object.keys(map).forEach(id => {
+      const el = document.getElementById(id);
+      if (el && s[map[id].start] && s[map[id].end]) {
+        el.textContent = `${s[map[id].start]} – ${s[map[id].end]}`;
+      }
+    });
+  }
+
+  function saveSettings() {
+    const result = document.getElementById('settingsResult');
+    result.innerHTML = '⏳ Menyimpan...';
+
+    const params = new URLSearchParams();
+    params.append('action', 'updateSettings');
+
+    const fields = [
+      'JamBukaMasuk', 'BatasTepatWaktu', 'BatasScanMasuk',
+      'JamBukaSesi2', 'BatasTepatWaktuSesi2', 'BatasScanSesi2',
+      'JamBukaPulang', 'BatasPulangTepat', 'JamTutupPulang',
+      'JamBukaMasukGuru', 'BatasTepatWaktuGuru', 'BatasScanMasukGuru',
+      'JamBukaPulangGuru', 'JamTutupPulangGuru'
+    ];
+
+    let hasChanges = false;
+    fields.forEach(f => {
+      const input = document.getElementById('set' + f);
+      if (input && input.value) {
+        params.append(f, input.value);
+        hasChanges = true;
+      }
+    });
+
+    const pinGuru = document.getElementById('setPinGuru');
+    const pinAdmin = document.getElementById('setPinAdmin');
+    if (pinGuru && pinGuru.value) {
+      if (/^\d{4}$/.test(pinGuru.value)) {
+        params.append('pinGuru', pinGuru.value);
+        hasChanges = true;
+      } else {
+        result.innerHTML = `<p style="color:red;">❌ PIN Guru harus 4 digit angka!</p>`;
         return;
       }
     }
-    
-    // Kirim data waktu
-    let url = `${SCRIPT_URL}?action=adminUpdateSettings`;
-    for (let key in settingsData) {
-      url += `&${key}=${encodeURIComponent(settingsData[key])}`;
+    if (pinAdmin && pinAdmin.value) {
+      if (/^\d{4}$/.test(pinAdmin.value)) {
+        params.append('pinAdmin', pinAdmin.value);
+        hasChanges = true;
+      } else {
+        result.innerHTML = `<p style="color:red;">❌ PIN Admin harus 4 digit angka!</p>`;
+        return;
+      }
     }
-    
-    fetch(url)
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          // Simpan PIN
-          const pinGuru = document.getElementById('sPinGuru').value;
-          const pinAdmin = document.getElementById('sPinAdmin').value;
-          
-          if (pinGuru && pinAdmin) {
-            return fetch(`${SCRIPT_URL}?action=adminUpdatePin&pinGuru=${encodeURIComponent(pinGuru)}&pinAdmin=${encodeURIComponent(pinAdmin)}`)
-              .then(r => r.json());
-          }
-          return { success: true, message: 'Pengaturan waktu berhasil diperbarui' };
-        }
-        throw new Error(data.message);
-      })
-      .then(data => {
-        if (data.success) {
-          msg.className = 'scan-result scan-success';
-          msg.textContent = '✅ ' + data.message;
-          // Update currentSettings
-          currentSettings.PIN_GURU = document.getElementById('sPinGuru').value;
-          currentSettings.PIN_ADMIN = document.getElementById('sPinAdmin').value;
-          setTimeout(() => { msg.style.display = 'none'; }, 3000);
-        } else {
-          msg.className = 'scan-result scan-error';
-          msg.textContent = '❌ ' + data.message;
-        }
-      })
-      .catch(e => {
-        msg.className = 'scan-result scan-error';
-        msg.textContent = '❌ Error: ' + e.message;
-      });
+
+    if (!hasChanges) {
+      result.innerHTML = `<p style="color:orange;">⚠️ Tidak ada perubahan yang disimpan.</p>`;
+      return;
+    }
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        result.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
+        showToast(`✅ ${data.message}`, 'success');
+        // Reload data setelah save
+        setTimeout(loadSettingsData, 1000);
+      } else {
+        result.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
+        showToast(`❌ ${data.message}`, 'error');
+      }
+    })
+    .catch(e => {
+      result.innerHTML = `<p style="color:red;">❌ Error: ${e.message}</p>`;
+      showToast(`❌ Error: ${e.message}`, 'error');
+    });
   }
 
   // ===== INIT =====
@@ -1355,9 +1449,6 @@
   const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
   document.getElementById('guruTglAkhirRange').value = todayStr;
-
-  // Load default settings
-  loadSettings();
 
   updateMenuState();
   navigateTo('dashboard');
