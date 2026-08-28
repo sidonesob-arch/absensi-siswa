@@ -1,509 +1,947 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Absensi SMP Negeri 1 Sobang</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            padding-bottom: 70px; /* Kompensasi agar konten tidak tertutup fixed footer */
-        }
-        .fixed-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Absensi Sekolah</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #f0f2f5; display: flex; flex-direction: column; min-height: 100vh; }
+
+    .topbar {
+      background: linear-gradient(135deg, #1a237e, #0d47a1);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .topbar .left { display: flex; align-items: center; gap: 12px; }
+    .topbar .left img { height: 45px; width: 45px; object-fit: contain; border-radius: 50%; background: white; padding: 3px; }
+    .topbar .left h2 { font-size: 18px; margin: 0; letter-spacing: 0.5px; }
+    .topbar .left span { font-size: 12px; opacity: 0.8; display: block; }
+    .topbar .right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .topbar .right .clock { background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+    .topbar .right .mode-badge { background: #ff6f00; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .sidebar-toggle { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 8px 12px; }
+
+    .app-layout { display: flex; flex: 1; min-height: 0; }
+    .sidebar {
+      width: 250px;
+      background: #1e2a4a;
+      color: #e0e0e0;
+      padding: 20px 0;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      position: sticky;
+      top: 70px;
+      height: calc(100vh - 70px);
+      box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    }
+    .sidebar .menu-label { padding: 10px 20px; font-size: 11px; text-transform: uppercase; color: #8899bb; letter-spacing: 1px; margin-top: 8px; }
+    .sidebar .menu-item {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+      border-left: 3px solid transparent;
+      font-size: 14px;
+      color: #c8d0e0;
+    }
+    .sidebar .menu-item:hover { background: #2a3a5a; color: white; border-left-color: #42a5f5; }
+    .sidebar .menu-item.active { background: #2a3a5a; color: white; border-left-color: #ffca28; font-weight: 600; }
+    .sidebar .menu-item i { width: 22px; text-align: center; font-size: 16px; }
+    .sidebar .menu-item.disabled { opacity: 0.4; cursor: not-allowed; }
+    .sidebar .menu-item.disabled:hover { background: transparent; border-left-color: transparent; }
+
+    .main-content { flex: 1; padding: 24px; overflow-y: auto; background: #f0f2f5; min-height: calc(100vh - 70px); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-left: 5px solid #1a73e8;
+      transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card .icon { font-size: 28px; color: #1a73e8; width: 44px; text-align: center; }
+    .stat-card .info h3 { font-size: 20px; margin: 0; }
+    .stat-card .info p { margin: 0; color: #666; font-size: 12px; }
+    .stat-card.orange { border-left-color: #ff6f00; }
+    .stat-card.orange .icon { color: #ff6f00; }
+    .stat-card.green { border-left-color: #2e7d32; }
+    .stat-card.green .icon { color: #2e7d32; }
+    .stat-card.red { border-left-color: #c62828; }
+    .stat-card.red .icon { color: #c62828; }
+    .stat-card.purple { border-left-color: #6a1b9a; }
+    .stat-card.purple .icon { color: #6a1b9a; }
+    .stat-card.teal { border-left-color: #00695c; }
+    .stat-card.teal .icon { color: #00695c; }
+    .stat-card.amber { border-left-color: #f57f17; }
+    .stat-card.amber .icon { color: #f57f17; }
+
+    .panel { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .panel h3 { margin-bottom: 16px; color: #1a237e; display: flex; align-items: center; gap: 10px; }
+    .hidden { display: none !important; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e8e8e8; }
+    th { background: #f5f7fb; color: #1a237e; font-weight: 600; }
+    .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+    .badge-success { background: #e8f5e9; color: #1b5e20; }
+    .badge-warning { background: #fff8e1; color: #e65100; }
+    .badge-danger { background: #fce4ec; color: #c62828; }
+    .badge-purple { background: #f3e5f5; color: #4a148c; }
+    .badge-izin { background: #fff3e0; color: #bf360c; }
+    .badge-sakit { background: #fce4ec; color: #b71c1c; }
+    .badge-info { background: #e3f2fd; color: #0d47a1; }
+    .badge-secondary { background: #f5f5f5; color: #424242; }
+    .badge-bolos { background: #f3e5f5; color: #4a148c; }
+
+    #reader, #readerAdmin {
+      width: 100%;
+      min-height: 220px;
+      background: #1a1a2e;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ccc;
+      position: relative;
+    }
+    #reader video, #readerAdmin video { width: 100% !important; height: auto !important; }
+    .camera-controls { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .camera-controls button { flex: 1; min-width: 100px; }
+    .scan-result { padding: 10px; border-radius: 8px; margin-top: 10px; font-weight: 600; text-align: center; }
+    .scan-success { background: #e8f5e9; color: #1b5e20; }
+    .scan-error { background: #fce4ec; color: #c62828; }
+    .scan-info { background: #e3f2fd; color: #0d47a1; }
+
+    button { padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    button:hover { opacity: 0.9; transform: scale(1.02); }
+    .btn-primary { background: #1a73e8; color: white; }
+    .btn-secondary { background: #5f6368; color: white; }
+    .btn-success { background: #2e7d32; color: white; }
+    .btn-danger { background: #c62828; color: white; }
+    .btn-warning { background: #f57f17; color: white; }
+    .btn-purple { background: #6a1b9a; color: white; }
+    .btn-orange { background: #e65100; color: white; }
+    .btn-teal { background: #00695c; color: white; }
+
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; margin: 6px 0 12px 0; font-size: 14px; }
+    input:focus, select:focus, textarea:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 6px rgba(26,115,232,0.25); }
+    .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+    .row > * { flex: 1; min-width: 140px; }
+
+    @media (max-width: 820px) {
+      .sidebar-toggle { display: block; }
+      .sidebar {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        height: calc(100vh - 70px);
+        transform: translateX(-100%);
+        width: 260px;
+        z-index: 1000;
+        box-shadow: 2px 0 20px rgba(0,0,0,0.3);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .topbar .left h2 { font-size: 15px; }
+      .topbar .right .clock { font-size: 12px; padding: 4px 12px; }
+      .main-content { padding: 14px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .topbar .left h2 { font-size: 13px; }
+    }
+
+    .footer {
+      background: #1a237e;
+      color: #aaa;
+      text-align: center;
+      padding: 14px 20px;
+      font-size: 13px;
+      border-top: 1px solid #2a3a6a;
+      flex-shrink: 0;
+    }
+    .main-content::-webkit-scrollbar { width: 6px; }
+    .main-content::-webkit-scrollbar-thumb { background: #b0b8c8; border-radius: 10px; }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #4a5a7a; border-radius: 10px; }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
+  
+<body>
 
-    <!-- HEADER / NAVIGATION -->
-    <header class="bg-blue-700 text-white shadow-md sticky top-0 z-40">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-white p-2 rounded-full w-10 h-10 flex items-center justify-center shadow-inner">
-                    <i class="fa-solid class font-bold text-blue-700 fa-school"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-wide">SMP NEGERI 1 SOBANG</h1>
-                    <p class="text-xs text-blue-200">Sistem Absensi Digital & Portal Manajemen</p>
-                </div>
-            </div>
-            <div id="clock" class="text-sm font-semibold bg-blue-800 px-3 py-1.5 rounded-lg shadow-sm">
-                Memuat Waktu...
-            </div>
+  <header class="topbar">
+  <div class="left">
+    <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <img src="https://lh3.googleusercontent.com/d/11YsPOKyrRxyFEseGmrMQoe8Iem44OiUH" alt="Logo">
+    <div>
+      <h2>SMP NEGERI 1 SOBANG</h2>
+      <span>Sistem Absensi Digital</span>
+    </div>
+  </div>
+  <div class="right">
+    <span class="clock" id="clockDisplay"><i class="far fa-clock"></i> Loading...</span>
+    <span class="mode-badge" id="modeBadge">📊 Dashboard</span>
+  </div>
+</header>
+
+<div class="app-layout">
+
+  <nav class="sidebar" id="sidebar">
+    <div class="menu-label">📋 Dashboard</div>
+    <div class="menu-item active" data-mode="dashboard" onclick="navigateTo('dashboard')">
+      <i class="fas fa-chart-pie"></i> Dashboard
+    </div>
+
+    <div class="menu-label">👨‍👩‍👧 Orang Tua</div>
+    <div class="menu-item" data-mode="ortu" onclick="navigateTo('ortu')">
+      <i class="fas fa-user-graduate"></i> Cek Absensi Siswa
+    </div>
+
+    <div class="menu-label">👨‍🏫 Guru</div>
+    <div class="menu-item" data-mode="guru" onclick="navigateTo('guru')">
+      <i class="fas fa-chalkboard-teacher"></i> Login Guru
+    </div>
+    <div class="menu-item disabled" data-mode="guruScan" onclick="navigateTo('guruScan')">
+      <i class="fas fa-qrcode"></i> Scan QR Siswa
+    </div>
+    <div class="menu-item disabled" data-mode="guruRekap" onclick="navigateTo('guruRekap')">
+      <i class="fas fa-table"></i> Rekap Siswa
+    </div>
+    <div class="menu-item disabled" data-mode="guruStatus" onclick="navigateTo('guruStatus')">
+      <i class="fas fa-pen"></i> Izin/Sakit Siswa
+    </div>
+
+    <div class="menu-label">👔 Admin Guru</div>
+    <div class="menu-item" data-mode="admin" onclick="navigateTo('admin')">
+      <i class="fas fa-user-shield"></i> Login Admin
+    </div>
+    <div class="menu-item disabled" data-mode="adminScan" onclick="navigateTo('adminScan')">
+      <i class="fas fa-qrcode"></i> Scan QR Guru
+    </div>
+    <div class="menu-item disabled" data-mode="adminRekap" onclick="navigateTo('adminRekap')">
+      <i class="fas fa-users"></i> Rekap Guru
+    </div>
+    <div class="menu-item disabled" data-mode="adminStatus" onclick="navigateTo('adminStatus')">
+      <i class="fas fa-pen"></i> Izin/Sakit Guru
+    </div>
+  </nav>
+
+  <main class="main-content" id="mainContent">
+
+        <div id="panelDashboard">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="icon"><i class="fas fa-user-graduate"></i></div>
+          <div class="info"><h3 id="statSiswa">0</h3><p>Total Siswa</p></div>
         </div>
-    </header>
-
-    <!-- MAIN CONTENT CONTAINER -->
-    <main class="container mx-auto px-4 py-6 max-w-6xl">
-        
-        <!-- DASHBOARD STATISTIK -->
-        <section class="mb-8">
-            <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
-                <i class="fa-solid fa-chart-pie mr-2 text-blue-600"></i> Ringkasan Absensi Hari Ini
-            </h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
-                    <p class="text-xs text-gray-500 font-medium font-semibold uppercase">Total Siswa</p>
-                    <p id="stat-total-siswa" class="text-2xl font-bold text-gray-800 mt-1">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
-                    <p class="text-xs text-gray-500 font-medium font-semibold uppercase">Hadir Tepat Waktu</p>
-                    <p id="stat-hadir" class="text-2xl font-bold text-green-600 mt-1">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500">
-                    <p class="text-xs text-gray-500 font-medium font-semibold uppercase">Terlambat</p>
-                    <p id="stat-terlambat" class="text-2xl font-bold text-amber-500 mt-1">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
-                    <p class="text-xs text-gray-500 font-medium font-semibold uppercase">Alpa</p>
-                    <p id="stat-alpa" class="text-2xl font-bold text-red-600 mt-1">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
-                    <p class="text-xs text-gray-500 font-medium font-semibold uppercase">Bolos (Sesi 2)</p>
-                    <p id="stat-bolos" class="text-2xl font-bold text-purple-600 mt-1">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-500">
-                    <p class="text-xs text-gray-500 font-medium font-semibold uppercase">Izin</p>
-                    <p id="stat-izin" class="text-2xl font-bold text-indigo-600 mt-1">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-pink-500">
-                    <p class="text-xs text-gray-500 font-medium font-semibold uppercase">Sakit</p>
-                    <p id="stat-sakit" class="text-2xl font-bold text-pink-600 mt-1">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-gray-500">
-                    <p class="text-xs text-gray-500 font-medium font-semibold uppercase">Total Guru</p>
-                    <p id="stat-total-guru" class="text-2xl font-bold text-gray-700 mt-1">0</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- OPERASIONAL & LAYOUT UTAMA -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- LEFT PANEL: INFORMASI OPERASIONAL -->
-            <div class="space-y-6">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-                    <h3 class="text-md font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100 flex items-center">
-                        <i class="fa-solid fa-clock-history mr-2 text-blue-600"></i> Jadwal Operasional Aktif
-                    </h3>
-                    <ul class="space-y-3 text-sm">
-                        <li class="flex justify-between items-center bg-gray-50 p-2 rounded">
-                            <span class="font-medium text-gray-600">📥 Masuk Tepat:</span>
-                            <span id="view-jam-masuk" class="font-bold text-green-600">06:00 – 07:30</span>
-                        </li>
-                        <li class="flex justify-between items-center bg-gray-50 p-2 rounded">
-                            <span class="font-medium text-gray-600">⚠ Masuk Terlambat:</span>
-                            <span id="view-jam-terlambat" class="font-bold text-amber-500">07:30 – 08:30</span>
-                        </li>
-                        <li class="flex justify-between items-center bg-gray-50 p-2 rounded border-l-2 border-red-400">
-                            <span class="font-medium text-gray-600">🚫 Batas Scan Pagi:</span>
-                            <span id="view-jam-batas-masuk" class="font-bold text-red-600">Setelah 08:30 (Alpa)</span>
-                        </li>
-                        <li class="flex justify-between items-center bg-gray-50 p-2 rounded">
-                            <span class="font-medium text-gray-600">📥 Sesi 2 Masuk:</span>
-                            <span id="view-jam-sesi2" class="font-bold text-blue-600">12:00 – 12:30</span>
-                        </li>
-                        <li class="flex justify-between items-center bg-gray-50 p-2 rounded">
-                            <span class="font-medium text-gray-600">⚠ Terlambat Sesi 2:</span>
-                            <span id="view-jam-terlambat-sesi2" class="font-bold text-purple-500">12:30 – 12:40</span>
-                        </li>
-                        <li class="flex justify-between items-center bg-gray-50 p-2 rounded">
-                            <span class="font-medium text-gray-600">📤 Pulang Tepat:</span>
-                            <span id="view-jam-pulang" class="font-bold text-green-700">14:00 – 14:30</span>
-                        </li>
-                        <li class="flex justify-between items-center bg-gray-50 p-2 rounded">
-                            <span class="font-medium text-gray-600">📤 Pulang Terlambat:</span>
-                            <span id="view-jam-pulang-lambat" class="font-bold text-gray-600">14:30 – 17:00</span>
-                        </li>
-                    </ul>
-                    <div class="mt-4 p-2.5 bg-yellow-50 rounded-lg border border-yellow-200 text-xs text-yellow-800 leading-relaxed">
-                        <i class="fa-solid fa-triangle-exclamation mr-1"></i> <strong>Sistem Otomatis:</strong> Tidak melakukan presensi pagi akan langsung dianggap <strong>Alpa</strong>, dan mengabaikan Sesi 2 dianggap <strong>Bolos</strong>.
-                    </div>
-                </div>
-            </div>
-
-            <!-- RIGHT PANEL: INTERFACES & FORMS (TABBED OR COMPACT VIEW) -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- MENU AKSES ROLE -->
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-2">
-                    <button onclick="switchTab('parent')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center transition">
-                        <i class="fa-solid fa-user-shield mr-2"></i> Orang Tua
-                    </button>
-                    <button onclick="switchTab('teacher')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100 flex items-center transition">
-                        <i class="fa-solid fa-chalkboard-teacher mr-2"></i> Panel Guru
-                    </button>
-                    <button onclick="switchTab('admin')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100 flex items-center transition">
-                        <i class="fa-solid fa-user-gear mr-2"></i> Administrator
-                    </button>
-                </div>
-
-                <!-- TABS CONTAINER -->
-                <div id="tab-content-area">
-                    
-                    <!-- 1. INTERFACE ORANG TUA -->
-                    <div id="tab-parent" class="tab-panel bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
-                        <div>
-                            <h3 class="text-md font-bold text-gray-800 flex items-center"><i class="fa-solid fa-magnifying-glass mr-2 text-blue-600"></i> Cek Histori Absensi Siswa</h3>
-                            <p class="text-xs text-gray-400 mt-0.5">Masukkan NISN anak untuk meninjau riwayat harian secara detail</p>
-                        </div>
-                        <form id="form-cek-siswa" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Nomor NISN Siswa</label>
-                                <input type="text" id="parent-nisn" placeholder="Contoh: 00984712" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Dari Tanggal</label>
-                                <input type="date" id="parent-tgl-awal" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Sampai Tanggal</label>
-                                <input type="date" id="parent-tgl-akhir" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg text-sm hover:bg-blue-700 transition flex items-center justify-center shadow-sm">
-                                <i class="fa-solid fa-search mr-1.5"></i> Cari Data
-                            </button>
-                        </form>
-                        <div id="result-parent-area" class="hidden border border-gray-100 rounded-lg p-3 bg-gray-50 text-sm">
-                            <!-- Hasil Render Dinamis Riwayat -->
-                        </div>
-                    </div>
-
-                    <!-- 2. INTERFACE GURU -->
-                    <div id="tab-teacher" class="tab-panel hidden bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
-                        <div id="teacher-auth" class="space-y-4">
-                            <div>
-                                <h3 class="text-md font-bold text-gray-800 flex items-center"><i class="fa-solid fa-lock mr-2 text-blue-600"></i> Otentikasi Akses Guru</h3>
-                                <p class="text-xs text-gray-400 mt-0.5">Gunakan PIN Guru untuk mengaktifkan pemindai & input data siswa</p>
-                            </div>
-                            <div class="flex gap-2 max-w-sm">
-                                <input type="password" id="pin-guru-input" placeholder="Masukkan PIN Guru" class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 tracking-widest">
-                                <button onclick="verifyGuruPIN()" class="bg-blue-600 text-white px-4 py-2 text-sm font-semibold rounded-lg hover:bg-blue-700 transition">Verifikasi</button>
-                            </div>
-                        </div>
-
-                        <div id="teacher-features" class="hidden space-y-6">
-                            <div class="p-3 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center text-sm text-green-800">
-                                <span><i class="fa-solid fa-circle-check mr-1.5"></i> Akses Mode Guru Aktif</span>
-                                <button onclick="lockTeacherMode()" class="text-xs underline text-red-600 font-semibold hover:text-red-700">Kunci Kembali</button>
-                            </div>
-                            
-                            <!-- SUB-SEKSI SCAN QR SISWA -->
-                            <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 space-y-3">
-                                <h4 class="text-sm font-bold text-gray-700 flex items-center"><i class="fa-solid fa-qrcode mr-2 text-blue-600"></i> Pemindaian Kartu QR QRIS Siswa</h4>
-                                <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl bg-white min-h-[180px]">
-                                    <div class="text-center space-y-2">
-                                        <i class="fa-solid fa-camera text-3xl text-gray-400"></i>
-                                        <p class="text-xs text-gray-500 font-medium">Kamera Presensi Terkunci / Non-aktif</p>
-                                        <button class="mt-2 text-xs bg-blue-600 text-white font-semibold py-1.5 px-3 rounded-lg hover:bg-blue-700 transition">Buka Kamera Pemindai</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- SUB-SEKSI INPUT FORM STATUS KHUSUS -->
-                            <div class="border border-gray-200 rounded-xl p-4 space-y-4">
-                                <h4 class="text-sm font-bold text-gray-700 flex items-center"><i class="fa-solid fa-pen-to-square mr-2 text-blue-600"></i> Input Absensi Manual / Status Khusus</h4>
-                                <form id="form-status-siswa" class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div class="md:col-span-1">
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">NISN Siswa</label>
-                                        <input type="text" placeholder="Masukkan NISN" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Tanggal</label>
-                                        <input type="date" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Status</label>
-                                        <select required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                                            <option value="Izin">📝 Izin Resmi</option>
-                                            <option value="Sakit">🤒 Sakit (Surat)</option>
-                                            <option value="Alpa">❌ Alpa Tanpa Keterangan</option>
-                                        </select>
-                                    </div>
-                                    <div class="md:col-span-3">
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Keterangan Alasan</label>
-                                        <input type="text" placeholder="Contoh: Sakit demam berdarah / Acara Keluarga" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                                    </div>
-                                    <div class="md:col-span-3 text-right">
-                                        <button type="submit" class="bg-blue-600 text-white font-semibold text-xs py-2 px-4 rounded-lg hover:bg-blue-700 shadow-sm transition">Simpan Absensi</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3. INTERFACE ADMIN -->
-                    <div id="tab-admin" class="tab-panel hidden bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
-                        <div id="admin-auth" class="space-y-4">
-                            <div>
-                                <h3 class="text-md font-bold text-gray-800 flex items-center"><i class="fa-solid fa-shield-halved mr-2 text-red-600"></i> Keamanan Administrator</h3>
-                                <p class="text-xs text-gray-400 mt-0.5">Konfirmasi PIN Keamanan Utama untuk mengakses pengaturan sistem</p>
-                            </div>
-                            <div class="flex gap-2 max-w-sm">
-                                <input type="password" id="pin-admin-input" placeholder="Masukkan PIN Admin" class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 tracking-widest">
-                                <button onclick="verifyAdminPIN()" class="bg-red-600 text-white px-4 py-2 text-sm font-semibold rounded-lg hover:bg-red-700 transition">Akses Masuk</button>
-                            </div>
-                        </div>
-
-                        <div id="admin-features" class="hidden space-y-6">
-                            <div class="p-3 bg-red-50 border border-red-200 rounded-lg flex justify-between items-center text-sm text-red-800">
-                                <span><i class="fa-solid fa-user-lock mr-1.5"></i> Hak Akses Kontrol Penuh Terbuka</span>
-                                <button onclick="lockAdminMode()" class="text-xs underline text-red-600 font-semibold hover:text-red-700">Kunci Sistem</button>
-                            </div>
-
-                            <!-- SUB-TAB MENU DI DALAM ADMIN -->
-                            <div class="border-b border-gray-200 flex gap-4 text-sm font-semibold mb-4">
-                                <button onclick="switchAdminSubTab('config-jam')" class="admin-sub-btn border-b-2 border-red-600 py-1 text-red-600">Konfigurasi Jam Operasional</button>
-                                <button onclick="switchAdminSubTab('config-pin')" class="admin-sub-btn border-b-2 border-transparent py-1 text-gray-500 hover:text-gray-800">Manajemen PIN Keamanan</button>
-                            </div>
-
-                            <!-- ADMIN SUBPANEL 1: PENGATURAN JAM OPERASIONAL -->
-                            <div id="sub-admin-config-jam" class="admin-sub-panel space-y-4">
-                                <h4 class="text-sm font-bold text-gray-700 flex items-center"><i class="fa-solid fa-sliders mr-2 text-red-600"></i> Ubah Batas Batasan Jam Operasional App</h4>
-                                <form id="form-setting-jam" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div class="p-3 border border-gray-100 rounded-lg bg-gray-50/50">
-                                        <p class="text-xs font-bold text-blue-700 mb-2 border-b pb-1">Siswa - Pagi Hari</p>
-                                        <div class="space-y-2">
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-gray-500">Jam Buka Masuk</label>
-                                                <input type="text" id="set-JamBukaMasuk" value="06:00" class="w-full text-xs px-2 py-1.5 border border-gray-300 rounded">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-gray-500">Batas Tepat Waktu</label>
-                                                <input type="text" id="set-BatasTepatWaktu" value="07:30" class="w-full text-xs px-2 py-1.5 border border-gray-300 rounded">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-gray-500">Batas Akhir Scan</label>
-                                                <input type="text" id="set-BatasScanMasuk" value="08:30" class="w-full text-xs px-2 py-1.5 border border-gray-300 rounded">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="p-3 border border-gray-100 rounded-lg bg-gray-50/50">
-                                        <p class="text-xs font-bold text-indigo-700 mb-2 border-b pb-1">Siswa - Sesi 2 & Pulang</p>
-                                        <div class="space-y-2">
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-gray-500">Buka Sesi 2</label>
-                                                <input type="text" id="set-JamBukaSesi2" value="12:00" class="w-full text-xs px-2 py-1.5 border border-gray-300 rounded">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-gray-500">Batas Scan Sesi 2</label>
-                                                <input type="text" id="set-BatasScanSesi2" value="12:40" class="w-full text-xs px-2 py-1.5 border border-gray-300 rounded">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-gray-500">Buka Scan Pulang</label>
-                                                <input type="text" id="set-JamBukaPulang" value="14:00" class="w-full text-xs px-2 py-1.5 border border-gray-300 rounded">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="p-3 border border-gray-100 rounded-lg bg-gray-50/50">
-                                        <p class="text-xs font-bold text-emerald-700 mb-2 border-b pb-1">Presensi Kelompok Guru</p>
-                                        <div class="space-y-2">
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-gray-500">Buka Masuk Guru</label>
-                                                <input type="text" id="set-JamBukaMasukGuru" value="06:30" class="w-full text-xs px-2 py-1.5 border border-gray-300 rounded">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-gray-500">Batas Tepat Guru</label>
-                                                <input type="text" id="set-BatasTepatWaktuGuru" value="07:00" class="w-full text-xs px-2 py-1.5 border border-gray-300 rounded">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-gray-500">Tutup Pulang Guru</label>
-                                                <input type="text" id="set-JamTutupPulangGuru" value="17:00" class="w-full text-xs px-2 py-1.5 border border-gray-300 rounded">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="md:col-span-3 text-right">
-                                        <button type="button" onclick="saveOperationalSettings()" class="bg-red-600 text-white font-semibold text-xs py-2 px-5 rounded-lg hover:bg-red-700 shadow-sm transition">Perbarui Jam Operasional</button>
-                                    </div>
-                                </form>
-                            </div>
-
-                            <!-- ADMIN SUBPANEL 2: GANTI PIN KEAMANAN -->
-                            <div id="sub-admin-config-pin" class="admin-sub-panel hidden space-y-4">
-                                <h4 class="text-sm font-bold text-gray-700 flex items-center"><i class="fa-solid fa-key mr-2 text-red-600"></i> Perubahan Kredensial PIN Portal</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <!-- FORM PIN GURU -->
-                                    <form id="form-change-pin-guru" class="border border-gray-200 p-4 rounded-xl space-y-3 bg-white">
-                                        <h5 class="text-xs font-bold text-gray-800 uppercase tracking-wide border-b pb-1.5 flex items-center"><i class="fa-solid fa-user-tie mr-1.5 text-blue-600"></i> Ganti PIN Petugas/Guru</h5>
-                                        <div>
-                                            <label class="block text-xs font-semibold text-gray-600 mb-1">PIN Guru Baru</label>
-                                            <input type="password" id="new-pin-guru" placeholder="Masukkan Angka Rahasia" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-semibold text-gray-600 mb-1">Konfirmasi PIN Baru</label>
-                                            <input type="password" id="confirm-pin-guru" placeholder="Ketik Ulang PIN" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                                        </div>
-                                        <button type="button" onclick="changePinRole('guru')" class="w-full bg-blue-600 text-white font-semibold text-xs py-2 rounded-lg hover:bg-blue-700 transition">Update PIN Guru</button>
-                                    </form>
-
-                                    <!-- FORM PIN ADMIN -->
-                                    <form id="form-change-pin-admin" class="border border-gray-200 p-4 rounded-xl space-y-3 bg-white">
-                                        <h5 class="text-xs font-bold text-gray-800 uppercase tracking-wide border-b pb-1.5 flex items-center"><i class="fa-solid fa-user-lock mr-1.5 text-red-600"></i> Ganti PIN Administrator Utama</h5>
-                                        <div>
-                                            <label class="block text-xs font-semibold text-gray-600 mb-1">PIN Admin Baru</label>
-                                            <input type="password" id="new-pin-admin" placeholder="Masukkan PIN Super Admin Baru" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-semibold text-gray-600 mb-1">Konfirmasi PIN Admin Baru</label>
-                                            <input type="password" id="confirm-pin-admin" placeholder="Ketik Ulang PIN Admin" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                                        </div>
-                                        <button type="button" onclick="changePinRole('admin')" class="w-full bg-red-600 text-white font-semibold text-xs py-2 rounded-lg hover:bg-red-700 transition">Update PIN Utama</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
+        <div class="stat-card green">
+          <div class="icon"><i class="fas fa-user-check"></i></div>
+          <div class="info"><h3 id="statHadir">0</h3><p>Hadir Hari Ini</p></div>
         </div>
-    </main>
-
-    <!-- FIXED FOOTER -->
-    <footer class="fixed-footer bg-gray-900 text-gray-400 py-3.5 border-t border-gray-800 shadow-inner">
-        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs">
-            <p class="font-medium text-center md:text-left">&copy; 2026 SMP Negeri 1 Sobang — Dikembangkan secara mandiri</p>
-            <p class="text-gray-500 mt-1 md:mt-0 flex items-center gap-1 font-semibold">
-                <span>Design layout by M TAUPIK</span>
-                <span class="text-gray-700">|</span>
-                <span class="text-blue-500">v2.1 Stable</span>
-            </p>
+        <div class="stat-card orange">
+          <div class="icon"><i class="fas fa-clock"></i></div>
+          <div class="info"><h3 id="statTerlambat">0</h3><p>Terlambat</p></div>
         </div>
-    </footer>
+        <div class="stat-card red">
+          <div class="icon"><i class="fas fa-user-slash"></i></div>
+          <div class="info"><h3 id="statAlpa">0</h3><p>Alpa</p></div>
+        </div>
+        <div class="stat-card purple">
+          <div class="icon"><i class="fas fa-user-times"></i></div>
+          <div class="info"><h3 id="statBolos">0</h3><p>Bolos</p></div>
+        </div>
+        <div class="stat-card amber">
+          <div class="icon"><i class="fas fa-file-signature"></i></div>
+          <div class="info"><h3 id="statIzin">0</h3><p>Izin</p></div>
+        </div>
+        <div class="stat-card teal">
+          <div class="icon"><i class="fas fa-notes-medical"></i></div>
+          <div class="info"><h3 id="statSakit">0</h3><p>Sakit</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="icon"><i class="fas fa-chalkboard-teacher"></i></div>
+          <div class="info"><h3 id="statGuru">0</h3><p>Total Guru</p></div>
+        </div>
+      </div>
 
-    <!-- INTERACTIVE JAVASCRIPT FUNCTIONS -->
-    <script>
-        // Simulasi database PIN lokal bawaan web (Nanti terhubung dengan GAS/Spreadsheet Anda)
-        let APP_CREDS = {
-            pinGuru: "1234",
-            pinAdmin: "4321"
-        };
+      <div class="panel">
+        <h3><i class="fas fa-info-circle" style="color:#1a73e8;"></i> Informasi Operasional</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; font-size:13px; background:#f5f7fb; padding:14px; border-radius:10px;">
+          <div><b>📥 Masuk Tepat</b><br>06:00 – 07:30</div>
+          <div><b>⚠️ Masuk Terlambat</b><br>07:30 – 08:30</div>
+          <div><b>🚫 Scan Ditolak</b><br>08:30 – 12:00</div>
+          <div><b>📥 Sesi 2</b><br>12:00 – 12:30</div>
+          <div><b>⚠️ Terlambat Sesi 2</b><br>12:30 – 12:40</div>
+          <div><b>🚫 Scan Ditolak</b><br>12:40 – 14:00</div>
+          <div><b>📤 Pulang Tepat</b><br>14:00 – 14:30</div>
+          <div><b>📤 Pulang Terlambat</b><br>14:30 – 17:00</div>
+        </div>
+        <p style="margin-top:12px; font-size:12px; color:#555;">
+          <i class="fas fa-info-circle"></i> 
+          Tidak scan sampai 08:30 = <b>Alpa</b> | Tidak scan Sesi 2 setelah 12:40 = <b>Bolos</b>
+        </p>
+      </div>
 
-        // Realtime Clock Function
-        function startRealtimeClock() {
-            const clockEl = document.getElementById('clock');
-            setInterval(() => {
-                const now = new Date();
-                clockEl.innerHTML = `<i class="fa-solid fa-clock mr-1 text-blue-300"></i> ` + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
-            }, 1000);
-        }
+      <div class="panel">
+        <h3><i class="fas fa-chart-bar" style="color:#2e7d32;"></i> Rekap Hari Ini</h3>
+        <div id="rekapCepat" style="font-size:14px; color:#555;">⏳ Memuat data...</div>
+      </div>
+    </div>
 
-        // Tab Switching Role Logic
-        function switchTab(role) {
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200');
-                b.classList.add('bg-gray-50', 'text-gray-600', 'border-transparent');
+        <div id="panelOrtu" class="panel hidden">
+      <h3><i class="fas fa-search"></i> Cek Absensi Siswa</h3>
+      <div class="row">
+        <div><label>NISN</label><input type="text" id="ortuNisn" placeholder="Masukkan NISN..."></div>
+        <div><label>Dari</label><input type="date" id="ortuTglAwal"></div>
+        <div><label>Sampai</label><input type="date" id="ortuTglAkhir"></div>
+      </div>
+      <button class="btn-primary" onclick="cariAbsensiOrtu()"><i class="fas fa-search"></i> Cari</button>
+      <div id="resultOrtu" style="margin-top:16px;"></div>
+    </div>
+
+    <div id="panelGuru" class="panel hidden">
+      <h3><i class="fas fa-chalkboard-teacher"></i> Verifikasi Guru</h3>
+      <div style="max-width:320px;">
+        <label>PIN Guru</label>
+        <input type="password" id="guruPin" placeholder="Masukkan PIN..." onkeydown="if(event.key==='Enter') verifyPin()">
+        <button class="btn-success" onclick="verifyPin()"><i class="fas fa-unlock"></i> Masuk</button>
+        <div id="guruAuthMsg" style="margin-top:8px;color:#c62828;"></div>
+      </div>
+    </div>
+
+    <div id="panelGuruScan" class="panel hidden">
+      <h3><i class="fas fa-qrcode"></i> Scan QR Siswa</h3>
+      <div class="camera-controls">
+        <button class="btn-success" onclick="startCamera()"><i class="fas fa-camera"></i> Buka Kamera</button>
+        <button class="btn-danger" onclick="stopCamera()" id="btnStopCamera" disabled><i class="fas fa-stop"></i> Tutup</button>
+      </div>
+      <div id="reader"><span style="color:#999;">Kamera non-aktif</span></div>
+      <div id="scanMsg" class="scan-result scan-info">📷 Siap memindai</div>
+      <div id="debugConsole" style="background:#1a1a2e;color:#b0bec5;padding:10px;border-radius:6px;font-size:12px;max-height:120px;overflow-y:auto;margin-top:10px;font-family:monospace;">🔍 Debug Console...</div>
+    </div>
+
+        <div id="panelGuruRekap" class="panel hidden">
+      <h3><i class="fas fa-table"></i> Rekap Absensi Siswa</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn-primary" onclick="setRekapMode('harian')"><i class="fas fa-calendar-day"></i> Harian</button>
+        <button class="btn-purple" onclick="setRekapMode('bulanan')"><i class="fas fa-calendar-alt"></i> Bulanan</button>
+        <button class="btn-teal" onclick="setRekapMode('tahunan')"><i class="fas fa-calendar-plus"></i> Tahunan</button>
+      </div>
+      <div id="rekapForm">
+        <div class="row">
+          <div><label>Kelas</label><input type="text" id="guruKelas" placeholder="Contoh: 8A" onkeydown="if(event.key==='Enter') loadRekap()"></div>
+          <div id="rekapDateWrap"><label>Tanggal</label><input type="date" id="guruTanggal"></div>
+          <div id="rekapRangeWrap" class="hidden"><label>Dari</label><input type="date" id="guruTglAwalRange"></div>
+          <div id="rekapRangeWrap2" class="hidden"><label>Sampai</label><input type="date" id="guruTglAkhirRange"></div>
+        </div>
+        <button class="btn-primary" onclick="loadRekap()"><i class="fas fa-eye"></i> Tampilkan</button>
+      </div>
+      <div id="resultRekapKelas" style="margin-top:16px;"></div>
+    </div>
+
+    <div id="panelGuruStatus" class="panel hidden">
+      <h3><i class="fas fa-pen"></i> Input Status Siswa (Izin/Sakit/Alpa)</h3>
+      <div class="row">
+        <div><label>NISN</label><input type="text" id="statusNisn" placeholder="NISN"></div>
+        <div><label>Tanggal</label><input type="date" id="statusTanggal"></div>
+        <div><label>Status</label>
+          <select id="statusPilih">
+            <option value="Izin">📝 Izin</option>
+            <option value="Sakit">🤒 Sakit</option>
+            <option value="Alpa">❌ Alpa</option>
+          </select>
+        </div>
+      </div>
+      <div><label>Keterangan</label><input type="text" id="statusKeterangan" placeholder="Opsional..."></div>
+      <button class="btn-orange" onclick="inputStatusSiswa()"><i class="fas fa-save"></i> Simpan</button>
+      <div id="statusResult" style="margin-top:10px;"></div>
+    </div>
+
+        <div id="panelAdmin" class="panel hidden">
+      <h3><i class="fas fa-user-shield"></i> Verifikasi Admin Guru</h3>
+      <div style="max-width:320px;">
+        <label>PIN Admin</label>
+        <input type="password" id="adminPin" placeholder="Masukkan PIN Admin..." onkeydown="if(event.key==='Enter') verifyAdminPin()">
+        <button class="btn-purple" onclick="verifyAdminPin()"><i class="fas fa-unlock"></i> Masuk</button>
+        <div id="adminAuthMsg" style="margin-top:8px;color:#c62828;"></div>
+      </div>
+    </div>
+
+    <div id="panelAdminScan" class="panel hidden">
+      <h3><i class="fas fa-qrcode"></i> Scan QR Guru</h3>
+      <div class="camera-controls">
+        <button class="btn-success" onclick="startCameraAdmin()"><i class="fas fa-camera"></i> Buka Kamera</button>
+        <button class="btn-danger" onclick="stopCameraAdmin()" id="btnStopCameraAdmin" disabled><i class="fas fa-stop"></i> Tutup</button>
+      </div>
+      <div id="readerAdmin"><span style="color:#999;">Kamera non-aktif</span></div>
+      <div id="scanMsgAdmin" class="scan-result scan-info">📷 Siap memindai QR Guru</div>
+      <div id="debugConsoleAdmin" style="background:#1a1a2e;color:#b0bec5;padding:10px;border-radius:6px;font-size:12px;max-height:120px;overflow-y:auto;margin-top:10px;font-family:monospace;">🔍 Debug Console Admin...</div>
+    </div>
+
+    <div id="panelAdminRekap" class="panel hidden">
+      <h3><i class="fas fa-users"></i> Rekap Absensi Guru</h3>
+      <div class="row">
+        <div><label>Dari</label><input type="date" id="adminTglAwal"></div>
+        <div><label>Sampai</label><input type="date" id="adminTglAkhir"></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-purple" onclick="loadRekapGuru()"><i class="fas fa-eye"></i> Tampilkan</button>
+        <button class="btn-success" onclick="setRangeBulanIniAdmin()"><i class="fas fa-calendar-alt"></i> Bulan Ini</button>
+        <button class="btn-secondary" onclick="setRangeBulanLaluAdmin()"><i class="fas fa-chevron-left"></i> Bulan Lalu</button>
+      </div>
+      <div id="resultRekapGuru" style="margin-top:16px;"></div>
+    </div>
+
+    <div id="panelAdminStatus" class="panel hidden">
+      <h3><i class="fas fa-pen"></i> Input Izin/Sakit Guru</h3>
+      <div class="row">
+        <div><label>NIP</label><input type="text" id="statusNipGuru" placeholder="NIP Guru"></div>
+        <div><label>Tanggal</label><input type="date" id="statusTanggalGuru"></div>
+        <div><label>Status</label>
+          <select id="statusPilihGuru">
+            <option value="Izin">📝 Izin</option>
+            <option value="Sakit">🤒 Sakit</option>
+            <option value="Alpa">❌ Alpa</option>
+          </select>
+        </div>
+      </div>
+      <div><label>Keterangan</label><input type="text" id="statusKeteranganGuru" placeholder="Opsional..."></div>
+      <button class="btn-orange" onclick="inputStatusGuru()"><i class="fas fa-save"></i> Simpan</button>
+      <div id="statusResultGuru" style="margin-top:10px;"></div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="footer">
+  &copy; 2026 SMP Negeri 1 Sobang &mdash; Design by M TAUPIK
+</footer>
+
+  <script>
+  // ===== KONFIGURASI =====
+  // GANTI URL INI DENGAN URL WEB APP ANDA
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxY86Gf5wzX5mywbG-3R6VIZurplfdBUlA8YGNFXbyR56XouY9WkkpzxtjIvpU3b7sWWA/exec";
+  const PIN_GURU = "1234";
+  const PIN_ADMIN = "9999";
+
+  // ===== STATE =====
+  let currentMode = 'dashboard';
+  let rekapMode = 'harian';
+  let isGuruLoggedIn = false;
+  let isAdminLoggedIn = false;
+  let html5QrCode = null, isScanning = false, isProcessing = false;
+  let html5QrCodeAdmin = null, isScanningAdmin = false, isProcessingAdmin = false;
+
+  const sidebar = document.getElementById('sidebar');
+  const clockEl = document.getElementById('clockDisplay');
+  const modeBadge = document.getElementById('modeBadge');
+
+  // ===== CLOCK =====
+  function updateClock() {
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  function toggleSidebar() { sidebar.classList.toggle('open'); }
+
+  function updateMenuState() {
+    const guruScan = document.querySelector('[data-mode="guruScan"]');
+    const guruRekap = document.querySelector('[data-mode="guruRekap"]');
+    const guruStatus = document.querySelector('[data-mode="guruStatus"]');
+    
+    if (isGuruLoggedIn) {
+      guruScan.classList.remove('disabled');
+      guruRekap.classList.remove('disabled');
+      guruStatus.classList.remove('disabled');
+    } else {
+      guruScan.classList.add('disabled');
+      guruRekap.classList.add('disabled');
+      guruStatus.classList.add('disabled');
+    }
+
+    const adminScan = document.querySelector('[data-mode="adminScan"]');
+    const adminRekap = document.querySelector('[data-mode="adminRekap"]');
+    const adminStatus = document.querySelector('[data-mode="adminStatus"]');
+    
+    if (isAdminLoggedIn) {
+      adminScan.classList.remove('disabled');
+      adminRekap.classList.remove('disabled');
+      adminStatus.classList.remove('disabled');
+    } else {
+      adminScan.classList.add('disabled');
+      adminRekap.classList.add('disabled');
+      adminStatus.classList.add('disabled');
+    }
+  }
+
+  function navigateTo(mode) {
+    const menuItem = document.querySelector(`.sidebar .menu-item[data-mode="${mode}"]`);
+    if (menuItem && menuItem.classList.contains('disabled')) {
+      alert('🔒 Silakan login terlebih dahulu untuk mengakses menu ini!');
+      return;
+    }
+
+    sidebar.classList.remove('open');
+    document.querySelectorAll('.sidebar .menu-item').forEach(el => el.classList.remove('active'));
+    if (menuItem) menuItem.classList.add('active');
+
+    document.querySelectorAll('.main-content > div').forEach(el => el.classList.add('hidden'));
+
+    const panelMap = {
+      'dashboard': 'panelDashboard', 'ortu': 'panelOrtu',
+      'guru': 'panelGuru', 'guruScan': 'panelGuruScan',
+      'guruRekap': 'panelGuruRekap', 'guruStatus': 'panelGuruStatus',
+      'admin': 'panelAdmin', 'adminScan': 'panelAdminScan',
+      'adminRekap': 'panelAdminRekap', 'adminStatus': 'panelAdminStatus'
+    };
+    const panelId = panelMap[mode] || 'panelDashboard';
+    document.getElementById(panelId)?.classList.remove('hidden');
+
+    const labelMap = {
+      'dashboard': '📊 Dashboard', 'ortu': '👨‍👩‍👧 Orang Tua',
+      'guru': '👨‍🏫 Login Guru', 'guruScan': '📷 Scan Siswa',
+      'guruRekap': '📊 Rekap Siswa', 'guruStatus': '📝 Izin/Sakit Siswa',
+      'admin': '👔 Login Admin', 'adminScan': '📷 Scan Guru',
+      'adminRekap': '📊 Rekap Guru', 'adminStatus': '📝 Izin/Sakit Guru'
+    };
+    modeBadge.textContent = labelMap[mode] || 'Dashboard';
+
+    if (mode === 'dashboard') refreshDashboard();
+    if (mode === 'guruRekap') setRekapMode(rekapMode);
+    currentMode = mode;
+  }
+
+      function refreshDashboard() {
+    fetch(`${SCRIPT_URL}?action=getDashboardStats`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById('statSiswa').textContent = data.data.totalSiswa || 0;
+          document.getElementById('statGuru').textContent = data.data.totalGuru || 0;
+          document.getElementById('statHadir').textContent = data.data.hadir || 0;
+          document.getElementById('statTerlambat').textContent = data.data.terlambat || 0;
+          document.getElementById('statAlpa').textContent = data.data.alpa || 0;
+          document.getElementById('statBolos').textContent = data.data.bolos || 0;
+          document.getElementById('statIzin').textContent = data.data.izin || 0;
+          document.getElementById('statSakit').textContent = data.data.sakit || 0;
+
+          if (data.data.rekapHariIni && data.data.rekapHariIni.length) {
+            let html = `<table><thead><tr><th>Nama</th><th>NISN</th><th>Status</th></tr></thead><tbody>`;
+            data.data.rekapHariIni.forEach(s => {
+              let badge = getBadgeClass(s.status);
+              html += `<tr><td>${s.nama}</td><td>${s.nisn}</td><td><span class="badge ${badge}">${s.status}</span></td></tr>`;
             });
-
-            const activePanel = document.getElementById('tab-' + role);
-            if(activePanel) activePanel.classList.remove('hidden');
-
-            const currentBtn = event.currentTarget;
-            if(currentBtn) {
-                currentBtn.classList.remove('bg-gray-50', 'text-gray-600', 'border-transparent');
-                currentBtn.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-200');
-            }
+            html += `</tbody></table>`;
+            document.getElementById('rekapCepat').innerHTML = html;
+          } else {
+            document.getElementById('rekapCepat').innerHTML = '<p style="color:#666;">Belum ada data absensi hari ini.</p>';
+          }
         }
+      }).catch(() => {});
+  }
 
-        // Sub-Tab Admin Logic
-        function switchAdminSubTab(targetId) {
-            document.querySelectorAll('.admin-sub-panel').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('.admin-sub-btn').forEach(b => {
-                b.classList.remove('border-red-600', 'text-red-600');
-                b.classList.add('border-transparent', 'text-gray-500');
-            });
+  function getBadgeClass(status) {
+    if (status === 'Hadir Tepat Waktu' || status === 'Hadir' || status === 'Hadir (Belum Pulang)' || status === 'Hadir (Menunggu Sesi 2)') return 'badge-success';
+    if (status === 'Terlambat' || status === 'Terlambat (Belum Pulang)' || status === 'Terlambat (Menunggu Sesi 2)') return 'badge-warning';
+    if (status === 'Alpa' || status === 'Alpa (Input Admin)' || status === 'Alpa (Tidak Pulang)') return 'badge-danger';
+    if (status.includes('Bolos')) return 'badge-bolos';
+    if (status === 'Izin') return 'badge-izin';
+    if (status === 'Sakit') return 'badge-sakit';
+    if (status.includes('Libur')) return 'badge-secondary';
+    if (status === 'Belum Absen' || status === 'Belum Pulang' || status === 'Menunggu Sesi 2') return 'badge-info';
+    return 'badge-secondary';
+  }
 
-            document.getElementById('sub-admin-' + targetId).classList.remove('hidden');
-            event.currentTarget.classList.remove('border-transparent', 'text-gray-500');
-            event.currentTarget.classList.add('border-red-600', 'text-red-600');
+  function setRekapMode(mode) {
+    rekapMode = mode;
+    const isRange = mode !== 'harian';
+    document.getElementById('rekapDateWrap').classList.toggle('hidden', isRange);
+    document.getElementById('rekapRangeWrap').classList.toggle('hidden', !isRange);
+    document.getElementById('rekapRangeWrap2').classList.toggle('hidden', !isRange);
+    const now = new Date();
+    if (mode === 'bulanan') {
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      document.getElementById('guruTglAwalRange').value = first.toISOString().split('T')[0];
+      document.getElementById('guruTglAkhirRange').value = last.toISOString().split('T')[0];
+    } else if (mode === 'tahunan') {
+      const first = new Date(now.getFullYear(), 0, 1);
+      const last = new Date(now.getFullYear(), 11, 31);
+      document.getElementById('guruTglAwalRange').value = first.toISOString().split('T')[0];
+      document.getElementById('guruTglAkhirRange').value = last.toISOString().split('T')[0];
+    }
+  }
+
+  function loadRekap() {
+    const kelas = document.getElementById('guruKelas').value.trim();
+    const resDiv = document.getElementById('resultRekapKelas');
+    if (!kelas) { alert('Masukkan kelas!'); return; }
+
+    let url = '';
+    if (rekapMode === 'harian') {
+      const tgl = document.getElementById('guruTanggal').value;
+      if (!tgl) { alert('Pilih tanggal!'); return; }
+      url = `${SCRIPT_URL}?action=getRekapKelas&kelas=${encodeURIComponent(kelas)}&tanggal=${tgl}`;
+    } else {
+      const tglAwal = document.getElementById('guruTglAwalRange').value;
+      const tglAkhir = document.getElementById('guruTglAkhirRange').value;
+      if (!tglAwal || !tglAkhir) { alert('Pilih rentang tanggal!'); return; }
+      url = `${SCRIPT_URL}?action=getRekapKelasRange&kelas=${encodeURIComponent(kelas)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`;
+    }
+
+    resDiv.innerHTML = '⏳ Memuat...';
+    fetch(url).then(r => r.json()).then(data => {
+      if (!data.success) { resDiv.innerHTML = `<p style="color:red;">${data.message}</p>`; return; }
+      let html = `<table><thead><tr>`;
+      if (rekapMode === 'harian') {
+        html += `<th>NISN</th><th>Nama</th><th>Datang</th><th>Pulang</th><th>Status</th>`;
+      } else {
+        html += `<th>NISN</th><th>Nama</th><th>✅ Hadir</th><th>⚠️ Terlambat</th><th>❌ Alpa</th><th>🟣 Bolos</th><th>📝 Izin</th><th>🤒 Sakit</th><th>📈 % Hadir</th>`;
+      }
+      html += `</tr></thead><tbody>`;
+
+      if (data.data && data.data.length) {
+        data.data.forEach(row => {
+          if (rekapMode === 'harian') {
+            let badge = getBadgeClass(row.status);
+            html += `<tr><td>${row.nisn}</td><td>${row.nama}</td><td>${row.jamMasuk}</td><td>${row.jamPulang}</td><td><span class="badge ${badge}">${row.status}</span></td></tr>`;
+          } else {
+            const pct = row.persentaseKehadiran || 0;
+            html += `<tr><td>${row.nisn}</td><td>${row.nama}</td>
+              <td><span class="badge badge-success">${row.totalHadir||0}</span></td>
+              <td><span class="badge badge-warning">${row.totalTerlambat||0}</span></td>
+              <td><span class="badge badge-danger">${row.totalAlpa||0}</span></td>
+              <td><span class="badge badge-bolos">${row.totalBolos||0}</span></td>
+              <td><span class="badge badge-izin">${row.totalIzin||0}</span></td>
+              <td><span class="badge badge-sakit">${row.totalSakit||0}</span></td>
+              <td><span class="badge badge-info">${pct}%</span></td></tr>`;
+          }
+        });
+      } else {
+        html += `<tr><td colspan="5">Tidak ada data</td></tr>`;
+      }
+      html += `</tbody></table>`;
+      resDiv.innerHTML = html;
+    }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
+  }
+
+      function cariAbsensiOrtu() {
+    const nisn = document.getElementById('ortuNisn').value.trim();
+    const tglAwal = document.getElementById('ortuTglAwal').value;
+    const tglAkhir = document.getElementById('ortuTglAkhir').value;
+    const resDiv = document.getElementById('resultOrtu');
+    if (!nisn || !tglAwal || !tglAkhir) { alert('Isi semua field!'); return; }
+    resDiv.innerHTML = '⏳ Memuat...';
+    fetch(`${SCRIPT_URL}?action=getRiwayatSiswa&nisn=${encodeURIComponent(nisn)}&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
+      .then(r => r.json()).then(data => {
+        if (!data.success) { resDiv.innerHTML = `<p style="color:red;">${data.message}</p>`; return; }
+        let html = `<div style="margin-bottom:10px;"><b>${data.siswa.nama}</b> (${data.siswa.nisn}) - Kelas ${data.siswa.kelas}</div>`;
+        html += `<table><thead><tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead><tbody>`;
+        data.riwayat.forEach(r => {
+          let badge = getBadgeClass(r.status);
+          html += `<tr><td>${r.tanggal}</td><td>${r.jamMasuk}</td><td>${r.jamPulang}</td><td><span class="badge ${badge}">${r.status}</span></td></tr>`;
+        });
+        html += `</tbody></table>`;
+        resDiv.innerHTML = html;
+      }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
+  }
+
+  function verifyPin() {
+    const pin = document.getElementById('guruPin').value;
+    const msg = document.getElementById('guruAuthMsg');
+    if (pin === PIN_GURU) {
+      isGuruLoggedIn = true;
+      msg.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'guruScan\'); return false;">Klik untuk lanjut</a>';
+      msg.style.color = '#2e7d32';
+      updateMenuState();
+      navigateTo('guruScan');
+    } else {
+      msg.textContent = '❌ PIN salah!';
+      msg.style.color = '#c62828';
+      document.getElementById('guruPin').value = '';
+      document.getElementById('guruPin').focus();
+    }
+  }
+
+  function verifyAdminPin() {
+    const pin = document.getElementById('adminPin').value;
+    const msg = document.getElementById('adminAuthMsg');
+    if (pin === PIN_ADMIN) {
+      isAdminLoggedIn = true;
+      msg.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'adminScan\'); return false;">Klik untuk lanjut</a>';
+      msg.style.color = '#2e7d32';
+      updateMenuState();
+      navigateTo('adminScan');
+    } else {
+      msg.textContent = '❌ PIN Admin salah!';
+      msg.style.color = '#c62828';
+      document.getElementById('adminPin').value = '';
+      document.getElementById('adminPin').focus();
+    }
+  }
+  function startCamera() {
+    if (isScanning) return;
+    const reader = document.getElementById('reader');
+    reader.innerHTML = '';
+    if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 15, qrbox: { width: 250, height: 250 } },
+      onScanSuccess,
+      onScanFailure
+    ).then(() => {
+      isScanning = true;
+      document.getElementById('btnStopCamera').disabled = false;
+      document.getElementById('scanMsg').className = 'scan-result scan-info';
+      document.getElementById('scanMsg').textContent = '📷 Kamera aktif, arahkan ke QR Code';
+    }).catch(e => alert('Gagal buka kamera: ' + e));
+  }
+
+  function stopCamera() {
+    if (html5QrCode && isScanning) {
+      html5QrCode.stop().then(() => {
+        isScanning = false;
+        document.getElementById('btnStopCamera').disabled = true;
+        document.getElementById('scanMsg').className = 'scan-result scan-info';
+        document.getElementById('scanMsg').textContent = '📷 Kamera ditutup';
+        document.getElementById('reader').innerHTML = '<span style="color:#999;">Kamera non-aktif</span>';
+      }).catch(() => {});
+    }
+  }
+
+  function onScanSuccess(text) {
+    if (isProcessing) return;
+    isProcessing = true;
+    const msg = document.getElementById('scanMsg');
+    msg.className = 'scan-result scan-info';
+    msg.textContent = `⏳ Memproses NISN: ${text}...`;
+
+    fetch(`${SCRIPT_URL}?action=absen&nisn=${encodeURIComponent(text)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          msg.className = 'scan-result scan-success';
+          msg.textContent = `✅ ${data.message}`;
+        } else {
+          msg.className = 'scan-result scan-error';
+          msg.textContent = `❌ ${data.message}`;
         }
+      })
+      .catch(error => {
+        msg.className = 'scan-result scan-error';
+        msg.textContent = `❌ Error: ${error.message}`;
+      })
+      .finally(() => {
+        setTimeout(() => {
+          isProcessing = false;
+          if (isScanning) { try { html5QrCode.resume(); } catch(e) {} }
+        }, 2000);
+      });
 
-        // Verification PIN Guru
-        function verifyGuruPIN() {
-            const inputVal = document.getElementById('pin-guru-input').value;
-            if (inputVal === APP_CREDS.pinGuru) {
-                document.getElementById('teacher-auth').classList.add('hidden');
-                document.getElementById('teacher-features').classList.remove('hidden');
-            } else {
-                alert('❌ Kegagalan Otentikasi: PIN Guru yang dimasukkan keliru!');
-            }
+    if (isScanning) { try { html5QrCode.pause(); } catch(e) {} }
+  }
+
+  function onScanFailure(error) {}
+
+      function startCameraAdmin() {
+    if (isScanningAdmin) return;
+    const reader = document.getElementById('readerAdmin');
+    reader.innerHTML = '';
+    if (!html5QrCodeAdmin) html5QrCodeAdmin = new Html5Qrcode("readerAdmin");
+    html5QrCodeAdmin.start(
+      { facingMode: "environment" },
+      { fps: 15, qrbox: { width: 250, height: 250 } },
+      onScanSuccessAdmin,
+      onScanFailureAdmin
+    ).then(() => {
+      isScanningAdmin = true;
+      document.getElementById('btnStopCameraAdmin').disabled = false;
+      document.getElementById('scanMsgAdmin').className = 'scan-result scan-info';
+      document.getElementById('scanMsgAdmin').textContent = '📷 Kamera aktif, arahkan ke QR Code Guru';
+    }).catch(e => alert('Gagal buka kamera: ' + e));
+  }
+
+  function stopCameraAdmin() {
+    if (html5QrCodeAdmin && isScanningAdmin) {
+      html5QrCodeAdmin.stop().then(() => {
+        isScanningAdmin = false;
+        document.getElementById('btnStopCameraAdmin').disabled = true;
+        document.getElementById('scanMsgAdmin').className = 'scan-result scan-info';
+        document.getElementById('scanMsgAdmin').textContent = '📷 Kamera ditutup';
+        document.getElementById('readerAdmin').innerHTML = '<span style="color:#999;">Kamera non-aktif</span>';
+      }).catch(() => {});
+    }
+  }
+
+  function onScanSuccessAdmin(text) {
+    if (isProcessingAdmin) return;
+    isProcessingAdmin = true;
+    const msg = document.getElementById('scanMsgAdmin');
+    msg.className = 'scan-result scan-info';
+    msg.textContent = `⏳ Memproses NIP: ${text}...`;
+
+    fetch(`${SCRIPT_URL}?action=absenGuru&nip=${encodeURIComponent(text)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          msg.className = 'scan-result scan-success';
+          msg.textContent = `✅ ${data.message}`;
+        } else {
+          msg.className = 'scan-result scan-error';
+          msg.textContent = `❌ ${data.message}`;
         }
+      })
+      .catch(error => {
+        msg.className = 'scan-result scan-error';
+        msg.textContent = `❌ Error: ${error.message}`;
+      })
+      .finally(() => {
+        setTimeout(() => {
+          isProcessingAdmin = false;
+          if (isScanningAdmin) { try { html5QrCodeAdmin.resume(); } catch(e) {} }
+        }, 2000);
+      });
 
-        function lockTeacherMode() {
-            document.getElementById('pin-guru-input').value = "";
-            document.getElementById('teacher-auth').classList.remove('hidden');
-            document.getElementById('teacher-features').classList.add('hidden');
-        }
+    if (isScanningAdmin) { try { html5QrCodeAdmin.pause(); } catch(e) {} }
+  }
 
-        // Verification PIN Admin
-        function verifyAdminPIN() {
-            const inputVal = document.getElementById('pin-admin-input').value;
-            if (inputVal === APP_CREDS.pinAdmin) {
-                document.getElementById('admin-auth').classList.add('hidden');
-                document.getElementById('admin-features').classList.remove('hidden');
-            } else {
-                alert('❌ Akses Ditolak: Kredensial PIN Administrator tidak valid!');
-            }
-        }
+  function onScanFailureAdmin(error) {}
 
-        function lockAdminMode() {
-            document.getElementById('pin-admin-input').value = "";
-            document.getElementById('admin-auth').classList.remove('hidden');
-            document.getElementById('admin-features').classList.add('hidden');
-        }
+  function inputStatusSiswa() {
+    const nisn = document.getElementById('statusNisn').value.trim();
+    const tanggal = document.getElementById('statusTanggal').value;
+    const status = document.getElementById('statusPilih').value;
+    const keterangan = document.getElementById('statusKeterangan').value.trim();
+    const res = document.getElementById('statusResult');
+    if (!nisn || !tanggal) { res.innerHTML = '<p style="color:red;">❌ Isi NISN dan tanggal!</p>'; return; }
+    res.innerHTML = '⏳ Menyimpan...';
+    fetch(`${SCRIPT_URL}?action=setStatus&nisn=${encodeURIComponent(nisn)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&guru=Guru`)
+      .then(r => r.json()).then(data => {
+        if (data.success) { res.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`; }
+        else { res.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`; }
+      }).catch(e => res.innerHTML = `<p style="color:red;">❌ Error: ${e.message}</p>`);
+  }
 
-        // Simpan Jam Operasional Baru (Frontend state)
-        function saveOperationalSettings() {
-            const jM = document.getElementById('set-JamBukaMasuk').value;
-            const bT = document.getElementById('set-BatasTepatWaktu').value;
-            const bS = document.getElementById('set-BatasScanMasuk').value;
-            
-            document.getElementById('view-jam-masuk').innerText = `${jM} – ${bT}`;
-            document.getElementById('view-jam-terlambat').innerText = `${bT} – ${bS}`;
-            document.getElementById('view-jam-batas-masuk').innerText = `Setelah ${bS} (Alpa)`;
-            
-            alert('✅ Berhasil: Jam konfigurasi operasional diperbarui di panel!');
-        }
+  function inputStatusGuru() {
+    const nip = document.getElementById('statusNipGuru').value.trim();
+    const tanggal = document.getElementById('statusTanggalGuru').value;
+    const status = document.getElementById('statusPilihGuru').value;
+    const keterangan = document.getElementById('statusKeteranganGuru').value.trim();
+    const res = document.getElementById('statusResultGuru');
+    if (!nip || !tanggal) { res.innerHTML = '<p style="color:red;">❌ Isi NIP dan tanggal!</p>'; return; }
+    res.innerHTML = '⏳ Menyimpan...';
+    fetch(`${SCRIPT_URL}?action=setStatusGuru&nip=${encodeURIComponent(nip)}&tanggal=${tanggal}&status=${status}&keterangan=${encodeURIComponent(keterangan)}&admin=Admin`)
+      .then(r => r.json()).then(data => {
+        if (data.success) { res.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`; }
+        else { res.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`; }
+      }).catch(e => res.innerHTML = `<p style="color:red;">❌ Error: ${e.message}</p>`);
+  }
 
-        // Ganti PIN Role (Guru / Admin)
-        function changePinRole(role) {
-            if(role === 'guru') {
-                const pin = document.getElementById('new-pin-guru').value;
-                const confirm = document.getElementById('confirm-pin-guru').value;
-                if(pin !== confirm) return alert('⚠️ Error: Konfirmasi PIN tidak cocok!');
-                if(pin.length < 4) return alert('⚠️ Error: PIN minimal berisi 4 karakter!');
-                APP_CREDS.pinGuru = pin;
-                alert('🎉 Sukses: PIN Guru berhasil diubah menjadi: ' + pin);
-                document.getElementById('form-change-pin-guru').reset();
-            } else {
-                const pin = document.getElementById('new-pin-admin').value;
-                const confirm = document.getElementById('confirm-pin-admin').value;
-                if(pin !== confirm) return alert('⚠️ Error: Konfirmasi PIN tidak cocok!');
-                if(pin.length < 4) return alert('⚠️ Error: PIN minimal berisi 4 karakter!');
-                APP_CREDS.pinAdmin = pin;
-                alert('🎉 Sukses: PIN Administrator Utama berhasil diperbarui!');
-                document.getElementById('form-change-pin-admin').reset();
-            }
-        }
+      function setRangeBulanIniAdmin() {
+    const now = new Date();
+    document.getElementById('adminTglAwal').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    document.getElementById('adminTglAkhir').value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  }
 
-        // Initialize script on startup
-        window.onload = function() {
-            startRealtimeClock();
-            
-            // Set input date default ke hari ini
-            const todayStr = new Date().toISOString().split('T')[0];
-            if(document.getElementById('parent-tgl-awal')) document.getElementById('parent-tgl-awal').value = todayStr;
-            if(document.getElementById('parent-tgl-akhir')) document.getElementById('parent-tgl-akhir').value = todayStr;
-        };
-    </script>
+  function setRangeBulanLaluAdmin() {
+    const now = new Date();
+    document.getElementById('adminTglAwal').value = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+    document.getElementById('adminTglAkhir').value = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+  }
+
+  function loadRekapGuru() {
+    const tglAwal = document.getElementById('adminTglAwal').value;
+    const tglAkhir = document.getElementById('adminTglAkhir').value;
+    const resDiv = document.getElementById('resultRekapGuru');
+    if (!tglAwal || !tglAkhir) { alert('Pilih rentang tanggal!'); return; }
+    resDiv.innerHTML = '⏳ Memuat...';
+    fetch(`${SCRIPT_URL}?action=getRekapGuru&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
+      .then(r => r.json()).then(data => {
+        if (!data.success) { resDiv.innerHTML = `<p style="color:red;">${data.message}</p>`; return; }
+        let html = `<table><thead><tr>
+          <th>NIP</th><th>Nama</th><th>Jabatan</th>
+          <th>✅ Hadir</th><th>📝 Izin</th><th>🤒 Sakit</th>
+          <th>❌ Alpa</th><th>📈 % Hadir</th>
+        </tr></thead><tbody>`;
+        if (data.data && data.data.length) {
+          data.data.forEach(r => {
+            html += `<tr>
+              <td>${r.nip}</td><td>${r.nama}</td><td>${r.jabatan || '-'}</td>
+              <td><span class="badge badge-success">${r.totalHadir || 0}</span></td>
+              <td><span class="badge badge-izin">${r.totalIzin || 0}</span></td>
+              <td><span class="badge badge-sakit">${r.totalSakit || 0}</span></td>
+              <td><span class="badge badge-danger">${r.totalAlpa || 0}</span></td>
+              <td><span class="badge badge-info">${r.persentaseKehadiran || 0}%</span></td>
+            </tr>`;
+          });
+        } else { html += `<tr><td colspan="8">Tidak ada data guru</td></tr>`; }
+        html += `</tbody></table>`;
+        resDiv.innerHTML = html;
+      }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
+  }
+
+  // ===== INIT =====
+  const todayStr = new Date().toISOString().split('T')[0];
+  document.getElementById('ortuTglAwal').value = todayStr;
+  document.getElementById('ortuTglAkhir').value = todayStr;
+  document.getElementById('guruTanggal').value = todayStr;
+  document.getElementById('statusTanggal').value = todayStr;
+  document.getElementById('statusTanggalGuru').value = todayStr;
+  document.getElementById('adminTglAwal').value = todayStr;
+  document.getElementById('adminTglAkhir').value = todayStr;
+  
+  const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  document.getElementById('guruTglAwalRange').value = firstDay.toISOString().split('T')[0];
+  document.getElementById('guruTglAkhirRange').value = todayStr;
+
+  updateMenuState();
+  navigateTo('dashboard');
+
+  setInterval(() => {
+    if (currentMode === 'dashboard') refreshDashboard();
+  }, 60000);
+
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 820) {
+      if (!sidebar.contains(e.target) && !e.target.closest('.sidebar-toggle')) {
+        sidebar.classList.remove('open');
+      }
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { sidebar.classList.remove('open'); }
+  });
+</script>
 </body>
 </html>
+    
