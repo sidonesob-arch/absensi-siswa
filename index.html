@@ -186,7 +186,13 @@
       font-size: 13px;
       border-top: 1px solid #2a3a6a;
       flex-shrink: 0;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 998;
     }
+    .main-content { padding-bottom: 80px; }
     .main-content::-webkit-scrollbar { width: 6px; }
     .main-content::-webkit-scrollbar-thumb { background: #b0b8c8; border-radius: 10px; }
     .sidebar::-webkit-scrollbar { width: 4px; }
@@ -250,6 +256,9 @@
     </div>
     <div class="menu-item disabled" data-mode="adminStatus" onclick="navigateTo('adminStatus')">
       <i class="fas fa-pen"></i> Izin/Sakit Guru
+    </div>
+    <div class="menu-item disabled" data-mode="adminSettings" onclick="navigateTo('adminSettings')">
+      <i class="fas fa-cog"></i> Pengaturan
     </div>
   </nav>
 
@@ -437,6 +446,35 @@
       <div id="statusResultGuru" style="margin-top:10px;"></div>
     </div>
 
+        <div id="panelAdminSettings" class="panel hidden">
+      <h3><i class="fas fa-cog"></i> Pengaturan</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:20px;">
+        <div style="background:#f8f9fa; padding:16px; border-radius:12px;">
+          <h4 style="color:#1a237e; margin-bottom:12px;"><i class="fas fa-clock"></i> Waktu Operasional</h4>
+          <div class="row" style="gap:8px;">
+            <div><label>Jam Buka Masuk</label><input type="time" id="setJamBukaMasuk" value="06:00"></div>
+            <div><label>Batas Tepat Waktu</label><input type="time" id="setBatasTepat" value="07:30"></div>
+            <div><label>Batas Scan Masuk</label><input type="time" id="setBatasScan" value="08:30"></div>
+            <div><label>Jam Buka Sesi 2</label><input type="time" id="setJamBukaSesi2" value="12:00"></div>
+            <div><label>Batas Tepat Sesi2</label><input type="time" id="setBatasTepatSesi2" value="12:30"></div>
+            <div><label>Batas Scan Sesi2</label><input type="time" id="setBatasScanSesi2" value="12:40"></div>
+            <div><label>Jam Buka Pulang</label><input type="time" id="setJamBukaPulang" value="14:00"></div>
+            <div><label>Batas Pulang Tepat</label><input type="time" id="setBatasPulangTepat" value="14:30"></div>
+            <div><label>Jam Tutup Pulang</label><input type="time" id="setJamTutupPulang" value="17:00"></div>
+          </div>
+          <button class="btn-primary" onclick="simpanPengaturanWaktu()" style="margin-top:12px;"><i class="fas fa-save"></i> Simpan Waktu</button>
+          <div id="statusWaktu" style="margin-top:10px;"></div>
+        </div>
+        <div style="background:#f8f9fa; padding:16px; border-radius:12px;">
+          <h4 style="color:#1a237e; margin-bottom:12px;"><i class="fas fa-key"></i> Ganti PIN</h4>
+          <div><label>PIN Guru Baru</label><input type="password" id="newPinGuru" placeholder="PIN baru 4 digit"></div>
+          <div><label>PIN Admin Baru</label><input type="password" id="newPinAdmin" placeholder="PIN baru 4 digit"></div>
+          <button class="btn-purple" onclick="simpanPinBaru()" style="margin-top:12px;"><i class="fas fa-save"></i> Simpan PIN</button>
+          <div id="statusPin" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -446,10 +484,9 @@
 
   <script>
   // ===== KONFIGURASI =====
-  // GANTI URL INI DENGAN URL WEB APP ANDA
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxY86Gf5wzX5mywbG-3R6VIZurplfdBUlA8YGNFXbyR56XouY9WkkpzxtjIvpU3b7sWWA/exec";
-  const PIN_GURU = "1234";
-  const PIN_ADMIN = "9999";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzynxMtTZUEVvBhGjm02HVxQjLtV4_wv1mmBGuFZEK4_-d70DGxN2puywkfyjTlWpXN5Q/exec";
+  let PIN_GURU = "1234";
+  let PIN_ADMIN = "9999";
 
   // ===== STATE =====
   let currentMode = 'dashboard';
@@ -491,15 +528,18 @@
     const adminScan = document.querySelector('[data-mode="adminScan"]');
     const adminRekap = document.querySelector('[data-mode="adminRekap"]');
     const adminStatus = document.querySelector('[data-mode="adminStatus"]');
+    const adminSettings = document.querySelector('[data-mode="adminSettings"]');
     
     if (isAdminLoggedIn) {
       adminScan.classList.remove('disabled');
       adminRekap.classList.remove('disabled');
       adminStatus.classList.remove('disabled');
+      adminSettings.classList.remove('disabled');
     } else {
       adminScan.classList.add('disabled');
       adminRekap.classList.add('disabled');
       adminStatus.classList.add('disabled');
+      adminSettings.classList.add('disabled');
     }
   }
 
@@ -521,7 +561,8 @@
       'guru': 'panelGuru', 'guruScan': 'panelGuruScan',
       'guruRekap': 'panelGuruRekap', 'guruStatus': 'panelGuruStatus',
       'admin': 'panelAdmin', 'adminScan': 'panelAdminScan',
-      'adminRekap': 'panelAdminRekap', 'adminStatus': 'panelAdminStatus'
+      'adminRekap': 'panelAdminRekap', 'adminStatus': 'panelAdminStatus',
+      'adminSettings': 'panelAdminSettings'
     };
     const panelId = panelMap[mode] || 'panelDashboard';
     document.getElementById(panelId)?.classList.remove('hidden');
@@ -531,12 +572,14 @@
       'guru': '👨‍🏫 Login Guru', 'guruScan': '📷 Scan Siswa',
       'guruRekap': '📊 Rekap Siswa', 'guruStatus': '📝 Izin/Sakit Siswa',
       'admin': '👔 Login Admin', 'adminScan': '📷 Scan Guru',
-      'adminRekap': '📊 Rekap Guru', 'adminStatus': '📝 Izin/Sakit Guru'
+      'adminRekap': '📊 Rekap Guru', 'adminStatus': '📝 Izin/Sakit Guru',
+      'adminSettings': '⚙️ Pengaturan'
     };
     modeBadge.textContent = labelMap[mode] || 'Dashboard';
 
     if (mode === 'dashboard') refreshDashboard();
     if (mode === 'guruRekap') setRekapMode(rekapMode);
+    if (mode === 'adminSettings') loadPengaturan();
     currentMode = mode;
   }
 
@@ -708,6 +751,7 @@
       document.getElementById('adminPin').focus();
     }
   }
+  
   function startCamera() {
     if (isScanning) return;
     const reader = document.getElementById('reader');
@@ -715,7 +759,7 @@
     if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 15, qrbox: { width: 250, height: 250 } },
+      { fps: 30, qrbox: { width: 250, height: 250 } },
       onScanSuccess,
       onScanFailure
     ).then(() => {
@@ -764,7 +808,7 @@
         setTimeout(() => {
           isProcessing = false;
           if (isScanning) { try { html5QrCode.resume(); } catch(e) {} }
-        }, 2000);
+        }, 500);
       });
 
     if (isScanning) { try { html5QrCode.pause(); } catch(e) {} }
@@ -779,7 +823,7 @@
     if (!html5QrCodeAdmin) html5QrCodeAdmin = new Html5Qrcode("readerAdmin");
     html5QrCodeAdmin.start(
       { facingMode: "environment" },
-      { fps: 15, qrbox: { width: 250, height: 250 } },
+      { fps: 30, qrbox: { width: 250, height: 250 } },
       onScanSuccessAdmin,
       onScanFailureAdmin
     ).then(() => {
@@ -828,7 +872,7 @@
         setTimeout(() => {
           isProcessingAdmin = false;
           if (isScanningAdmin) { try { html5QrCodeAdmin.resume(); } catch(e) {} }
-        }, 2000);
+        }, 500);
       });
 
     if (isScanningAdmin) { try { html5QrCodeAdmin.pause(); } catch(e) {} }
@@ -909,6 +953,84 @@
       }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
   }
 
+  // ===== PENGATURAN =====
+  function loadPengaturan() {
+    const waktuFields = ['setJamBukaMasuk','setBatasTepat','setBatasScan','setJamBukaSesi2',
+                         'setBatasTepatSesi2','setBatasScanSesi2','setJamBukaPulang',
+                         'setBatasPulangTepat','setJamTutupPulang'];
+    fetch(`${SCRIPT_URL}?action=getSettings`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.data) {
+          waktuFields.forEach(f => {
+            const el = document.getElementById(f);
+            if (el && data.data[el.id.replace('set','')]) {
+              el.value = data.data[el.id.replace('set','')];
+            }
+          });
+        }
+      }).catch(() => {});
+  }
+
+  function simpanPengaturanWaktu() {
+    const statusDiv = document.getElementById('statusWaktu');
+    statusDiv.innerHTML = '⏳ Menyimpan...';
+    const params = new URLSearchParams();
+    const fields = ['setJamBukaMasuk','setBatasTepat','setBatasScan','setJamBukaSesi2',
+                    'setBatasTepatSesi2','setBatasScanSesi2','setJamBukaPulang',
+                    'setBatasPulangTepat','setJamTutupPulang'];
+    fields.forEach(f => {
+      const el = document.getElementById(f);
+      if (el) params.append(f.replace('set',''), el.value);
+    });
+    params.append('action', 'updateSettings');
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    }).then(r => r.json()).then(data => {
+      if (data.success) {
+        statusDiv.innerHTML = `<span style="color:green;">✅ ${data.message}</span>`;
+      } else {
+        statusDiv.innerHTML = `<span style="color:red;">❌ ${data.message}</span>`;
+      }
+    }).catch(e => statusDiv.innerHTML = `<span style="color:red;">❌ Error: ${e.message}</span>`);
+  }
+
+  function simpanPinBaru() {
+    const statusDiv = document.getElementById('statusPin');
+    const newPinGuru = document.getElementById('newPinGuru').value.trim();
+    const newPinAdmin = document.getElementById('newPinAdmin').value.trim();
+    if (newPinGuru && (newPinGuru.length !== 4 || isNaN(newPinGuru))) {
+      statusDiv.innerHTML = '<span style="color:red;">❌ PIN Guru harus 4 digit angka!</span>';
+      return;
+    }
+    if (newPinAdmin && (newPinAdmin.length !== 4 || isNaN(newPinAdmin))) {
+      statusDiv.innerHTML = '<span style="color:red;">❌ PIN Admin harus 4 digit angka!</span>';
+      return;
+    }
+    statusDiv.innerHTML = '⏳ Menyimpan...';
+    const params = new URLSearchParams();
+    params.append('action', 'updatePin');
+    if (newPinGuru) params.append('pinGuru', newPinGuru);
+    if (newPinAdmin) params.append('pinAdmin', newPinAdmin);
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    }).then(r => r.json()).then(data => {
+      if (data.success) {
+        if (newPinGuru) PIN_GURU = newPinGuru;
+        if (newPinAdmin) PIN_ADMIN = newPinAdmin;
+        statusDiv.innerHTML = `<span style="color:green;">✅ ${data.message}</span>`;
+        document.getElementById('newPinGuru').value = '';
+        document.getElementById('newPinAdmin').value = '';
+      } else {
+        statusDiv.innerHTML = `<span style="color:red;">❌ ${data.message}</span>`;
+      }
+    }).catch(e => statusDiv.innerHTML = `<span style="color:red;">❌ Error: ${e.message}</span>`);
+  }
+
   // ===== INIT =====
   const todayStr = new Date().toISOString().split('T')[0];
   document.getElementById('ortuTglAwal').value = todayStr;
@@ -944,4 +1066,3 @@
 </script>
 </body>
 </html>
-    
