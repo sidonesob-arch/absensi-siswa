@@ -7,6 +7,7 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* CSS SAMA SEPERTI SEBELUMNYA - TIDAK DIUBAH */
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background: #f0f2f5; display: flex; flex-direction: column; min-height: 100vh; }
 
@@ -725,9 +726,12 @@
 
   <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKkBwy8A1JBHgnjPLzJhoRA3Cleh4UN_apS_m3cSb6vT-9Ep9c_EkBdE6DnRodqT9CxQ/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3285Zc2u_jnNapMl2pOMkGean77phHdxJ8RHuiE5pJtVme4YcxhBXEohcBhQfgM5k7A/exec";
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
+  
+  // Cache pengaturan untuk digunakan di dashboard
+  let cachedSettings = null;
 
   // ===== STATE =====
   let currentMode = 'dashboard';
@@ -765,35 +769,63 @@
     const h = now.getHours();
     const m = now.getMinutes();
     
+    // Gunakan cached settings jika ada
+    const s = cachedSettings || {};
+    
+    // Tentukan status berdasarkan waktu
     let statusText = '⏳ Belum Waktu Scan';
     let statusClass = 'value';
     
-    if (h >= 6 && h < 7 || (h === 7 && m <= 30)) {
-      statusText = '✅ Waktu Masuk Tepat (06:00-07:30)';
+    // Gunakan nilai dari settings jika tersedia
+    const jamBukaMasuk = s.JamBukaMasuk || '06:00';
+    const batasTepatWaktu = s.BatasTepatWaktu || '07:30';
+    const batasScanMasuk = s.BatasScanMasuk || '08:30';
+    const jamBukaSesi2 = s.JamBukaSesi2 || '12:00';
+    const batasTepatWaktuSesi2 = s.BatasTepatWaktuSesi2 || '12:30';
+    const batasScanSesi2 = s.BatasScanSesi2 || '12:40';
+    const jamBukaPulang = s.JamBukaPulang || '14:00';
+    const batasPulangTepat = s.BatasPulangTepat || '14:30';
+    const jamTutupPulang = s.JamTutupPulang || '17:00';
+    
+    // Update display batas waktu
+    document.getElementById('batasMasukTepat').textContent = `${jamBukaMasuk} – ${batasTepatWaktu}`;
+    document.getElementById('batasMasukTerlambat').textContent = `${batasTepatWaktu} – ${batasScanMasuk}`;
+    document.getElementById('batasScanDitolak').textContent = `${batasScanMasuk} – ${jamBukaSesi2}`;
+    document.getElementById('batasPulangTepat').textContent = `${jamBukaPulang} – ${batasPulangTepat}`;
+    document.getElementById('batasPulangTerlambat').textContent = `${batasPulangTepat} – ${jamTutupPulang}`;
+    document.getElementById('scanSesi2').textContent = `${jamBukaSesi2} – ${batasTepatWaktuSesi2}`;
+    document.getElementById('scanSesi2Terlambat').textContent = `${batasTepatWaktuSesi2} – ${batasScanSesi2}`;
+    document.getElementById('scanSesi2Ditolak').textContent = `${batasScanSesi2} – ${jamBukaPulang}`;
+    
+    // Tentukan status berdasarkan waktu dengan setting yang ada
+    const timeStr = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+    
+    if (timeStr >= jamBukaMasuk && timeStr < batasTepatWaktu) {
+      statusText = `✅ Waktu Masuk Tepat (${jamBukaMasuk}-${batasTepatWaktu})`;
       statusClass = 'value active';
-    } else if (h >= 7 && h < 8 || (h === 8 && m <= 30)) {
-      statusText = '⚠️ Terlambat (07:30-08:30)';
+    } else if (timeStr >= batasTepatWaktu && timeStr < batasScanMasuk) {
+      statusText = `⚠️ Terlambat (${batasTepatWaktu}-${batasScanMasuk})`;
       statusClass = 'value warning';
-    } else if (h >= 8 && h < 12 || (h === 12 && m === 0)) {
-      statusText = '🚫 Scan Ditolak (08:30-12:00)';
+    } else if (timeStr >= batasScanMasuk && timeStr < jamBukaSesi2) {
+      statusText = `🚫 Scan Ditolak (${batasScanMasuk}-${jamBukaSesi2})`;
       statusClass = 'value danger';
-    } else if (h >= 12 && h < 12 || (h === 12 && m >= 0 && m <= 30)) {
-      statusText = '📥 Sesi 2 (12:00-12:30)';
+    } else if (timeStr >= jamBukaSesi2 && timeStr < batasTepatWaktuSesi2) {
+      statusText = `📥 Sesi 2 (${jamBukaSesi2}-${batasTepatWaktuSesi2})`;
       statusClass = 'value active';
-    } else if (h >= 12 && h < 12 || (h === 12 && m > 30 && m <= 40)) {
-      statusText = '⚠️ Terlambat Sesi 2 (12:30-12:40)';
+    } else if (timeStr >= batasTepatWaktuSesi2 && timeStr < batasScanSesi2) {
+      statusText = `⚠️ Terlambat Sesi 2 (${batasTepatWaktuSesi2}-${batasScanSesi2})`;
       statusClass = 'value warning';
-    } else if (h >= 12 && h < 14 || (h === 14 && m === 0)) {
-      statusText = '🚫 Scan Ditolak (12:40-14:00)';
+    } else if (timeStr >= batasScanSesi2 && timeStr < jamBukaPulang) {
+      statusText = `🚫 Scan Ditolak (${batasScanSesi2}-${jamBukaPulang})`;
       statusClass = 'value danger';
-    } else if (h >= 14 && h < 14 || (h === 14 && m >= 0 && m <= 30)) {
-      statusText = '📤 Pulang Tepat (14:00-14:30)';
+    } else if (timeStr >= jamBukaPulang && timeStr < batasPulangTepat) {
+      statusText = `📤 Pulang Tepat (${jamBukaPulang}-${batasPulangTepat})`;
       statusClass = 'value active';
-    } else if (h >= 14 && h < 17 || (h === 17 && m === 0)) {
-      statusText = '📤 Pulang Terlambat (14:30-17:00)';
+    } else if (timeStr >= batasPulangTepat && timeStr < jamTutupPulang) {
+      statusText = `📤 Pulang Terlambat (${batasPulangTepat}-${jamTutupPulang})`;
       statusClass = 'value warning';
-    } else if (h >= 17) {
-      statusText = '🌙 Selesai (Lewat 17:00)';
+    } else if (timeStr >= jamTutupPulang) {
+      statusText = `🌙 Selesai (Lewat ${jamTutupPulang})`;
       statusClass = 'value';
     }
     
@@ -875,10 +907,34 @@
     };
     modeBadge.textContent = labelMap[mode] || 'Dashboard';
 
-    if (mode === 'dashboard') refreshDashboard();
+    if (mode === 'dashboard') {
+      // Load settings dulu sebelum refresh dashboard
+      loadSettingsForDashboard();
+    }
     if (mode === 'guruRekap') setRekapMode(rekapMode);
     if (mode === 'adminSettings') loadSettingsData();
     currentMode = mode;
+  }
+
+  // ===== LOAD SETTINGS UNTUK DASHBOARD =====
+  function loadSettingsForDashboard() {
+    fetch(`${SCRIPT_URL}?action=getSettings`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          cachedSettings = data.data;
+          // Update PIN global
+          PIN_GURU = data.data.PIN_GURU || '1234';
+          PIN_ADMIN = data.data.PIN_ADMIN || '9999';
+          // Update operational info
+          updateOperationalInfo(new Date());
+        }
+        // Refresh dashboard stats
+        refreshDashboard();
+      })
+      .catch(() => {
+        refreshDashboard();
+      });
   }
 
   // ===== REFRESH DASHBOARD =====
@@ -1295,6 +1351,9 @@
 
         const s = data.data;
         
+        // Update cached settings
+        cachedSettings = s;
+        
         // Update PIN global
         PIN_GURU = s.PIN_GURU || '1234';
         PIN_ADMIN = s.PIN_ADMIN || '9999';
@@ -1330,7 +1389,7 @@
         }
 
         // Update info operasional di dashboard
-        updateOperationalInfoBatas(s);
+        updateOperationalInfo(new Date());
 
         result.innerHTML = `<p style="color:green;">✅ Pengaturan berhasil dimuat dari Google Sheet</p>`;
         showToast('✅ Pengaturan berhasil dimuat!', 'success');
@@ -1341,26 +1400,6 @@
         result.innerHTML = `<p style="color:red;">❌ Error: ${e.message}</p>`;
         showToast('❌ Gagal memuat pengaturan!', 'error');
       });
-  }
-
-  function updateOperationalInfoBatas(s) {
-    const map = {
-      'batasMasukTepat': { start: 'JamBukaMasuk', end: 'BatasTepatWaktu' },
-      'batasMasukTerlambat': { start: 'BatasTepatWaktu', end: 'BatasScanMasuk' },
-      'batasScanDitolak': { start: 'BatasScanMasuk', end: 'JamBukaSesi2' },
-      'batasPulangTepat': { start: 'JamBukaPulang', end: 'BatasPulangTepat' },
-      'batasPulangTerlambat': { start: 'BatasPulangTepat', end: 'JamTutupPulang' },
-      'scanSesi2': { start: 'JamBukaSesi2', end: 'BatasTepatWaktuSesi2' },
-      'scanSesi2Terlambat': { start: 'BatasTepatWaktuSesi2', end: 'BatasScanSesi2' },
-      'scanSesi2Ditolak': { start: 'BatasScanSesi2', end: 'JamBukaPulang' }
-    };
-
-    Object.keys(map).forEach(id => {
-      const el = document.getElementById(id);
-      if (el && s[map[id].start] && s[map[id].end]) {
-        el.textContent = `${s[map[id].start]} – ${s[map[id].end]}`;
-      }
-    });
   }
 
   function saveSettings() {
@@ -1395,6 +1434,7 @@
         hasChanges = true;
       } else {
         result.innerHTML = `<p style="color:red;">❌ PIN Guru harus 4 digit angka!</p>`;
+        showToast('❌ PIN Guru harus 4 digit angka!', 'error');
         return;
       }
     }
@@ -1404,12 +1444,14 @@
         hasChanges = true;
       } else {
         result.innerHTML = `<p style="color:red;">❌ PIN Admin harus 4 digit angka!</p>`;
+        showToast('❌ PIN Admin harus 4 digit angka!', 'error');
         return;
       }
     }
 
     if (!hasChanges) {
       result.innerHTML = `<p style="color:orange;">⚠️ Tidak ada perubahan yang disimpan.</p>`;
+      showToast('⚠️ Tidak ada perubahan', 'warning');
       return;
     }
 
@@ -1423,6 +1465,15 @@
       if (data.success) {
         result.innerHTML = `<p style="color:green;">✅ ${data.message}</p>`;
         showToast(`✅ ${data.message}`, 'success');
+        
+        // Update cached settings dengan data terbaru dari response
+        if (data.data) {
+          cachedSettings = data.data;
+          PIN_GURU = data.data.PIN_GURU || '1234';
+          PIN_ADMIN = data.data.PIN_ADMIN || '9999';
+          updateOperationalInfo(new Date());
+        }
+        
         // Reload data setelah save
         setTimeout(loadSettingsData, 1000);
       } else {
@@ -1451,10 +1502,14 @@
   document.getElementById('guruTglAkhirRange').value = todayStr;
 
   updateMenuState();
-  navigateTo('dashboard');
+  
+  // Load settings first, then navigate to dashboard
+  loadSettingsForDashboard();
 
   setInterval(() => {
-    if (currentMode === 'dashboard') refreshDashboard();
+    if (currentMode === 'dashboard') {
+      loadSettingsForDashboard();
+    }
   }, 60000);
 
   document.addEventListener('click', function(e) {
