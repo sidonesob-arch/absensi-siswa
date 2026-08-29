@@ -439,6 +439,11 @@
     <main class="main-content" id="mainContent">
             <!-- ===== DASHBOARD ===== -->
       <div id="panelDashboard">
+
+        <!-- ===== INFO LIBUR ===== -->
+      <div id="infoLiburPanel" style="display:none; background:#fff3e0; border-radius:12px; padding:16px 20px; margin-bottom:20px; border-left:4px solid #ff6f00;">
+        <h3 style="color:#e65100;margin:0;"><i class="fas fa-calendar-times"></i> <span id="infoLiburText">📅 Hari ini adalah hari libur</span></h3>
+      </div>
         <!-- STATISTIK -->
         <div class="stats-grid-wrapper" id="statsWrapper">
           <!-- KIRI: SISWA -->
@@ -902,7 +907,7 @@
 
     <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3xDv3TECZIXsUQYZl0RLYinct9K5wgtWg3Wqid3l_SI8uNmcEIqtV9YqQ5eZl8AwAug/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6ArHchZhZND9wfjb3yHH2STt1YoS0UkcGbCiBRPyhoecqR_1kLuP5Ib4emcQBuO1RSg/exec";
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
   let cachedSettings = null;
@@ -1059,102 +1064,127 @@
 
 // ===== SHOW LIBUR INFO =====
 function showLiburInfo(keterangan) {
+  console.log('📢 showLiburInfo dipanggil:', keterangan);
   const panel = document.getElementById('infoLiburPanel');
   const text = document.getElementById('infoLiburText');
+  
+  if (!panel || !text) {
+    console.error('❌ Element infoLiburPanel atau infoLiburText tidak ditemukan!');
+    return;
+  }
+  
   if (keterangan) {
     panel.style.display = 'block';
     text.textContent = `📅 Hari ini libur (${keterangan}) - Tidak ada aktivitas absensi`;
+    console.log('✅ Panel libur ditampilkan');
   } else {
     panel.style.display = 'none';
+    console.log('✅ Panel libur disembunyikan');
   }
 }
   
 // ===== REFRESH DASHBOARD =====
 function refreshDashboard() {
+  console.log('🔄 Refresh dashboard dimulai...');
+  
   fetch(`${SCRIPT_URL}?action=getDashboardStats`)
     .then(r => r.json())
     .then(data => {
-      if (data.success) {
-        // CEK APAKAH HARI LIBUR
-        if (data.data.isLibur) {
-          // Tampilkan panel libur
-          showLiburInfo(data.data.keteranganLibur);
-          
-          // Tampilkan pesan libur di rekap
-          document.getElementById('rekapSiswaCepat').innerHTML = 
-            `<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">
-              📅 Hari ini libur (${data.data.keteranganLibur || 'Libur'}) - Tidak ada aktivitas absensi
-            </p>`;
-          document.getElementById('rekapGuruCepat').innerHTML = 
-            `<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">
-              📅 Hari ini libur (${data.data.keteranganLibur || 'Libur'}) - Tidak ada aktivitas absensi
-            </p>`;
-          
-          // Total tetap ditampilkan
-          document.getElementById('statSiswa').textContent = data.data.totalSiswa || 0;
-          document.getElementById('totalSiswaBadge').textContent = data.data.totalSiswa || 0;
-          document.getElementById('statGuru').textContent = data.data.totalGuru || 0;
-          document.getElementById('totalGuruBadge').textContent = data.data.totalGuru || 0;
-          
-          // Stats siswa jadi 0
-          document.getElementById('statHadir').textContent = '0';
-          document.getElementById('statTerlambat').textContent = '0';
-          document.getElementById('statSakit').textContent = '0';
-          document.getElementById('statIzin').textContent = '0';
-          document.getElementById('statAlpa').textContent = '0';
-          document.getElementById('statBolos').textContent = '0';
-          
-          // Stats guru jadi 0
-          document.getElementById('statHadirGuru').textContent = '0';
-          document.getElementById('statTerlambatGuru').textContent = '0';
-          document.getElementById('statSakitGuru').textContent = '0';
-          document.getElementById('statIzinGuru').textContent = '0';
-          document.getElementById('statAlpaGuru').textContent = '0';
-          document.getElementById('statBolosGuru').textContent = '0';
-          
-          // Kosongkan rekap data untuk export
-          currentRekapData = { siswa: [], guru: [] };
-          return; // Keluar dari fungsi
-        }
+      console.log('📊 Data dashboard:', data);
+      
+      if (!data.success) {
+        console.error('❌ Gagal mendapatkan data:', data.message);
+        showToast('❌ Gagal memuat data dashboard!', 'error');
+        return;
+      }
+      
+      // CEK APAKAH HARI LIBUR
+      if (data.data.isLibur) {
+        console.log('📅 Hari ini libur:', data.data.keteranganLibur);
         
-        // ===== BUKAN HARI LIBUR =====
-        // Sembunyikan panel libur
-        showLiburInfo(null);
+        // Tampilkan panel libur
+        showLiburInfo(data.data.keteranganLibur);
         
-        // Total
+        // Tampilkan pesan libur di rekap
+        document.getElementById('rekapSiswaCepat').innerHTML = 
+          `<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">
+            📅 Hari ini libur (${data.data.keteranganLibur || 'Libur'}) - Tidak ada aktivitas absensi
+          </p>`;
+        document.getElementById('rekapGuruCepat').innerHTML = 
+          `<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">
+            📅 Hari ini libur (${data.data.keteranganLibur || 'Libur'}) - Tidak ada aktivitas absensi
+          </p>`;
+        
+        // Total tetap ditampilkan
         document.getElementById('statSiswa').textContent = data.data.totalSiswa || 0;
         document.getElementById('totalSiswaBadge').textContent = data.data.totalSiswa || 0;
         document.getElementById('statGuru').textContent = data.data.totalGuru || 0;
         document.getElementById('totalGuruBadge').textContent = data.data.totalGuru || 0;
         
-        // Siswa stats
-        document.getElementById('statHadir').textContent = data.data.hadir || 0;
-        document.getElementById('statTerlambat').textContent = data.data.terlambat || 0;
-        document.getElementById('statSakit').textContent = data.data.sakit || 0;
-        document.getElementById('statIzin').textContent = data.data.izin || 0;
-        document.getElementById('statAlpa').textContent = data.data.alpa || 0;
-        document.getElementById('statBolos').textContent = data.data.bolos || 0;
+        // Stats siswa jadi 0
+        document.getElementById('statHadir').textContent = '0';
+        document.getElementById('statTerlambat').textContent = '0';
+        document.getElementById('statSakit').textContent = '0';
+        document.getElementById('statIzin').textContent = '0';
+        document.getElementById('statAlpa').textContent = '0';
+        document.getElementById('statBolos').textContent = '0';
         
-        // Guru stats
-        document.getElementById('statHadirGuru').textContent = data.data.hadirGuru || 0;
-        document.getElementById('statTerlambatGuru').textContent = data.data.terlambatGuru || 0;
-        document.getElementById('statSakitGuru').textContent = data.data.sakitGuru || 0;
-        document.getElementById('statIzinGuru').textContent = data.data.izinGuru || 0;
-        document.getElementById('statAlpaGuru').textContent = data.data.alpaGuru || 0;
-        document.getElementById('statBolosGuru').textContent = '0'; // Tidak ada bolos untuk guru
-
-        // Rekap Siswa
-        renderRekapSiswa(data.data.rekapSiswaHariIni);
-        // Rekap Guru
-        renderRekapGuru(data.data.rekapGuruHariIni);
+        // Stats guru jadi 0
+        document.getElementById('statHadirGuru').textContent = '0';
+        document.getElementById('statTerlambatGuru').textContent = '0';
+        document.getElementById('statSakitGuru').textContent = '0';
+        document.getElementById('statIzinGuru').textContent = '0';
+        document.getElementById('statAlpaGuru').textContent = '0';
+        document.getElementById('statBolosGuru').textContent = '0';
         
-        // Store for export
-        currentRekapData = {
-          siswa: data.data.rekapSiswaHariIni || [],
-          guru: data.data.rekapGuruHariIni || []
-        };
+        currentRekapData = { siswa: [], guru: [] };
+        return;
       }
-    }).catch(() => {});
+      
+      // ===== BUKAN HARI LIBUR =====
+      console.log('📅 Hari ini BUKAN libur');
+      showLiburInfo(null);
+      
+      // Total
+      document.getElementById('statSiswa').textContent = data.data.totalSiswa || 0;
+      document.getElementById('totalSiswaBadge').textContent = data.data.totalSiswa || 0;
+      document.getElementById('statGuru').textContent = data.data.totalGuru || 0;
+      document.getElementById('totalGuruBadge').textContent = data.data.totalGuru || 0;
+      
+      // Siswa stats
+      document.getElementById('statHadir').textContent = data.data.hadir || 0;
+      document.getElementById('statTerlambat').textContent = data.data.terlambat || 0;
+      document.getElementById('statSakit').textContent = data.data.sakit || 0;
+      document.getElementById('statIzin').textContent = data.data.izin || 0;
+      document.getElementById('statAlpa').textContent = data.data.alpa || 0;
+      document.getElementById('statBolos').textContent = data.data.bolos || 0;
+      
+      // Guru stats
+      document.getElementById('statHadirGuru').textContent = data.data.hadirGuru || 0;
+      document.getElementById('statTerlambatGuru').textContent = data.data.terlambatGuru || 0;
+      document.getElementById('statSakitGuru').textContent = data.data.sakitGuru || 0;
+      document.getElementById('statIzinGuru').textContent = data.data.izinGuru || 0;
+      document.getElementById('statAlpaGuru').textContent = data.data.alpaGuru || 0;
+      document.getElementById('statBolosGuru').textContent = '0';
+
+      // Rekap Siswa
+      if (data.data.rekapSiswaHariIni) {
+        renderRekapSiswa(data.data.rekapSiswaHariIni);
+      }
+      // Rekap Guru
+      if (data.data.rekapGuruHariIni) {
+        renderRekapGuru(data.data.rekapGuruHariIni);
+      }
+      
+      currentRekapData = {
+        siswa: data.data.rekapSiswaHariIni || [],
+        guru: data.data.rekapGuruHariIni || []
+      };
+    })
+    .catch(err => {
+      console.error('❌ Error fetch dashboard:', err);
+      showToast('❌ Gagal menghubungi server!', 'error');
+    });
 }
 
   function getBadgeClass(status) {
