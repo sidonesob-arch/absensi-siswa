@@ -905,7 +905,7 @@
 
     <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfJCC5TYEASR_L9omhD3ojAuNI90-53D_7AwatEGjvyISKhRKjA6RefsFLhvgD6WvIUw/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoN3oywLXDP0URftVhY3s46Ug9kybfJvW1sSwDchHrkEN23APNBktTRY6RIcC6B8G0Fw/exec";
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
   let cachedSettings = null;
@@ -1000,34 +1000,23 @@
   }
 
   // ===== SHOW LIBUR INFO =====
-  function showLiburInfoOtomatis() {
-      var panel = document.getElementById('infoLiburPanel');
-      var text = document.getElementById('infoLiburText');
-      if (!panel || !text) return;
-
-      // Masukkan URL Web App Google Apps Script Anda di sini dengan action tambahan
-      var urlAppsScript = "https://google.com"; 
-
-      fetch(urlAppsScript)
-          .then(response => response.json())
-          .then(data => {
-              if (data.isLibur) {
-                  // Panel muncul otomatis jika Sabtu, Minggu, atau tanggal merah di Google Sheet
-                  panel.style.display = 'block';
-                  text.textContent = data.tanggal + ' Hari ini libur (' + data.keterangan + ') - Tidak ada aktivitas absensi';
-              } else {
-                  // Sembunyikan panel jika hari sekolah/kerja biasa
-                  panel.style.display = 'none';
-              }
-          })
-          .catch(error => {
-              console.error("Gagal mengambil status hari libur:", error);
-          });
+  function showLiburInfo(keterangan) {
+    var panel = document.getElementById('infoLiburPanel');
+    var text = document.getElementById('infoLiburText');
+    if (!panel || !text) return;
+    
+    if (keterangan) {
+        panel.style.display = 'block';
+        
+        // Membuat penanggalan otomatis hari ini dengan format lokal Indonesia
+        var tanggalHariIni = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        // Menggabungkan tanggal otomatis menggantikan simbol kalender lama
+        text.textContent = tanggalHariIni + ' Hari ini libur (' + keterangan + ') - Tidak ada aktivitas absensi';
+    } else {
+        panel.style.display = 'none';
+    }
   }
-
-  // Panggil fungsi ini agar langsung mengecek ke Google Script saat web dibuka
-  showLiburInfoOtomatis();
-
 
   // ===== TOGGLE SIDEBAR =====
   function toggleSidebar() {
@@ -1207,16 +1196,23 @@
         if (data.success) {
           // CEK APAKAH HARI LIBUR
           if (data.data.isLibur) {
-            showLiburInfo(data.data.keteranganLibur);
-            
-            document.getElementById('rekapSiswaCepat').innerHTML =
-              '<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">' +
-              '📅 Hari ini libur (' + (data.data.keteranganLibur || 'Libur') + ') - Tidak ada aktivitas absensi' +
-              '</p>';
-            document.getElementById('rekapGuruCepat').innerHTML =
-              '<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">' +
-              '📅 Hari ini libur (' + (data.data.keteranganLibur || 'Libur') + ') - Tidak ada aktivitas absensi' +
-              '</p>';
+          showLiburInfo(data.data.keteranganLibur);
+
+          // >>> TAMBAHKAN BARIS INI UNTUK TANGGAL OTOMATIS <<<
+          var tanggalHariIni = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+          var ketLibur = data.data.keteranganLibur || 'Libur';
+
+          document.getElementById('rekapSiswaCepat').innerHTML =
+            '<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">' +
+            tanggalHariIni + ' Hari ini libur (' + ketLibur + ') - Tidak ada aktivitas absensi' +
+            '</p>';
+
+          document.getElementById('rekapGuruCepat').innerHTML =
+            '<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">' +
+            tanggalHariIni + ' Hari ini libur (' + ketLibur + ') - Tidak ada aktivitas absensi' +
+            '</p>';
+          }
+
             
             document.getElementById('statSiswa').textContent = data.data.totalSiswa || 0;
             document.getElementById('totalSiswaBadge').textContent = data.data.totalSiswa || 0;
