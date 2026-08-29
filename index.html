@@ -438,7 +438,7 @@
         
         <!-- INFO LIBUR -->
         <div id="infoLiburPanel" style="display:none; background:#fff3e0; border-radius:12px; padding:16px 20px; margin-bottom:20px; border-left:4px solid #ff6f00;">
-          <h3 style="color:#e65100;margin:0;"><i class="fas fa-calendar-times"></i> <span id="infoLiburText">📅 Hari ini adalah hari libur</span></h3>
+          <h3 style="color:#e65100;margin:0;"><i class="fas fa-calendar-times"></i> <span id="infoLiburText">Hari ini adalah hari libur</span></h3>
         </div>
 
         <!-- STATISTIK -->
@@ -905,7 +905,7 @@
 
     <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoN3oywLXDP0URftVhY3s46Ug9kybfJvW1sSwDchHrkEN23APNBktTRY6RIcC6B8G0Fw/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx578aVNGyEcCzxhai7bH0fsIKj5NTfnn5dq0yjmkA3J_FHZAyjo2VnBg5Bf9vBcSIVhg/exec";
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
   let cachedSettings = null;
@@ -1004,17 +1004,11 @@
     var panel = document.getElementById('infoLiburPanel');
     var text = document.getElementById('infoLiburText');
     if (!panel || !text) return;
-    
     if (keterangan) {
-        panel.style.display = 'block';
-        
-        // Membuat penanggalan otomatis hari ini dengan format lokal Indonesia
-        var tanggalHariIni = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
-        
-        // Menggabungkan tanggal otomatis menggantikan simbol kalender lama
-        text.textContent = tanggalHariIni + ' Hari ini libur (' + keterangan + ') - Tidak ada aktivitas absensi';
+      panel.style.display = 'block';
+      text.textContent = 'Hari ini libur (' + keterangan + ') - Tidak ada aktivitas absensi';
     } else {
-        panel.style.display = 'none';
+      panel.style.display = 'none';
     }
   }
 
@@ -1196,23 +1190,16 @@
         if (data.success) {
           // CEK APAKAH HARI LIBUR
           if (data.data.isLibur) {
-          showLiburInfo(data.data.keteranganLibur);
-
-          // >>> TAMBAHKAN BARIS INI UNTUK TANGGAL OTOMATIS <<<
-          var tanggalHariIni = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
-          var ketLibur = data.data.keteranganLibur || 'Libur';
-
-          document.getElementById('rekapSiswaCepat').innerHTML =
-            '<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">' +
-            tanggalHariIni + ' Hari ini libur (' + ketLibur + ') - Tidak ada aktivitas absensi' +
-            '</p>';
-
-          document.getElementById('rekapGuruCepat').innerHTML =
-            '<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">' +
-            tanggalHariIni + ' Hari ini libur (' + ketLibur + ') - Tidak ada aktivitas absensi' +
-            '</p>';
-          }
-
+            showLiburInfo(data.data.keteranganLibur);
+            
+            document.getElementById('rekapSiswaCepat').innerHTML =
+              '<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">' +
+              'Hari ini libur (' + (data.data.keteranganLibur || 'Libur') + ') - Tidak ada aktivitas absensi' +
+              '</p>';
+            document.getElementById('rekapGuruCepat').innerHTML =
+              '<p style="color:#ff6f00;font-weight:600;padding:10px;background:#fff3e0;border-radius:8px;">' +
+              'Hari ini libur (' + (data.data.keteranganLibur || 'Libur') + ') - Tidak ada aktivitas absensi' +
+              '</p>';
             
             document.getElementById('statSiswa').textContent = data.data.totalSiswa || 0;
             document.getElementById('totalSiswaBadge').textContent = data.data.totalSiswa || 0;
