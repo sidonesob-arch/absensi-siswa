@@ -31,7 +31,7 @@
       width: 40px; 
       border-radius: 50%; 
       background: #ffca28; 
-      display: flex; 
+      display: none; 
       align-items: center; 
       justify-content: center; 
       font-size: 18px; 
@@ -81,48 +81,89 @@
 
     .main-content { flex: 1; padding: 24px; overflow-y: auto; background: #f0f2f5; min-height: calc(100vh - 130px); }
 
-    .stats-grid {
+    /* ===== STATS GRID BARU ===== */
+    .stats-grid-wrapper {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
       margin-bottom: 24px;
     }
-    .stat-card {
+    .stats-section {
       background: white;
       border-radius: 12px;
-      padding: 16px 14px;
+      padding: 16px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .stats-section .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a237e;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e8e8e8;
       display: flex;
       align-items: center;
-      gap: 12px;
-      border-left: 5px solid #1a73e8;
+      gap: 8px;
+    }
+    .stats-section .section-title i { font-size: 18px; }
+    .stats-section .section-title .total-badge {
+      background: #1a237e;
+      color: white;
+      padding: 2px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      margin-left: auto;
+    }
+    .stats-grid-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .stats-grid-inner .stat-card {
+      background: #f5f7fb;
+      border-radius: 10px;
+      padding: 12px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 4px solid #1a73e8;
       transition: transform 0.2s;
     }
-    .stat-card:hover { transform: translateY(-2px); }
-    .stat-card .icon { font-size: 24px; color: #1a73e8; width: 40px; text-align: center; flex-shrink: 0; }
-    .stat-card .info h3 { font-size: 18px; margin: 0; }
-    .stat-card .info p { margin: 0; color: #666; font-size: 11px; }
-    .stat-card.orange { border-left-color: #ff6f00; }
-    .stat-card.orange .icon { color: #ff6f00; }
-    .stat-card.green { border-left-color: #2e7d32; }
-    .stat-card.green .icon { color: #2e7d32; }
-    .stat-card.red { border-left-color: #c62828; }
-    .stat-card.red .icon { color: #c62828; }
-    .stat-card.purple { border-left-color: #6a1b9a; }
-    .stat-card.purple .icon { color: #6a1b9a; }
-    .stat-card.teal { border-left-color: #00695c; }
-    .stat-card.teal .icon { color: #00695c; }
-    .stat-card.amber { border-left-color: #f57f17; }
-    .stat-card.amber .icon { color: #f57f17; }
+    .stats-grid-inner .stat-card:hover { transform: translateY(-2px); }
+    .stats-grid-inner .stat-card .icon { font-size: 20px; color: #1a73e8; width: 32px; text-align: center; flex-shrink: 0; }
+    .stats-grid-inner .stat-card .info h4 { font-size: 18px; margin: 0; line-height: 1.2; }
+    .stats-grid-inner .stat-card .info p { margin: 0; color: #666; font-size: 10px; }
+    .stats-grid-inner .stat-card.green { border-left-color: #2e7d32; }
+    .stats-grid-inner .stat-card.green .icon { color: #2e7d32; }
+    .stats-grid-inner .stat-card.orange { border-left-color: #ff6f00; }
+    .stats-grid-inner .stat-card.orange .icon { color: #ff6f00; }
+    .stats-grid-inner .stat-card.red { border-left-color: #c62828; }
+    .stats-grid-inner .stat-card.red .icon { color: #c62828; }
+    .stats-grid-inner .stat-card.purple { border-left-color: #6a1b9a; }
+    .stats-grid-inner .stat-card.purple .icon { color: #6a1b9a; }
+    .stats-grid-inner .stat-card.teal { border-left-color: #00695c; }
+    .stats-grid-inner .stat-card.teal .icon { color: #00695c; }
+    .stats-grid-inner .stat-card.amber { border-left-color: #f57f17; }
+    .stats-grid-inner .stat-card.amber .icon { color: #f57f17; }
+    .stats-section .total-card {
+      background: #1a237e;
+      color: white;
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .stats-section .total-card h2 { font-size: 28px; margin: 0; }
+    .stats-section .total-card p { margin: 0; font-size: 13px; opacity: 0.8; }
 
     .panel { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .panel h3 { margin-bottom: 16px; color: #1a237e; display: flex; align-items: center; gap: 10px; }
+    .panel h3 { margin-bottom: 16px; color: #1a237e; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .panel h3 .subtitle { font-size: 13px; font-weight: normal; color: #666; margin-left: 8px; }
     .hidden { display: none !important; }
 
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e8e8e8; }
-    th { background: #f5f7fb; color: #1a237e; font-weight: 600; }
+    th { background: #f5f7fb; color: #1a237e; font-weight: 600; position: sticky; top: 0; z-index: 10; }
     .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
     .badge-success { background: #e8f5e9; color: #1b5e20; }
     .badge-warning { background: #fff8e1; color: #e65100; }
@@ -133,6 +174,34 @@
     .badge-info { background: #e3f2fd; color: #0d47a1; }
     .badge-secondary { background: #f5f5f5; color: #424242; }
     .badge-bolos { background: #f3e5f5; color: #4a148c; }
+
+    /* ===== INFO OPERASIONAL BARU ===== */
+    .info-grid-scan {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .info-scan-box {
+      background: #f5f7fb;
+      padding: 14px 18px;
+      border-radius: 10px;
+      border-left: 4px solid #1a73e8;
+      text-align: center;
+    }
+    .info-scan-box h4 {
+      color: #1a237e;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .info-scan-box .jam-range {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a237e;
+    }
+    .info-scan-box .jam-range.warning { color: #e65100; }
+    .info-scan-box .jam-range.danger { color: #c62828; }
+    .info-scan-box .jam-range.success { color: #2e7d32; }
+    .info-scan-box .label-scan { font-size: 11px; color: #666; margin-top: 4px; }
 
     #reader, #readerAdmin {
       width: 100%;
@@ -164,42 +233,12 @@
     .btn-purple { background: #6a1b9a; color: white; }
     .btn-orange { background: #e65100; color: white; }
     .btn-teal { background: #00695c; color: white; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
 
     input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; margin: 6px 0 12px 0; font-size: 14px; }
     input:focus, select:focus, textarea:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 6px rgba(26,115,232,0.25); }
     .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
     .row > * { flex: 1; min-width: 140px; }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .info-box {
-      background: #f5f7fb;
-      padding: 16px 18px;
-      border-radius: 10px;
-      border-left: 4px solid #1a73e8;
-    }
-    .info-box h4 {
-      color: #1a237e;
-      margin-bottom: 8px;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .info-box .time-list {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px 16px;
-      font-size: 13px;
-    }
-    .info-box .time-list .label { color: #555; }
-    .info-box .time-list .value { font-weight: 600; color: #1a237e; }
-    .info-box .time-list .value.active { color: #2e7d32; }
-    .info-box .time-list .value.warning { color: #e65100; }
-    .info-box .time-list .value.danger { color: #c62828; }
 
     .settings-grid {
       display: grid;
@@ -265,8 +304,22 @@
     .toast.warning { background: #e65100; }
     .toast.info { background: #0d47a1; }
 
+    /* Table wrapper for scroll */
+    .table-wrapper {
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+      border-radius: 8px;
+      border: 1px solid #e8e8e8;
+    }
+    .table-wrapper table { border-collapse: collapse; }
+    .table-wrapper table th { position: sticky; top: 0; z-index: 10; }
+
+    .export-buttons { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+
     @media (max-width: 1024px) {
-      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+      .stats-grid-wrapper { grid-template-columns: 1fr; }
+      .info-grid-scan { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 820px) {
       .sidebar-toggle { display: block; }
@@ -284,14 +337,14 @@
       .topbar .left h2 { font-size: 15px; }
       .topbar .right .clock { font-size: 12px; padding: 4px 12px; }
       .main-content { padding: 14px; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .info-grid { grid-template-columns: 1fr; }
+      .stats-grid-inner { grid-template-columns: 1fr 1fr; }
+      .info-grid-scan { grid-template-columns: 1fr; }
       .settings-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 480px) {
-      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .stats-grid-inner { grid-template-columns: 1fr 1fr; }
       .topbar .left h2 { font-size: 13px; }
-      .info-box .time-list { grid-template-columns: 1fr; }
+      .stats-section .total-card h2 { font-size: 22px; }
     }
 
     .footer {
@@ -315,6 +368,7 @@
     .sidebar::-webkit-scrollbar-thumb { background: #4a5a7a; border-radius: 10px; }
   </style>
 </head>
+
 <body>
 
   <header class="topbar">
@@ -325,7 +379,7 @@
         <h2>SMP NEGERI 1 SOBANG</h2>
         <span>Sistem Absensi Digital</span>
       </div>
-      <div class="admin-photo" id="adminPhoto" title="Admin" style="display:none;">
+      <div class="admin-photo" id="adminPhoto" title="Admin">
         <i class="fas fa-user-shield"></i>
       </div>
     </div>
@@ -383,89 +437,129 @@
     </nav>
 
     <main class="main-content" id="mainContent">
-
-      <!-- DASHBOARD -->
+            <!-- ===== DASHBOARD ===== -->
       <div id="panelDashboard">
-        <div class="stats-grid" id="statsGrid">
-          <div class="stat-card">
-            <div class="icon"><i class="fas fa-user-graduate"></i></div>
-            <div class="info"><h3 id="statSiswa">0</h3><p>Total Siswa</p></div>
+        <!-- STATISTIK -->
+        <div class="stats-grid-wrapper" id="statsWrapper">
+          <!-- KIRI: SISWA -->
+          <div class="stats-section">
+            <div class="section-title">
+              <i class="fas fa-user-graduate"></i> Statistik Siswa
+              <span class="total-badge" id="totalSiswaBadge">0</span>
+            </div>
+            <div class="total-card">
+              <h2 id="statSiswa">0</h2>
+              <p>Total Siswa</p>
+            </div>
+            <div class="stats-grid-inner">
+              <div class="stat-card green">
+                <div class="icon"><i class="fas fa-user-check"></i></div>
+                <div class="info"><h4 id="statHadir">0</h4><p>Hadir</p></div>
+              </div>
+              <div class="stat-card orange">
+                <div class="icon"><i class="fas fa-clock"></i></div>
+                <div class="info"><h4 id="statTerlambat">0</h4><p>Terlambat</p></div>
+              </div>
+              <div class="stat-card teal">
+                <div class="icon"><i class="fas fa-notes-medical"></i></div>
+                <div class="info"><h4 id="statSakit">0</h4><p>Sakit</p></div>
+              </div>
+              <div class="stat-card amber">
+                <div class="icon"><i class="fas fa-file-signature"></i></div>
+                <div class="info"><h4 id="statIzin">0</h4><p>Izin</p></div>
+              </div>
+              <div class="stat-card red">
+                <div class="icon"><i class="fas fa-user-slash"></i></div>
+                <div class="info"><h4 id="statAlpa">0</h4><p>Alpa</p></div>
+              </div>
+              <div class="stat-card purple">
+                <div class="icon"><i class="fas fa-user-times"></i></div>
+                <div class="info"><h4 id="statBolos">0</h4><p>Bolos</p></div>
+              </div>
+            </div>
           </div>
-          <div class="stat-card green">
-            <div class="icon"><i class="fas fa-user-check"></i></div>
-            <div class="info"><h3 id="statHadir">0</h3><p>Hadir Hari Ini</p></div>
-          </div>
-          <div class="stat-card orange">
-            <div class="icon"><i class="fas fa-clock"></i></div>
-            <div class="info"><h3 id="statTerlambat">0</h3><p>Terlambat</p></div>
-          </div>
-          <div class="stat-card red">
-            <div class="icon"><i class="fas fa-user-slash"></i></div>
-            <div class="info"><h3 id="statAlpa">0</h3><p>Alpa</p></div>
-          </div>
-          <div class="stat-card purple">
-            <div class="icon"><i class="fas fa-user-times"></i></div>
-            <div class="info"><h3 id="statBolos">0</h3><p>Bolos</p></div>
-          </div>
-          <div class="stat-card amber">
-            <div class="icon"><i class="fas fa-file-signature"></i></div>
-            <div class="info"><h3 id="statIzin">0</h3><p>Izin</p></div>
-          </div>
-          <div class="stat-card teal">
-            <div class="icon"><i class="fas fa-notes-medical"></i></div>
-            <div class="info"><h3 id="statSakit">0</h3><p>Sakit</p></div>
-          </div>
-          <div class="stat-card">
-            <div class="icon"><i class="fas fa-chalkboard-teacher"></i></div>
-            <div class="info"><h3 id="statGuru">0</h3><p>Total Guru</p></div>
+
+          <!-- KANAN: GURU -->
+          <div class="stats-section">
+            <div class="section-title">
+              <i class="fas fa-chalkboard-teacher"></i> Statistik Guru
+              <span class="total-badge" id="totalGuruBadge">0</span>
+            </div>
+            <div class="total-card">
+              <h2 id="statGuru">0</h2>
+              <p>Total Guru</p>
+            </div>
+            <div class="stats-grid-inner">
+              <div class="stat-card green">
+                <div class="icon"><i class="fas fa-user-check"></i></div>
+                <div class="info"><h4 id="statHadirGuru">0</h4><p>Hadir</p></div>
+              </div>
+              <div class="stat-card orange">
+                <div class="icon"><i class="fas fa-clock"></i></div>
+                <div class="info"><h4 id="statTerlambatGuru">0</h4><p>Terlambat</p></div>
+              </div>
+              <div class="stat-card teal">
+                <div class="icon"><i class="fas fa-notes-medical"></i></div>
+                <div class="info"><h4 id="statSakitGuru">0</h4><p>Sakit</p></div>
+              </div>
+              <div class="stat-card amber">
+                <div class="icon"><i class="fas fa-file-signature"></i></div>
+                <div class="info"><h4 id="statIzinGuru">0</h4><p>Izin</p></div>
+              </div>
+              <div class="stat-card red">
+                <div class="icon"><i class="fas fa-user-slash"></i></div>
+                <div class="info"><h4 id="statAlpaGuru">0</h4><p>Alpa</p></div>
+              </div>
+              <div class="stat-card purple">
+                <div class="icon"><i class="fas fa-user-times"></i></div>
+                <div class="info"><h4 id="statBolosGuru">0</h4><p>Bolos</p></div>
+              </div>
+            </div>
           </div>
         </div>
 
+        <!-- INFORMASI OPERASIONAL -->
         <div class="panel">
-          <h3><i class="fas fa-info-circle" style="color:#1a73e8;"></i> Informasi Operasional</h3>
-          <div class="info-grid">
-            <div class="info-box" style="border-left-color: #1a73e8;">
-              <h4><i class="fas fa-hourglass-start"></i> Batas Scan</h4>
-              <div class="time-list">
-                <span class="label">📥 Masuk Tepat</span>
-                <span class="value" id="batasMasukTepat">06:00 – 07:30</span>
-                <span class="label">⚠️ Masuk Terlambat</span>
-                <span class="value warning" id="batasMasukTerlambat">07:30 – 08:30</span>
-                <span class="label">🚫 Scan Ditolak</span>
-                <span class="value danger" id="batasScanDitolak">08:30 – 12:00</span>
-                <span class="label">📤 Pulang Tepat</span>
-                <span class="value" id="batasPulangTepat">14:00 – 14:30</span>
-                <span class="label">📤 Pulang Terlambat</span>
-                <span class="value warning" id="batasPulangTerlambat">14:30 – 17:00</span>
-              </div>
+          <h3><i class="fas fa-clock" style="color:#1a73e8;"></i> Informasi Operasional Scan</h3>
+          <div class="info-grid-scan">
+            <div class="info-scan-box" style="border-left-color: #2e7d32;">
+              <h4><i class="fas fa-sign-in-alt"></i> Scan Sesi 1</h4>
+              <div class="jam-range success" id="scanSesi1Range">06:00 - 07:30</div>
+              <div class="label-scan">Jam Masuk s.d Batas Tepat Waktu</div>
             </div>
-            <div class="info-box" style="border-left-color: #6a1b9a;">
-              <h4><i class="fas fa-hourglass-half"></i> Scan Berikutnya</h4>
-              <div class="time-list">
-                <span class="label">📥 Sesi 2</span>
-                <span class="value" id="scanSesi2">12:00 – 12:30</span>
-                <span class="label">⚠️ Terlambat Sesi 2</span>
-                <span class="value warning" id="scanSesi2Terlambat">12:30 – 12:40</span>
-                <span class="label">🚫 Scan Ditolak</span>
-                <span class="value danger" id="scanSesi2Ditolak">12:40 – 14:00</span>
-                <span class="label" style="color:#2e7d32;">🟢 Status Saat Ini</span>
-                <span class="value active" id="statusSaatIni">Belum Waktu Scan</span>
-              </div>
+            <div class="info-scan-box" style="border-left-color: #f57f17;">
+              <h4><i class="fas fa-coffee"></i> Scan Sesi 2</h4>
+              <div class="jam-range warning" id="scanSesi2Range">12:00 - 12:30</div>
+              <div class="label-scan">Jam Masuk Istirahat s.d Batas Tepat Istirahat</div>
+            </div>
+            <div class="info-scan-box" style="border-left-color: #1a73e8;">
+              <h4><i class="fas fa-sign-out-alt"></i> Scan Sesi 3</h4>
+              <div class="jam-range" id="scanSesi3Range">14:00 - 17:00</div>
+              <div class="label-scan">Jam Pulang s.d Batas Akhir Pulang</div>
             </div>
           </div>
           <p style="margin-top:12px; font-size:12px; color:#555;">
             <i class="fas fa-info-circle"></i> 
-            Tidak scan sampai 08:30 = <b>Alpa</b> | Tidak scan Sesi 2 setelah 12:40 = <b>Bolos</b>
+            Tidak scan sampai batas sesi = <b>Alpa</b> | Tidak scan Sesi 2 = <b>Bolos</b>
           </p>
         </div>
 
+        <!-- REKAP HARI INI -->
         <div class="panel">
           <h3><i class="fas fa-chart-bar" style="color:#2e7d32;"></i> Rekap Hari Ini</h3>
-          <div id="rekapCepat" style="font-size:14px; color:#555;">⏳ Memuat data...</div>
+          <div id="rekapContainer">
+            <div id="rekapSiswaContainer">
+              <h4 style="color:#1a237e;margin-bottom:8px;"><i class="fas fa-user-graduate"></i> Rekap Siswa</h4>
+              <div id="rekapSiswaCepat" style="font-size:14px; color:#555;">⏳ Memuat data...</div>
+            </div>
+            <div id="rekapGuruContainer" style="margin-top:20px;">
+              <h4 style="color:#1a237e;margin-bottom:8px;"><i class="fas fa-chalkboard-teacher"></i> Rekap Guru</h4>
+              <div id="rekapGuruCepat" style="font-size:14px; color:#555;">⏳ Memuat data...</div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- PANEL ORTU -->
+            <!-- ===== PANEL ORTU ===== -->
       <div id="panelOrtu" class="panel hidden">
         <h3><i class="fas fa-search"></i> Cek Absensi Siswa</h3>
         <div class="row">
@@ -477,7 +571,7 @@
         <div id="resultOrtu" style="margin-top:16px;"></div>
       </div>
 
-      <!-- PANEL GURU LOGIN -->
+      <!-- ===== PANEL GURU LOGIN ===== -->
       <div id="panelGuru" class="panel hidden">
         <h3><i class="fas fa-chalkboard-teacher"></i> Verifikasi Guru</h3>
         <div style="max-width:320px;">
@@ -488,7 +582,7 @@
         </div>
       </div>
 
-      <!-- PANEL GURU SCAN -->
+      <!-- ===== PANEL GURU SCAN ===== -->
       <div id="panelGuruScan" class="panel hidden">
         <h3><i class="fas fa-qrcode"></i> Scan QR Siswa</h3>
         <div class="camera-controls">
@@ -500,7 +594,7 @@
         <div id="debugConsole" style="background:#1a1a2e;color:#b0bec5;padding:10px;border-radius:6px;font-size:12px;max-height:120px;overflow-y:auto;margin-top:10px;font-family:monospace;">🔍 Debug Console...</div>
       </div>
 
-      <!-- PANEL GURU REKAP -->
+            <!-- ===== PANEL GURU REKAP ===== -->
       <div id="panelGuruRekap" class="panel hidden">
         <h3><i class="fas fa-table"></i> Rekap Absensi Siswa</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
@@ -517,10 +611,14 @@
           </div>
           <button class="btn-primary" onclick="loadRekap()"><i class="fas fa-eye"></i> Tampilkan</button>
         </div>
+        <div class="export-buttons">
+          <button class="btn-success btn-sm" onclick="exportCSV('siswa')"><i class="fas fa-file-csv"></i> Export CSV</button>
+          <button class="btn-danger btn-sm" onclick="exportPDF('siswa')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+        </div>
         <div id="resultRekapKelas" style="margin-top:16px;"></div>
       </div>
 
-      <!-- PANEL GURU STATUS -->
+      <!-- ===== PANEL GURU STATUS ===== -->
       <div id="panelGuruStatus" class="panel hidden">
         <h3><i class="fas fa-pen"></i> Input Status Siswa (Izin/Sakit/Alpa)</h3>
         <div class="row">
@@ -539,7 +637,7 @@
         <div id="statusResult" style="margin-top:10px;"></div>
       </div>
 
-      <!-- PANEL ADMIN LOGIN -->
+            <!-- ===== PANEL ADMIN LOGIN ===== -->
       <div id="panelAdmin" class="panel hidden">
         <h3><i class="fas fa-user-shield"></i> Verifikasi Admin Guru</h3>
         <div style="max-width:320px;">
@@ -550,7 +648,7 @@
         </div>
       </div>
 
-      <!-- PANEL ADMIN SCAN -->
+      <!-- ===== PANEL ADMIN SCAN ===== -->
       <div id="panelAdminScan" class="panel hidden">
         <h3><i class="fas fa-qrcode"></i> Scan QR Guru</h3>
         <div class="camera-controls">
@@ -562,7 +660,7 @@
         <div id="debugConsoleAdmin" style="background:#1a1a2e;color:#b0bec5;padding:10px;border-radius:6px;font-size:12px;max-height:120px;overflow-y:auto;margin-top:10px;font-family:monospace;">🔍 Debug Console Admin...</div>
       </div>
 
-      <!-- PANEL ADMIN REKAP -->
+            <!-- ===== PANEL ADMIN REKAP ===== -->
       <div id="panelAdminRekap" class="panel hidden">
         <h3><i class="fas fa-users"></i> Rekap Absensi Guru</h3>
         <div class="row">
@@ -574,10 +672,14 @@
           <button class="btn-success" onclick="setRangeBulanIniAdmin()"><i class="fas fa-calendar-alt"></i> Bulan Ini</button>
           <button class="btn-secondary" onclick="setRangeBulanLaluAdmin()"><i class="fas fa-chevron-left"></i> Bulan Lalu</button>
         </div>
+        <div class="export-buttons">
+          <button class="btn-success btn-sm" onclick="exportCSV('guru')"><i class="fas fa-file-csv"></i> Export CSV</button>
+          <button class="btn-danger btn-sm" onclick="exportPDF('guru')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+        </div>
         <div id="resultRekapGuru" style="margin-top:16px;"></div>
       </div>
 
-      <!-- PANEL ADMIN STATUS -->
+      <!-- ===== PANEL ADMIN STATUS ===== -->
       <div id="panelAdminStatus" class="panel hidden">
         <h3><i class="fas fa-pen"></i> Input Izin/Sakit Guru</h3>
         <div class="row">
@@ -596,7 +698,7 @@
         <div id="statusResultGuru" style="margin-top:10px;"></div>
       </div>
 
-      <!-- PANEL ADMIN SETTINGS -->
+            <!-- ===== PANEL ADMIN SETTINGS ===== -->
       <div id="panelAdminSettings" class="panel hidden">
         <h3><i class="fas fa-cog"></i> Pengaturan Sistem <span class="subtitle">(Update real-time ke Google Sheet)</span></h3>
         
@@ -702,7 +804,7 @@
             </div>
           </div>
 
-          <!-- ===== HARI KHUSUS SETTINGS ===== -->
+          <!-- ===== HARI KHUSUS ===== -->
           <div class="settings-group" style="margin-top:16px;">
             <h4><i class="fas fa-calendar-alt"></i> Pengaturan Hari Khusus <span style="font-size:12px;font-weight:normal;color:#666;">(Jum'at, Libur, dll)</span></h4>
             
@@ -800,10 +902,12 @@
 
     <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCvXfzlJPJs5dtSVY5yKBtD7uvhlhMOBNzbJa4kXrxRb3X5OShPtsw_L9MgvYGwZb07A/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5ZWKcTdWk0LcNzWAFT9Ew9RcxpXItg2ePgrudtW7SqC-oiU7CasqIt52nmfg-uQnq2A/exec";
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
   let cachedSettings = null;
+  let currentRekapData = null;
+  let currentRekapType = 'siswa';
 
   // ===== STATE =====
   let currentMode = 'dashboard';
@@ -830,78 +934,30 @@
   function updateClock() {
     const now = new Date();
     clockEl.textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    updateOperationalInfo(now);
   }
   setInterval(updateClock, 1000);
   updateClock();
 
   function updateOperationalInfo(now) {
     if (!now) now = new Date();
-    const h = now.getHours();
-    const m = now.getMinutes();
-    
     const s = cachedSettings || {};
     
     const jamBukaMasuk = s.JamBukaMasuk || '06:00';
     const batasTepatWaktu = s.BatasTepatWaktu || '07:30';
-    const batasScanMasuk = s.BatasScanMasuk || '08:30';
     const jamBukaSesi2 = s.JamBukaSesi2 || '12:00';
     const batasTepatWaktuSesi2 = s.BatasTepatWaktuSesi2 || '12:30';
-    const batasScanSesi2 = s.BatasScanSesi2 || '12:40';
     const jamBukaPulang = s.JamBukaPulang || '14:00';
-    const batasPulangTepat = s.BatasPulangTepat || '14:30';
     const jamTutupPulang = s.JamTutupPulang || '17:00';
     
-    document.getElementById('batasMasukTepat').textContent = `${jamBukaMasuk} – ${batasTepatWaktu}`;
-    document.getElementById('batasMasukTerlambat').textContent = `${batasTepatWaktu} – ${batasScanMasuk}`;
-    document.getElementById('batasScanDitolak').textContent = `${batasScanMasuk} – ${jamBukaSesi2}`;
-    document.getElementById('batasPulangTepat').textContent = `${jamBukaPulang} – ${batasPulangTepat}`;
-    document.getElementById('batasPulangTerlambat').textContent = `${batasPulangTepat} – ${jamTutupPulang}`;
-    document.getElementById('scanSesi2').textContent = `${jamBukaSesi2} – ${batasTepatWaktuSesi2}`;
-    document.getElementById('scanSesi2Terlambat').textContent = `${batasTepatWaktuSesi2} – ${batasScanSesi2}`;
-    document.getElementById('scanSesi2Ditolak').textContent = `${batasScanSesi2} – ${jamBukaPulang}`;
-    
-    const timeStr = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-    let statusText = '⏳ Belum Waktu Scan';
-    let statusClass = 'value';
-    
-    if (timeStr >= jamBukaMasuk && timeStr < batasTepatWaktu) {
-      statusText = `✅ Waktu Masuk Tepat (${jamBukaMasuk}-${batasTepatWaktu})`;
-      statusClass = 'value active';
-    } else if (timeStr >= batasTepatWaktu && timeStr < batasScanMasuk) {
-      statusText = `⚠️ Terlambat (${batasTepatWaktu}-${batasScanMasuk})`;
-      statusClass = 'value warning';
-    } else if (timeStr >= batasScanMasuk && timeStr < jamBukaSesi2) {
-      statusText = `🚫 Scan Ditolak (${batasScanMasuk}-${jamBukaSesi2})`;
-      statusClass = 'value danger';
-    } else if (timeStr >= jamBukaSesi2 && timeStr < batasTepatWaktuSesi2) {
-      statusText = `📥 Sesi 2 (${jamBukaSesi2}-${batasTepatWaktuSesi2})`;
-      statusClass = 'value active';
-    } else if (timeStr >= batasTepatWaktuSesi2 && timeStr < batasScanSesi2) {
-      statusText = `⚠️ Terlambat Sesi 2 (${batasTepatWaktuSesi2}-${batasScanSesi2})`;
-      statusClass = 'value warning';
-    } else if (timeStr >= batasScanSesi2 && timeStr < jamBukaPulang) {
-      statusText = `🚫 Scan Ditolak (${batasScanSesi2}-${jamBukaPulang})`;
-      statusClass = 'value danger';
-    } else if (timeStr >= jamBukaPulang && timeStr < batasPulangTepat) {
-      statusText = `📤 Pulang Tepat (${jamBukaPulang}-${batasPulangTepat})`;
-      statusClass = 'value active';
-    } else if (timeStr >= batasPulangTepat && timeStr < jamTutupPulang) {
-      statusText = `📤 Pulang Terlambat (${batasPulangTepat}-${jamTutupPulang})`;
-      statusClass = 'value warning';
-    } else if (timeStr >= jamTutupPulang) {
-      statusText = `🌙 Selesai (Lewat ${jamTutupPulang})`;
-      statusClass = 'value';
-    }
-    
-    const statusEl = document.getElementById('statusSaatIni');
-    if (statusEl) {
-      statusEl.textContent = statusText;
-      statusEl.className = statusClass;
-    }
+    // Update Sesi 1
+    document.getElementById('scanSesi1Range').textContent = `${jamBukaMasuk} - ${batasTepatWaktu}`;
+    // Update Sesi 2
+    document.getElementById('scanSesi2Range').textContent = `${jamBukaSesi2} - ${batasTepatWaktuSesi2}`;
+    // Update Sesi 3
+    document.getElementById('scanSesi3Range').textContent = `${jamBukaPulang} - ${jamTutupPulang}`;
   }
 
-  function toggleSidebar() { sidebar.classList.toggle('open'); }
+    function toggleSidebar() { sidebar.classList.toggle('open'); }
 
   function updateMenuState() {
     const guruScan = document.querySelector('[data-mode="guruScan"]');
@@ -977,6 +1033,9 @@
     }
     if (mode === 'guruRekap') setRekapMode(rekapMode);
     if (mode === 'adminSettings') loadSettingsData();
+    if (mode === 'adminRekap') {
+      setRangeBulanIniAdmin();
+    }
     currentMode = mode;
   }
 
@@ -1004,43 +1063,86 @@
       .then(r => r.json())
       .then(data => {
         if (data.success) {
+          // Total
           document.getElementById('statSiswa').textContent = data.data.totalSiswa || 0;
+          document.getElementById('totalSiswaBadge').textContent = data.data.totalSiswa || 0;
           document.getElementById('statGuru').textContent = data.data.totalGuru || 0;
+          document.getElementById('totalGuruBadge').textContent = data.data.totalGuru || 0;
+          
+          // Siswa stats
           document.getElementById('statHadir').textContent = data.data.hadir || 0;
           document.getElementById('statTerlambat').textContent = data.data.terlambat || 0;
+          document.getElementById('statSakit').textContent = data.data.sakit || 0;
+          document.getElementById('statIzin').textContent = data.data.izin || 0;
           document.getElementById('statAlpa').textContent = data.data.alpa || 0;
           document.getElementById('statBolos').textContent = data.data.bolos || 0;
-          document.getElementById('statIzin').textContent = data.data.izin || 0;
-          document.getElementById('statSakit').textContent = data.data.sakit || 0;
+          
+          // Guru stats
+          document.getElementById('statHadirGuru').textContent = data.data.hadirGuru || 0;
+          document.getElementById('statTerlambatGuru').textContent = data.data.terlambatGuru || 0;
+          document.getElementById('statSakitGuru').textContent = data.data.sakitGuru || 0;
+          document.getElementById('statIzinGuru').textContent = data.data.izinGuru || 0;
+          document.getElementById('statAlpaGuru').textContent = data.data.alpaGuru || 0;
+          document.getElementById('statBolosGuru').textContent = 0; // Tidak ada bolos untuk guru
 
-          if (data.data.rekapHariIni && data.data.rekapHariIni.length) {
-            let html = `<table><thead><tr><th>Nama</th><th>NISN</th><th>Status</th></tr></thead><tbody>`;
-            data.data.rekapHariIni.forEach(s => {
-              let badge = getBadgeClass(s.status);
-              html += `<tr><td>${s.nama}</td><td>${s.nisn}</td><td><span class="badge ${badge}">${s.status}</span></td></tr>`;
-            });
-            html += `</tbody></table>`;
-            document.getElementById('rekapCepat').innerHTML = html;
-          } else {
-            document.getElementById('rekapCepat').innerHTML = '<p style="color:#666;">Belum ada data absensi hari ini.</p>';
-          }
+          // Rekap Siswa
+          renderRekapSiswa(data.data.rekapSiswaHariIni);
+          // Rekap Guru
+          renderRekapGuru(data.data.rekapGuruHariIni);
+          
+          // Store for export
+          currentRekapData = {
+            siswa: data.data.rekapSiswaHariIni || [],
+            guru: data.data.rekapGuruHariIni || []
+          };
         }
       }).catch(() => {});
   }
 
   function getBadgeClass(status) {
+    if (!status) return 'badge-secondary';
     if (status === 'Hadir Tepat Waktu' || status === 'Hadir' || status === 'Hadir (Belum Pulang)' || status === 'Hadir (Menunggu Sesi 2)') return 'badge-success';
     if (status === 'Terlambat' || status === 'Terlambat (Belum Pulang)' || status === 'Terlambat (Menunggu Sesi 2)') return 'badge-warning';
     if (status === 'Alpa' || status === 'Alpa (Input Admin)' || status === 'Alpa (Tidak Pulang)') return 'badge-danger';
-    if (status.includes('Bolos')) return 'badge-bolos';
+    if (status && status.includes('Bolos')) return 'badge-bolos';
     if (status === 'Izin') return 'badge-izin';
     if (status === 'Sakit') return 'badge-sakit';
-    if (status.includes('Libur')) return 'badge-secondary';
+    if (status && status.includes('Libur')) return 'badge-secondary';
     if (status === 'Belum Absen' || status === 'Belum Pulang' || status === 'Menunggu Sesi 2') return 'badge-info';
     return 'badge-secondary';
   }
 
-  // ===== REKAP MODE =====
+  function renderRekapSiswa(data) {
+    const container = document.getElementById('rekapSiswaCepat');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<p style="color:#666;">Belum ada data absensi siswa hari ini.</p>';
+      return;
+    }
+    let html = `<div class="table-wrapper"><table><thead><tr><th>Nama</th><th>NISN</th><th>Kelas</th><th>Jam Datang</th><th>Status</th></tr></thead><tbody>`;
+    data.forEach(s => {
+      let badge = getBadgeClass(s.status);
+      html += `<tr><td>${s.nama}</td><td>${s.nisn}</td><td>${s.kelas || '-'}</td><td>${s.jamDatang || '-'}</td><td><span class="badge ${badge}">${s.status}</span></td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+  }
+
+  function renderRekapGuru(data) {
+    const container = document.getElementById('rekapGuruCepat');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<p style="color:#666;">Belum ada data absensi guru hari ini.</p>';
+      return;
+    }
+    let html = `<div class="table-wrapper"><table><thead><tr><th>Nama</th><th>NIP</th><th>Jabatan</th><th>Jam Datang</th><th>Status</th></tr></thead><tbody>`;
+    data.forEach(g => {
+      let badge = getBadgeClass(g.status);
+      html += `<tr><td>${g.nama}</td><td>${g.nip}</td><td>${g.jabatan || '-'}</td><td>${g.jamDatang || '-'}</td><td><span class="badge ${badge}">${g.status}</span></td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+  }
+
+    // ===== REKAP MODE =====
   function setRekapMode(mode) {
     rekapMode = mode;
     const isRange = mode !== 'harian';
@@ -1082,7 +1184,10 @@
     resDiv.innerHTML = '⏳ Memuat...';
     fetch(url).then(r => r.json()).then(data => {
       if (!data.success) { resDiv.innerHTML = `<p style="color:red;">${data.message}</p>`; return; }
-      let html = `<table><thead><tr>`;
+      currentRekapData = data.data;
+      currentRekapType = 'siswa';
+      
+      let html = `<div class="table-wrapper"><table><thead><tr>`;
       if (rekapMode === 'harian') {
         html += `<th>NISN</th><th>Nama</th><th>Datang</th><th>Pulang</th><th>Status</th>`;
       } else {
@@ -1110,12 +1215,13 @@
       } else {
         html += `<tr><td colspan="5">Tidak ada data</td></tr>`;
       }
-      html += `</tbody></table>`;
+      html += `</tbody></table></div>`;
       resDiv.innerHTML = html;
+      showToast('✅ Data rekap berhasil dimuat', 'success');
     }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
   }
 
-  // ===== ORTU =====
+    // ===== ORTU =====
   function cariAbsensiOrtu() {
     const nisn = document.getElementById('ortuNisn').value.trim();
     const tglAwal = document.getElementById('ortuTglAwal').value;
@@ -1127,12 +1233,12 @@
       .then(r => r.json()).then(data => {
         if (!data.success) { resDiv.innerHTML = `<p style="color:red;">${data.message}</p>`; return; }
         let html = `<div style="margin-bottom:10px;"><b>${data.siswa.nama}</b> (${data.siswa.nisn}) - Kelas ${data.siswa.kelas}</div>`;
-        html += `<table><thead><tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead><tbody>`;
+        html += `<div class="table-wrapper"><table><thead><tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead><tbody>`;
         data.riwayat.forEach(r => {
           let badge = getBadgeClass(r.status);
           html += `<tr><td>${r.tanggal}</td><td>${r.jamMasuk}</td><td>${r.jamPulang}</td><td><span class="badge ${badge}">${r.status}</span></td></tr>`;
         });
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
         resDiv.innerHTML = html;
       }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
   }
@@ -1313,7 +1419,7 @@
 
   function onScanFailureAdmin(error) {}
 
-  // ===== STATUS SISWA =====
+    // ===== STATUS SISWA =====
   function inputStatusSiswa() {
     const nisn = document.getElementById('statusNisn').value.trim();
     const tanggal = document.getElementById('statusTanggal').value;
@@ -1367,7 +1473,10 @@
     fetch(`${SCRIPT_URL}?action=getRekapGuru&tglAwal=${tglAwal}&tglAkhir=${tglAkhir}`)
       .then(r => r.json()).then(data => {
         if (!data.success) { resDiv.innerHTML = `<p style="color:red;">${data.message}</p>`; return; }
-        let html = `<table><thead><tr>
+        currentRekapData = data.data;
+        currentRekapType = 'guru';
+        
+        let html = `<div class="table-wrapper"><table><thead><tr>
           <th>NIP</th><th>Nama</th><th>Jabatan</th>
           <th>✅ Hadir</th><th>📝 Izin</th><th>🤒 Sakit</th>
           <th>❌ Alpa</th><th>📈 % Hadir</th>
@@ -1384,12 +1493,13 @@
             </tr>`;
           });
         } else { html += `<tr><td colspan="8">Tidak ada data guru</td></tr>`; }
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
         resDiv.innerHTML = html;
+        showToast('✅ Data rekap guru berhasil dimuat', 'success');
       }).catch(e => resDiv.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`);
   }
 
-  // ===== HARI KHUSUS =====
+    // ===== HARI KHUSUS =====
   function loadHariKhusus() {
     const tbody = document.getElementById('hkTableBody');
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
@@ -1536,7 +1646,7 @@
     showToast(`📅 Tanggal Jum'at: ${dateStr}`, 'info');
   }
 
-  // ===== SETTINGS =====
+    // ===== SETTINGS =====
   function loadSettingsData() {
     const loading = document.getElementById('settingsLoading');
     const content = document.getElementById('settingsContent');
@@ -1687,7 +1797,54 @@
     });
   }
 
-  // ===== INIT =====
+  // ===== EXPORT FUNCTIONS =====
+  function exportCSV(type) {
+    let data = [];
+    let headers = [];
+    let filename = '';
+    
+    if (type === 'siswa') {
+      data = currentRekapData || [];
+      if (!data.length) { showToast('Tidak ada data untuk diexport!', 'warning'); return; }
+      if (rekapMode === 'harian') {
+        headers = ['NISN', 'Nama', 'Jam Datang', 'Jam Pulang', 'Status'];
+        filename = `rekap_siswa_${document.getElementById('guruTanggal').value || 'now'}.csv`;
+      } else {
+        headers = ['NISN', 'Nama', 'Hadir', 'Terlambat', 'Alpa', 'Bolos', 'Izin', 'Sakit', '% Hadir'];
+        filename = `rekap_siswa_range.csv`;
+      }
+    } else if (type === 'guru') {
+      data = currentRekapData || [];
+      if (!data.length) { showToast('Tidak ada data untuk diexport!', 'warning'); return; }
+      headers = ['NIP', 'Nama', 'Jabatan', 'Hadir', 'Izin', 'Sakit', 'Alpa', '% Hadir'];
+      filename = `rekap_guru_${document.getElementById('adminTglAwal').value || 'now'}.csv`;
+    }
+
+    let csv = headers.join(',') + '\n';
+    data.forEach(row => {
+      const values = headers.map(h => {
+        const val = row[h.toLowerCase()] !== undefined ? row[h.toLowerCase()] : (row[h] || '');
+        return `"${val}"`;
+      });
+      csv += values.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast('✅ Export CSV berhasil!', 'success');
+  }
+
+  function exportPDF(type) {
+    showToast('📄 Fitur PDF akan segera hadir! Gunakan print browser (Ctrl+P) untuk saat ini.', 'info');
+    // Bisa ditambahkan library jsPDF untuk implementasi penuh
+    window.print();
+  }
+
+    // ===== INIT =====
   const todayStr = new Date().toISOString().split('T')[0];
   document.getElementById('ortuTglAwal').value = todayStr;
   document.getElementById('ortuTglAkhir').value = todayStr;
@@ -1721,6 +1878,11 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { sidebar.classList.remove('open'); }
   });
+
+  // Set initial operational info after settings load
+  setTimeout(() => {
+    if (cachedSettings) updateOperationalInfo(new Date());
+  }, 1000);
   </script>
 </body>
 </html>
