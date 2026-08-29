@@ -907,12 +907,38 @@
 
     <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6ArHchZhZND9wfjb3yHH2STt1YoS0UkcGbCiBRPyhoecqR_1kLuP5Ib4emcQBuO1RSg/exec";
-  let PIN_GURU = "1234";
-  let PIN_ADMIN = "9999";
-  let cachedSettings = null;
-  let currentRekapData = null;
-  let currentRekapType = 'siswa';
+// ===== KONFIGURASI =====
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6ArHchZhZND9wfjb3yHH2STt1YoS0UkcGbCiBRPyhoecqR_1kLuP5Ib4emcQBuO1RSg/exec";
+let PIN_GURU = "1234";
+let PIN_ADMIN = "9999";
+let cachedSettings = null;
+let currentRekapData = null;
+let currentRekapType = 'siswa';
+
+// ===== SET DEFAULT SETTINGS =====
+// Inisialisasi dengan default sebelum data dari server
+const defaultSettings = {
+  JamBukaMasuk: '06:00',
+  BatasTepatWaktu: '07:30',
+  BatasScanMasuk: '08:30',
+  JamBukaSesi2: '12:00',
+  BatasTepatWaktuSesi2: '12:30',
+  BatasScanSesi2: '12:40',
+  JamBukaPulang: '14:00',
+  BatasPulangTepat: '14:30',
+  JamTutupPulang: '17:00',
+  JamBukaMasukGuru: '06:30',
+  BatasTepatWaktuGuru: '07:00',
+  BatasScanMasukGuru: '07:30',
+  JamBukaPulangGuru: '14:00',
+  JamTutupPulangGuru: '17:00',
+  PIN_GURU: '1234',
+  PIN_ADMIN: '9999'
+};
+
+// Gunakan default sementara
+cachedSettings = defaultSettings;
+updateOperationalInfo(new Date());
 
   // ===== STATE =====
   let currentMode = 'dashboard';
@@ -943,10 +969,14 @@
   setInterval(updateClock, 1000);
   updateClock();
 
+ // ===== UPDATE OPERATIONAL INFO =====
   function updateOperationalInfo(now) {
     if (!now) now = new Date();
+    
+    // Ambil dari cachedSettings atau default
     const s = cachedSettings || {};
     
+    // Gunakan default jika tidak ada
     const jamBukaMasuk = s.JamBukaMasuk || '06:00';
     const batasTepatWaktu = s.BatasTepatWaktu || '07:30';
     const jamBukaSesi2 = s.JamBukaSesi2 || '12:00';
@@ -954,12 +984,29 @@
     const jamBukaPulang = s.JamBukaPulang || '14:00';
     const jamTutupPulang = s.JamTutupPulang || '17:00';
     
+    console.log('📊 Update Info Operasional:', {
+      jamBukaMasuk, batasTepatWaktu,
+      jamBukaSesi2, batasTepatWaktuSesi2,
+      jamBukaPulang, jamTutupPulang
+    });
+    
     // Update Sesi 1
-    document.getElementById('scanSesi1Range').textContent = `${jamBukaMasuk} - ${batasTepatWaktu}`;
+    const elSesi1 = document.getElementById('scanSesi1Range');
+    if (elSesi1) {
+      elSesi1.textContent = `${jamBukaMasuk} - ${batasTepatWaktu}`;
+    }
+    
     // Update Sesi 2
-    document.getElementById('scanSesi2Range').textContent = `${jamBukaSesi2} - ${batasTepatWaktuSesi2}`;
+    const elSesi2 = document.getElementById('scanSesi2Range');
+    if (elSesi2) {
+      elSesi2.textContent = `${jamBukaSesi2} - ${batasTepatWaktuSesi2}`;
+    }
+    
     // Update Sesi 3
-    document.getElementById('scanSesi3Range').textContent = `${jamBukaPulang} - ${jamTutupPulang}`;
+    const elSesi3 = document.getElementById('scanSesi3Range');
+    if (elSesi3) {
+      elSesi3.textContent = `${jamBukaPulang} - ${jamTutupPulang}`;
+    }
   }
 
     function toggleSidebar() { sidebar.classList.toggle('open'); }
@@ -1045,22 +1092,39 @@
   }
 
   // ===== LOAD SETTINGS FOR DASHBOARD =====
-  function loadSettingsForDashboard() {
-    fetch(`${SCRIPT_URL}?action=getSettings`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          cachedSettings = data.data;
-          PIN_GURU = data.data.PIN_GURU || '1234';
-          PIN_ADMIN = data.data.PIN_ADMIN || '9999';
-          updateOperationalInfo(new Date());
-        }
-        refreshDashboard();
-      })
-      .catch(() => {
-        refreshDashboard();
-      });
-  }
+function loadSettingsForDashboard() {
+  console.log('🔄 Memuat settings...');
+  
+  fetch(`${SCRIPT_URL}?action=getSettings`)
+    .then(r => r.json())
+    .then(data => {
+      console.log('📊 Data settings:', data);
+      
+      if (data.success) {
+        cachedSettings = data.data;
+        PIN_GURU = data.data.PIN_GURU || '1234';
+        PIN_ADMIN = data.data.PIN_ADMIN || '9999';
+        
+        // UPDATE INFORMASI OPERASIONAL
+        updateOperationalInfo(new Date());
+        
+        console.log('✅ Settings berhasil dimuat:', cachedSettings);
+      } else {
+        console.error('❌ Gagal memuat settings:', data.message);
+        // Gunakan default
+        updateOperationalInfo(new Date());
+      }
+      
+      // Refresh dashboard setelah settings dimuat
+      refreshDashboard();
+    })
+    .catch(err => {
+      console.error('❌ Error fetch settings:', err);
+      // Gunakan default
+      updateOperationalInfo(new Date());
+      refreshDashboard();
+    });
+}
 
 // ===== SHOW LIBUR INFO =====
 function showLiburInfo(keterangan) {
