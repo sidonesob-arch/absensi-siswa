@@ -905,7 +905,7 @@
 
     <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOE1b97qZqnaiiiMV5SLQP30bvWvBsWYYRBl-w8Q1RrYgc10RWqqdi20vLQXLq28SLkw/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfJCC5TYEASR_L9omhD3ojAuNI90-53D_7AwatEGjvyISKhRKjA6RefsFLhvgD6WvIUw/exec";
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
   let cachedSettings = null;
@@ -1000,17 +1000,34 @@
   }
 
   // ===== SHOW LIBUR INFO =====
-  function showLiburInfo(keterangan) {
-    var panel = document.getElementById('infoLiburPanel');
-    var text = document.getElementById('infoLiburText');
-    if (!panel || !text) return;
-    if (keterangan) {
-      panel.style.display = 'block';
-      text.textContent = '📅 Hari ini libur (' + keterangan + ') - Tidak ada aktivitas absensi';
-    } else {
-      panel.style.display = 'none';
-    }
+  function showLiburInfoOtomatis() {
+      var panel = document.getElementById('infoLiburPanel');
+      var text = document.getElementById('infoLiburText');
+      if (!panel || !text) return;
+
+      // Masukkan URL Web App Google Apps Script Anda di sini dengan action tambahan
+      var urlAppsScript = "https://google.com"; 
+
+      fetch(urlAppsScript)
+          .then(response => response.json())
+          .then(data => {
+              if (data.isLibur) {
+                  // Panel muncul otomatis jika Sabtu, Minggu, atau tanggal merah di Google Sheet
+                  panel.style.display = 'block';
+                  text.textContent = data.tanggal + ' Hari ini libur (' + data.keterangan + ') - Tidak ada aktivitas absensi';
+              } else {
+                  // Sembunyikan panel jika hari sekolah/kerja biasa
+                  panel.style.display = 'none';
+              }
+          })
+          .catch(error => {
+              console.error("Gagal mengambil status hari libur:", error);
+          });
   }
+
+  // Panggil fungsi ini agar langsung mengecek ke Google Script saat web dibuka
+  showLiburInfoOtomatis();
+
 
   // ===== TOGGLE SIDEBAR =====
   function toggleSidebar() {
