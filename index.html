@@ -812,6 +812,7 @@
                 <input type="time" id="setJamTutupPulang">
                 <span class="current-value" id="curJamTutupPulang"></span>
               </div>
+              <!-- Sesi Aktif untuk Siswa -->
               <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e8e8e8;">
                 <div class="session-toggle-row">
                   <label style="min-width:120px;">Sesi 1 Aktif</label>
@@ -989,7 +990,7 @@
 
   <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbpORqedxyT1jzuniYJAzVhpCHaRTCgi9CDorZrIHqTLvUsmNU_Yi9DHlM3v4YrjWJDA/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzmphsBN2acophQUAC5d_0CJj48ai483Xr2xFYBgdhVZLNeU3-tDpLwbP7HBK75log24g/exec";
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
   let cachedSettings = null;
@@ -1087,21 +1088,30 @@
     var box2 = document.getElementById('scanBox2');
     var box3 = document.getElementById('scanBox3');
     
-    if (elSesi1) elSesi1.textContent = jamBukaMasuk + ' - ' + batasTepatWaktu;
-    if (elSesi2) elSesi2.textContent = jamBukaSesi2 + ' - ' + batasTepatWaktuSesi2;
-    if (elSesi3) elSesi3.textContent = jamBukaPulang + ' - ' + jamTutupPulang;
-    
+    // Tampilkan hanya sesi yang aktif
     if (box1) {
-      if (sesi1Aktif) { box1.classList.remove('disabled'); } 
-      else { box1.classList.add('disabled'); }
+      if (sesi1Aktif) {
+        box1.style.display = 'block';
+        elSesi1.textContent = jamBukaMasuk + ' - ' + batasTepatWaktu;
+      } else {
+        box1.style.display = 'none';
+      }
     }
     if (box2) {
-      if (sesi2Aktif) { box2.classList.remove('disabled'); } 
-      else { box2.classList.add('disabled'); }
+      if (sesi2Aktif) {
+        box2.style.display = 'block';
+        elSesi2.textContent = jamBukaSesi2 + ' - ' + batasTepatWaktuSesi2;
+      } else {
+        box2.style.display = 'none';
+      }
     }
     if (box3) {
-      if (sesi3Aktif) { box3.classList.remove('disabled'); } 
-      else { box3.classList.add('disabled'); }
+      if (sesi3Aktif) {
+        box3.style.display = 'block';
+        elSesi3.textContent = jamBukaPulang + ' - ' + jamTutupPulang;
+      } else {
+        box3.style.display = 'none';
+      }
     }
   }
 
