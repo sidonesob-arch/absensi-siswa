@@ -196,6 +196,9 @@
       font-weight: 700;
       color: #1a237e;
     }
+    .info-scan-box.hidden-scan {
+      display: none !important;
+    }
     .info-scan-box .jam-range.warning { color: #e65100; }
     .info-scan-box .jam-range.danger { color: #c62828; }
     .info-scan-box .jam-range.success { color: #2e7d32; }
@@ -575,21 +578,21 @@
           </div>
         </div>
 
-        <!-- INFORMASI OPERASIONAL -->
+       <!-- INFORMASI OPERASIONAL -->
         <div class="panel">
           <h3><i class="fas fa-clock" style="color:#1a73e8;"></i> Informasi Operasional Scan</h3>
           <div class="info-grid-scan" id="infoScanGrid">
-            <div class="info-scan-box" id="scanBox1" style="border-left-color: #2e7d32;">
+            <div class="info-scan-box" id="scanBox1" style="border-left-color: #2e7d32; display:none;">
               <h4><i class="fas fa-sign-in-alt"></i> Scan Sesi 1</h4>
               <div class="jam-range success" id="scanSesi1Range">06:00 - 07:30</div>
               <div class="label-scan">Jam Masuk s.d Batas Tepat Waktu</div>
             </div>
-            <div class="info-scan-box" id="scanBox2" style="border-left-color: #f57f17;">
+            <div class="info-scan-box" id="scanBox2" style="border-left-color: #f57f17; display:none;">
               <h4><i class="fas fa-coffee"></i> Scan Sesi 2</h4>
               <div class="jam-range warning" id="scanSesi2Range">12:00 - 12:30</div>
               <div class="label-scan">Jam Masuk Istirahat s.d Batas Tepat Istirahat</div>
             </div>
-            <div class="info-scan-box" id="scanBox3" style="border-left-color: #1a73e8;">
+            <div class="info-scan-box" id="scanBox3" style="border-left-color: #1a73e8; display:none;">
               <h4><i class="fas fa-sign-out-alt"></i> Scan Sesi 3</h4>
               <div class="jam-range" id="scanSesi3Range">14:00 - 17:00</div>
               <div class="label-scan">Jam Pulang s.d Batas Akhir Pulang</div>
@@ -990,7 +993,7 @@
 
   <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzmphsBN2acophQUAC5d_0CJj48ai483Xr2xFYBgdhVZLNeU3-tDpLwbP7HBK75log24g/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbpORqedxyT1jzuniYJAzVhpCHaRTCgi9CDorZrIHqTLvUsmNU_Yi9DHlM3v4YrjWJDA/exec";
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
   let cachedSettings = null;
@@ -1065,57 +1068,51 @@
   setInterval(updateClock, 1000);
   updateClock();
 
-// ===== UPDATE OPERATIONAL INFO =====
-function updateOperationalInfo(now) {
-  if (!now) now = new Date();
-  var s = cachedSettings || {};
   
-  var jamBukaMasuk = fixTimeFormat(s.JamBukaMasuk) || '06:00';
-  var batasTepatWaktu = fixTimeFormat(s.BatasTepatWaktu) || '07:30';
-  var jamBukaSesi2 = fixTimeFormat(s.JamBukaSesi2) || '12:00';
-  var batasTepatWaktuSesi2 = fixTimeFormat(s.BatasTepatWaktuSesi2) || '12:30';
-  var jamBukaPulang = fixTimeFormat(s.JamBukaPulang) || '14:00';
-  var jamTutupPulang = fixTimeFormat(s.JamTutupPulang) || '17:00';
-  
-  var sesi1Aktif = s.Sesi1Aktif !== 'false';
-  var sesi2Aktif = s.Sesi2Aktif !== 'false';
-  var sesi3Aktif = s.Sesi3Aktif !== 'false';
-  
-  var box1 = document.getElementById('scanBox1');
-  var box2 = document.getElementById('scanBox2');
-  var box3 = document.getElementById('scanBox3');
-  var elSesi1 = document.getElementById('scanSesi1Range');
-  var elSesi2 = document.getElementById('scanSesi2Range');
-  var elSesi3 = document.getElementById('scanSesi3Range');
-  
-  // Sembunyikan/tampilkan berdasarkan status aktif
-  if (box1) {
-    if (sesi1Aktif) {
+  // ===== UPDATE OPERATIONAL INFO =====
+  function updateOperationalInfo(now) {
+    if (!now) now = new Date();
+    var s = cachedSettings || {};
+    
+    var jamBukaMasuk = fixTimeFormat(s.JamBukaMasuk) || '06:00';
+    var batasTepatWaktu = fixTimeFormat(s.BatasTepatWaktu) || '07:30';
+    var jamBukaSesi2 = fixTimeFormat(s.JamBukaSesi2) || '12:00';
+    var batasTepatWaktuSesi2 = fixTimeFormat(s.BatasTepatWaktuSesi2) || '12:30';
+    var jamBukaPulang = fixTimeFormat(s.JamBukaPulang) || '14:00';
+    var jamTutupPulang = fixTimeFormat(s.JamTutupPulang) || '17:00';
+    
+    var sesi1Aktif = s.Sesi1Aktif !== 'false';
+    var sesi2Aktif = s.Sesi2Aktif !== 'false';
+    var sesi3Aktif = s.Sesi3Aktif !== 'false';
+    
+    var box1 = document.getElementById('scanBox1');
+    var box2 = document.getElementById('scanBox2');
+    var box3 = document.getElementById('scanBox3');
+    var elSesi1 = document.getElementById('scanSesi1Range');
+    var elSesi2 = document.getElementById('scanSesi2Range');
+    var elSesi3 = document.getElementById('scanSesi3Range');
+    
+    // Sembunyikan semua terlebih dahulu
+    if (box1) box1.style.display = 'none';
+    if (box2) box2.style.display = 'none';
+    if (box3) box3.style.display = 'none';
+    
+    // Tampilkan hanya yang aktif
+    if (sesi1Aktif && box1) {
       box1.style.display = 'block';
       if (elSesi1) elSesi1.textContent = jamBukaMasuk + ' - ' + batasTepatWaktu;
-    } else {
-      box1.style.display = 'none';
     }
-  }
-  
-  if (box2) {
-    if (sesi2Aktif) {
+    
+    if (sesi2Aktif && box2) {
       box2.style.display = 'block';
       if (elSesi2) elSesi2.textContent = jamBukaSesi2 + ' - ' + batasTepatWaktuSesi2;
-    } else {
-      box2.style.display = 'none';
     }
-  }
-  
-  if (box3) {
-    if (sesi3Aktif) {
+    
+    if (sesi3Aktif && box3) {
       box3.style.display = 'block';
       if (elSesi3) elSesi3.textContent = jamBukaPulang + ' - ' + jamTutupPulang;
-    } else {
-      box3.style.display = 'none';
     }
   }
-}
 
   // ===== SHOW LIBUR INFO =====
   function showLiburInfo(keterangan) {
@@ -1354,7 +1351,13 @@ function updateOperationalInfo(now) {
       .catch(function() {
         refreshDashboard();
       });
-  }
+  
+        setTimeout(function() {
+          if (cachedSettings) {
+            updateOperationalInfo(new Date());
+          }
+        }, 500);
+      }
 
   // ===== REFRESH DASHBOARD =====
   function refreshDashboard() {
