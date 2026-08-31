@@ -200,6 +200,11 @@
     .info-scan-box .jam-range.danger { color: #c62828; }
     .info-scan-box .jam-range.success { color: #2e7d32; }
     .info-scan-box .label-scan { font-size: 11px; color: #666; margin-top: 4px; }
+    .info-scan-box.disabled {
+      opacity: 0.4;
+      border-left-color: #999;
+    }
+    .info-scan-box.disabled .jam-range { color: #999; }
 
     #reader, #readerAdmin {
       width: 100%;
@@ -279,6 +284,12 @@
       background: #e8e8e8;
       padding: 2px 8px;
       border-radius: 4px;
+    }
+    .settings-group .setting-row select {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 13px;
+      margin: 0;
     }
 
     .toast {
@@ -362,6 +373,50 @@
     .main-content::-webkit-scrollbar-thumb { background: #b0b8c8; border-radius: 10px; }
     .sidebar::-webkit-scrollbar { width: 4px; }
     .sidebar::-webkit-scrollbar-thumb { background: #4a5a7a; border-radius: 10px; }
+    
+    /* Toggle switch untuk sesi aktif */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #ccc;
+      transition: .3s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background: #2e7d32; }
+    input:checked + .slider:before { transform: translateX(20px); }
+    .session-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 0;
+    }
+    .session-toggle-row label {
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -523,18 +578,18 @@
         <!-- INFORMASI OPERASIONAL -->
         <div class="panel">
           <h3><i class="fas fa-clock" style="color:#1a73e8;"></i> Informasi Operasional Scan</h3>
-          <div class="info-grid-scan">
-            <div class="info-scan-box" style="border-left-color: #2e7d32;">
+          <div class="info-grid-scan" id="infoScanGrid">
+            <div class="info-scan-box" id="scanBox1" style="border-left-color: #2e7d32;">
               <h4><i class="fas fa-sign-in-alt"></i> Scan Sesi 1</h4>
               <div class="jam-range success" id="scanSesi1Range">06:00 - 07:30</div>
               <div class="label-scan">Jam Masuk s.d Batas Tepat Waktu</div>
             </div>
-            <div class="info-scan-box" style="border-left-color: #f57f17;">
+            <div class="info-scan-box" id="scanBox2" style="border-left-color: #f57f17;">
               <h4><i class="fas fa-coffee"></i> Scan Sesi 2</h4>
               <div class="jam-range warning" id="scanSesi2Range">12:00 - 12:30</div>
               <div class="label-scan">Jam Masuk Istirahat s.d Batas Tepat Istirahat</div>
             </div>
-            <div class="info-scan-box" style="border-left-color: #1a73e8;">
+            <div class="info-scan-box" id="scanBox3" style="border-left-color: #1a73e8;">
               <h4><i class="fas fa-sign-out-alt"></i> Scan Sesi 3</h4>
               <div class="jam-range" id="scanSesi3Range">14:00 - 17:00</div>
               <div class="label-scan">Jam Pulang s.d Batas Akhir Pulang</div>
@@ -562,7 +617,7 @@
         </div>
       </div>
 
-            <!-- ===== PANEL ORTU ===== -->
+      <!-- ===== PANEL ORTU ===== -->
       <div id="panelOrtu" class="panel hidden">
         <h3><i class="fas fa-search"></i> Cek Absensi Siswa</h3>
         <div class="row">
@@ -757,6 +812,35 @@
                 <input type="time" id="setJamTutupPulang">
                 <span class="current-value" id="curJamTutupPulang"></span>
               </div>
+              <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e8e8e8;">
+                <div class="session-toggle-row">
+                  <label style="min-width:120px;">Sesi 1 Aktif</label>
+                  <label class="switch">
+                    <input type="checkbox" id="setSesi1Aktif" checked>
+                    <span class="slider"></span>
+                  </label>
+                  <span style="font-size:12px;color:#666;" id="curSesi1Aktif">✅</span>
+                </div>
+                <div class="session-toggle-row">
+                  <label style="min-width:120px;">Sesi 2 Aktif</label>
+                  <label class="switch">
+                    <input type="checkbox" id="setSesi2Aktif" checked>
+                    <span class="slider"></span>
+                  </label>
+                  <span style="font-size:12px;color:#666;" id="curSesi2Aktif">✅</span>
+                </div>
+                <div class="session-toggle-row">
+                  <label style="min-width:120px;">Sesi 3 Aktif</label>
+                  <label class="switch">
+                    <input type="checkbox" id="setSesi3Aktif" checked>
+                    <span class="slider"></span>
+                  </label>
+                  <span style="font-size:12px;color:#666;" id="curSesi3Aktif">✅</span>
+                </div>
+                <p style="font-size:11px;color:#888;margin-top:6px;">
+                  <i class="fas fa-info-circle"></i> Matikan sesi yang tidak digunakan. Contoh: Jum'at matikan Sesi 2.
+                </p>
+              </div>
             </div>
 
             <!-- GURU -->
@@ -903,9 +987,9 @@
     &copy; 2026 SMP Negeri 1 Sobang &mdash; Design by M TAUPIK
   </footer>
 
-    <script>
+  <script>
   // ===== KONFIGURASI =====
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx578aVNGyEcCzxhai7bH0fsIKj5NTfnn5dq0yjmkA3J_FHZAyjo2VnBg5Bf9vBcSIVhg/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbpORqedxyT1jzuniYJAzVhpCHaRTCgi9CDorZrIHqTLvUsmNU_Yi9DHlM3v4YrjWJDA/exec";
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
   let cachedSettings = null;
@@ -941,7 +1025,10 @@
     JamBukaPulangGuru: '14:00',
     JamTutupPulangGuru: '17:00',
     PIN_GURU: '1234',
-    PIN_ADMIN: '9999'
+    PIN_ADMIN: '9999',
+    Sesi1Aktif: 'true',
+    Sesi2Aktif: 'true',
+    Sesi3Aktif: 'true'
   };
 
   // ===== HELPER FIX TIME =====
@@ -989,14 +1076,33 @@
     var jamBukaPulang = fixTimeFormat(s.JamBukaPulang) || '14:00';
     var jamTutupPulang = fixTimeFormat(s.JamTutupPulang) || '17:00';
     
+    var sesi1Aktif = s.Sesi1Aktif !== 'false';
+    var sesi2Aktif = s.Sesi2Aktif !== 'false';
+    var sesi3Aktif = s.Sesi3Aktif !== 'false';
+    
     var elSesi1 = document.getElementById('scanSesi1Range');
-    if (elSesi1) elSesi1.textContent = jamBukaMasuk + ' - ' + batasTepatWaktu;
-    
     var elSesi2 = document.getElementById('scanSesi2Range');
-    if (elSesi2) elSesi2.textContent = jamBukaSesi2 + ' - ' + batasTepatWaktuSesi2;
-    
     var elSesi3 = document.getElementById('scanSesi3Range');
+    var box1 = document.getElementById('scanBox1');
+    var box2 = document.getElementById('scanBox2');
+    var box3 = document.getElementById('scanBox3');
+    
+    if (elSesi1) elSesi1.textContent = jamBukaMasuk + ' - ' + batasTepatWaktu;
+    if (elSesi2) elSesi2.textContent = jamBukaSesi2 + ' - ' + batasTepatWaktuSesi2;
     if (elSesi3) elSesi3.textContent = jamBukaPulang + ' - ' + jamTutupPulang;
+    
+    if (box1) {
+      if (sesi1Aktif) { box1.classList.remove('disabled'); } 
+      else { box1.classList.add('disabled'); }
+    }
+    if (box2) {
+      if (sesi2Aktif) { box2.classList.remove('disabled'); } 
+      else { box2.classList.add('disabled'); }
+    }
+    if (box3) {
+      if (sesi3Aktif) { box3.classList.remove('disabled'); } 
+      else { box3.classList.add('disabled'); }
+    }
   }
 
   // ===== SHOW LIBUR INFO =====
@@ -1056,52 +1162,108 @@
   // ===== GET BADGE CLASS =====
   function getBadgeClass(status) {
     if (!status) return 'badge-secondary';
-    if (status === 'Hadir Tepat Waktu' || status === 'Hadir' || status === 'Hadir (Belum Pulang)' || status === 'Hadir (Menunggu Sesi 2)') return 'badge-success';
+    if (status === 'Hadir Tepat Waktu' || status === 'Hadir' || status === 'Hadir (Belum Pulang)' || status === 'Hadir (Menunggu Sesi 2)' || status === 'Hadir (Belum Selesai)') return 'badge-success';
     if (status === 'Terlambat' || status === 'Terlambat (Belum Pulang)' || status === 'Terlambat (Menunggu Sesi 2)') return 'badge-warning';
-    if (status === 'Alpa' || status === 'Alpa (Input Admin)' || status === 'Alpa (Tidak Pulang)' || status === 'Alpa (Menunggu Sesi 2)') return 'badge-danger';
+    if (status === 'Alpa' || status === 'Alpa (Input Admin)' || status === 'Alpa (Tidak Pulang)' || status === 'Alpa (Menunggu Sesi 2)' || status === 'Alpa (Tidak Masuk)') return 'badge-danger';
     if (status && status.indexOf('Bolos') !== -1) return 'badge-bolos';
     if (status === 'Izin') return 'badge-izin';
     if (status === 'Sakit') return 'badge-sakit';
     if (status && status.indexOf('Libur') !== -1) return 'badge-secondary';
-    if (status === 'Belum Absen' || status === 'Belum Pulang' || status === 'Menunggu Sesi 2') return 'badge-info';
+    if (status === 'Belum Absen' || status === 'Belum Pulang' || status === 'Menunggu Sesi 2' || status === 'Tidak Lengkap') return 'badge-info';
     return 'badge-secondary';
   }
 
-  // ===== RENDER REKAP SISWA =====
+  // ===== RENDER REKAP SISWA DENGAN SESI DINAMIS =====
   function renderRekapSiswa(data) {
     var container = document.getElementById('rekapSiswaCepat');
     if (!data || data.length === 0) {
       container.innerHTML = '<p style="color:#666;">Belum ada data absensi siswa hari ini.</p>';
       return;
     }
-    var html = '<div class="table-wrapper"><table><thead><tr><th>Nama</th><th>NISN</th><th>Kelas</th><th>Jam Datang</th><th>Status</th></tr></thead><tbody>';
+    
+    var sesi1Aktif = cachedSettings && cachedSettings.Sesi1Aktif !== 'false';
+    var sesi2Aktif = cachedSettings && cachedSettings.Sesi2Aktif !== 'false';
+    var sesi3Aktif = cachedSettings && cachedSettings.Sesi3Aktif !== 'false';
+    
+    var headers = ['No', 'Nama', 'NISN', 'Kelas'];
+    var sesiLabels = [];
+    if (sesi1Aktif) { headers.push('Sesi 1'); sesiLabels.push('sesi1'); }
+    if (sesi2Aktif) { headers.push('Sesi 2'); sesiLabels.push('sesi2'); }
+    if (sesi3Aktif) { headers.push('Sesi 3'); sesiLabels.push('sesi3'); }
+    headers.push('Status');
+    
+    var html = '<div class="table-wrapper"><table><thead><tr>';
+    for (var h = 0; h < headers.length; h++) {
+      html += '<th>' + headers[h] + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    
     for (var i = 0; i < data.length; i++) {
       var s = data[i];
       var badge = getBadgeClass(s.status);
-      html += '<tr><td>' + s.nama + '</td><td>' + s.nisn + '</td><td>' + (s.kelas || '-') + '</td><td>' + (s.jamDatang || '-') + '</td><td><span class="badge ' + badge + '">' + s.status + '</span></td></tr>';
+      html += '<tr>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td>' + s.nama + '</td>';
+      html += '<td>' + s.nisn + '</td>';
+      html += '<td>' + (s.kelas || '-') + '</td>';
+      
+      if (sesi1Aktif) html += '<td>' + (s.sesi1 || '-') + '</td>';
+      if (sesi2Aktif) html += '<td>' + (s.sesi2 || '-') + '</td>';
+      if (sesi3Aktif) html += '<td>' + (s.sesi3 || '-') + '</td>';
+      
+      html += '<td><span class="badge ' + badge + '">' + s.status + '</span></td>';
+      html += '</tr>';
     }
     html += '</tbody></table></div>';
     container.innerHTML = html;
   }
 
-  // ===== RENDER REKAP GURU =====
+  // ===== RENDER REKAP GURU DENGAN SESI DINAMIS =====
   function renderRekapGuru(data) {
     var container = document.getElementById('rekapGuruCepat');
     if (!data || data.length === 0) {
       container.innerHTML = '<p style="color:#666;">Belum ada data absensi guru hari ini.</p>';
       return;
     }
-    var html = '<div class="table-wrapper"><table><thead><tr><th>Nama</th><th>NIP</th><th>Jabatan</th><th>Jam Datang</th><th>Status</th></tr></thead><tbody>';
+    
+    var sesi1Aktif = cachedSettings && cachedSettings.Sesi1Aktif !== 'false';
+    var sesi2Aktif = cachedSettings && cachedSettings.Sesi2Aktif !== 'false';
+    var sesi3Aktif = cachedSettings && cachedSettings.Sesi3Aktif !== 'false';
+    
+    var headers = ['No', 'Nama', 'NIP', 'Jabatan'];
+    var sesiLabels = [];
+    if (sesi1Aktif) { headers.push('Sesi 1'); sesiLabels.push('sesi1'); }
+    if (sesi2Aktif) { headers.push('Sesi 2'); sesiLabels.push('sesi2'); }
+    if (sesi3Aktif) { headers.push('Sesi 3'); sesiLabels.push('sesi3'); }
+    headers.push('Status');
+    
+    var html = '<div class="table-wrapper"><table><thead><tr>';
+    for (var h = 0; h < headers.length; h++) {
+      html += '<th>' + headers[h] + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    
     for (var i = 0; i < data.length; i++) {
       var g = data[i];
       var badge = getBadgeClass(g.status);
-      html += '<tr><td>' + g.nama + '</td><td>' + g.nip + '</td><td>' + (g.jabatan || '-') + '</td><td>' + (g.jamDatang || '-') + '</td><td><span class="badge ' + badge + '">' + g.status + '</span></td></tr>';
+      html += '<tr>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td>' + g.nama + '</td>';
+      html += '<td>' + g.nip + '</td>';
+      html += '<td>' + (g.jabatan || '-') + '</td>';
+      
+      if (sesi1Aktif) html += '<td>' + (g.sesi1 || '-') + '</td>';
+      if (sesi2Aktif) html += '<td>' + (g.sesi2 || '-') + '</td>';
+      if (sesi3Aktif) html += '<td>' + (g.sesi3 || '-') + '</td>';
+      
+      html += '<td><span class="badge ' + badge + '">' + g.status + '</span></td>';
+      html += '</tr>';
     }
     html += '</tbody></table></div>';
     container.innerHTML = html;
   }
 
-    // ===== NAVIGATE =====
+  // ===== NAVIGATE =====
   function navigateTo(mode) {
     var menuItem = document.querySelector('.sidebar .menu-item[data-mode="' + mode + '"]');
     if (menuItem && menuItem.classList.contains('disabled')) {
@@ -1227,6 +1389,16 @@
           // ===== BUKAN HARI LIBUR =====
           showLiburInfo(null);
           
+          // Update sesi aktif dari data
+          if (data.data.sesi1Aktif !== undefined) {
+            if (cachedSettings) {
+              cachedSettings.Sesi1Aktif = data.data.sesi1Aktif ? 'true' : 'false';
+              cachedSettings.Sesi2Aktif = data.data.sesi2Aktif ? 'true' : 'false';
+              cachedSettings.Sesi3Aktif = data.data.sesi3Aktif ? 'true' : 'false';
+            }
+            updateOperationalInfo(new Date());
+          }
+          
           document.getElementById('statSiswa').textContent = data.data.totalSiswa || 0;
           document.getElementById('totalSiswaBadge').textContent = data.data.totalSiswa || 0;
           document.getElementById('statGuru').textContent = data.data.totalGuru || 0;
@@ -1258,7 +1430,7 @@
       .catch(function() {});
   }
 
-    // ===== REKAP MODE =====
+  // ===== REKAP MODE =====
   function setRekapMode(mode) {
     rekapMode = mode;
     var isRange = mode !== 'harian';
@@ -1326,11 +1498,21 @@
         currentRekapData = data.data;
         currentRekapType = 'siswa';
         
+        var sesi1Aktif = data.sesi1Aktif !== undefined ? data.sesi1Aktif : true;
+        var sesi2Aktif = data.sesi2Aktif !== undefined ? data.sesi2Aktif : true;
+        var sesi3Aktif = data.sesi3Aktif !== undefined ? data.sesi3Aktif : true;
+        
         var html = '<div class="table-wrapper"><table><thead><tr>';
         if (rekapMode === 'harian') {
-          html += '<th>NISN</th><th>Nama</th><th>Datang</th><th>Pulang</th><th>Status</th>';
+          html += '<th>NISN</th><th>Nama</th>';
+          if (sesi1Aktif) html += '<th>Sesi 1</th>';
+          if (sesi2Aktif) html += '<th>Sesi 2</th>';
+          if (sesi3Aktif) html += '<th>Sesi 3</th>';
+          html += '<th>Status</th>';
         } else {
-          html += '<th>NISN</th><th>Nama</th><th>✅ Hadir</th><th>⚠️ Terlambat</th><th>❌ Alpa</th><th>🟣 Bolos</th><th>📝 Izin</th><th>🤒 Sakit</th><th>📈 % Hadir</th>';
+          html += '<th>NISN</th><th>Nama</th>';
+          html += '<th>✅ Hadir</th><th>⚠️ Terlambat</th><th>❌ Alpa</th><th>🟣 Bolos</th>';
+          html += '<th>📝 Izin</th><th>🤒 Sakit</th><th>📈 % Hadir</th>';
         }
         html += '</tr></thead><tbody>';
 
@@ -1339,7 +1521,11 @@
             var row = data.data[i];
             if (rekapMode === 'harian') {
               var badge = getBadgeClass(row.status);
-              html += '<tr><td>' + row.nisn + '</td><td>' + row.nama + '</td><td>' + row.jamMasuk + '</td><td>' + row.jamPulang + '</td><td><span class="badge ' + badge + '">' + row.status + '</span></td></tr>';
+              html += '<tr><td>' + row.nisn + '</td><td>' + row.nama + '</td>';
+              if (sesi1Aktif) html += '<td>' + (row.sesi1 || '-') + '</td>';
+              if (sesi2Aktif) html += '<td>' + (row.sesi2 || '-') + '</td>';
+              if (sesi3Aktif) html += '<td>' + (row.sesi3 || '-') + '</td>';
+              html += '<td><span class="badge ' + badge + '">' + row.status + '</span></td></tr>';
             } else {
               var pct = row.persentaseKehadiran || 0;
               html += '<tr><td>' + row.nisn + '</td><td>' + row.nama + '</td>';
@@ -1383,11 +1569,25 @@
           return;
         }
         var html = '<div style="margin-bottom:10px;"><b>' + data.siswa.nama + '</b> (' + data.siswa.nisn + ') - Kelas ' + data.siswa.kelas + '</div>';
-        html += '<div class="table-wrapper"><table><thead><tr><th>Tanggal</th><th>Datang</th><th>Pulang</th><th>Status</th></tr></thead><tbody>';
+        
+        var sesi1Aktif = cachedSettings && cachedSettings.Sesi1Aktif !== 'false';
+        var sesi2Aktif = cachedSettings && cachedSettings.Sesi2Aktif !== 'false';
+        var sesi3Aktif = cachedSettings && cachedSettings.Sesi3Aktif !== 'false';
+        
+        html += '<div class="table-wrapper"><table><thead><tr><th>Tanggal</th>';
+        if (sesi1Aktif) html += '<th>Sesi 1</th>';
+        if (sesi2Aktif) html += '<th>Sesi 2</th>';
+        if (sesi3Aktif) html += '<th>Sesi 3</th>';
+        html += '<th>Status</th></tr></thead><tbody>';
+        
         for (var i = 0; i < data.riwayat.length; i++) {
           var r = data.riwayat[i];
           var badge = getBadgeClass(r.status);
-          html += '<tr><td>' + r.tanggal + '</td><td>' + r.jamMasuk + '</td><td>' + r.jamPulang + '</td><td><span class="badge ' + badge + '">' + r.status + '</span></td></tr>';
+          html += '<tr><td>' + r.tanggal + '</td>';
+          if (sesi1Aktif) html += '<td>' + (r.sesi1 || '-') + '</td>';
+          if (sesi2Aktif) html += '<td>' + (r.sesi2 || '-') + '</td>';
+          if (sesi3Aktif) html += '<td>' + (r.sesi3 || '-') + '</td>';
+          html += '<td><span class="badge ' + badge + '">' + r.status + '</span></td></tr>';
         }
         html += '</tbody></table></div>';
         resDiv.innerHTML = html;
@@ -1397,7 +1597,7 @@
       });
   }
 
-    // ===== GURU LOGIN =====
+  // ===== GURU LOGIN =====
   function verifyPin() {
     var pin = document.getElementById('guruPin').value;
     var msg = document.getElementById('guruAuthMsg');
@@ -1437,7 +1637,7 @@
     }
   }
 
-  // ===== CAMERA FUNCTIONS =====
+  // ===== CAMERA FUNCTIONS (DITINGKATKAN KECEPATAN) =====
   function startCamera() {
     if (isScanning) return;
     var reader = document.getElementById('reader');
@@ -1445,7 +1645,12 @@
     if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 15, qrbox: { width: 250, height: 250 } },
+      { 
+        fps: 30, 
+        qrbox: { width: 280, height: 280 },
+        aspectRatio: 1.0,
+        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.CODE_128 ]
+      },
       onScanSuccess,
       onScanFailure
     ).then(function() {
@@ -1501,7 +1706,7 @@
           if (isScanning) {
             try { html5QrCode.resume(); } catch(e) {}
           }
-        }, 2000);
+        }, 1500);
       });
 
     if (isScanning) {
@@ -1511,7 +1716,7 @@
 
   function onScanFailure(error) {}
 
-  // ===== ADMIN CAMERA =====
+  // ===== ADMIN CAMERA (DITINGKATKAN KECEPATAN) =====
   function startCameraAdmin() {
     if (isScanningAdmin) return;
     var reader = document.getElementById('readerAdmin');
@@ -1519,7 +1724,12 @@
     if (!html5QrCodeAdmin) html5QrCodeAdmin = new Html5Qrcode("readerAdmin");
     html5QrCodeAdmin.start(
       { facingMode: "environment" },
-      { fps: 15, qrbox: { width: 250, height: 250 } },
+      { 
+        fps: 30, 
+        qrbox: { width: 280, height: 280 },
+        aspectRatio: 1.0,
+        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.CODE_128 ]
+      },
       onScanSuccessAdmin,
       onScanFailureAdmin
     ).then(function() {
@@ -1575,7 +1785,7 @@
           if (isScanningAdmin) {
             try { html5QrCodeAdmin.resume(); } catch(e) {}
           }
-        }, 2000);
+        }, 1500);
       });
 
     if (isScanningAdmin) {
@@ -1584,7 +1794,8 @@
   }
 
   function onScanFailureAdmin(error) {}
-    // ===== STATUS SISWA =====
+
+  // ===== STATUS SISWA =====
   function inputStatusSiswa() {
     var nisn = document.getElementById('statusNisn').value.trim();
     var tanggal = document.getElementById('statusTanggal').value;
@@ -1727,7 +1938,14 @@
         return;
       }
       if (rekapMode === 'harian') {
-        headers = ['NISN', 'Nama', 'Jam Datang', 'Jam Pulang', 'Status'];
+        var sesi1Aktif = cachedSettings && cachedSettings.Sesi1Aktif !== 'false';
+        var sesi2Aktif = cachedSettings && cachedSettings.Sesi2Aktif !== 'false';
+        var sesi3Aktif = cachedSettings && cachedSettings.Sesi3Aktif !== 'false';
+        headers = ['NISN', 'Nama'];
+        if (sesi1Aktif) headers.push('Sesi 1');
+        if (sesi2Aktif) headers.push('Sesi 2');
+        if (sesi3Aktif) headers.push('Sesi 3');
+        headers.push('Status');
         var tglInput = document.getElementById('guruTanggal');
         filename = 'rekap_siswa_' + (tglInput ? tglInput.value : 'now') + '.csv';
       } else {
@@ -1771,7 +1989,7 @@
     window.print();
   }
 
-    // ===== HARI KHUSUS =====
+  // ===== HARI KHUSUS =====
   function loadHariKhusus() {
     var tbody = document.getElementById('hkTableBody');
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">⏳ Memuat data...</td></tr>';
@@ -1965,6 +2183,25 @@
           }
         }
 
+        // Sesi Aktif
+        var sesi1Aktif = s.Sesi1Aktif !== 'false';
+        var sesi2Aktif = s.Sesi2Aktif !== 'false';
+        var sesi3Aktif = s.Sesi3Aktif !== 'false';
+        
+        var chk1 = document.getElementById('setSesi1Aktif');
+        var chk2 = document.getElementById('setSesi2Aktif');
+        var chk3 = document.getElementById('setSesi3Aktif');
+        var cur1 = document.getElementById('curSesi1Aktif');
+        var cur2 = document.getElementById('curSesi2Aktif');
+        var cur3 = document.getElementById('curSesi3Aktif');
+        
+        if (chk1) chk1.checked = sesi1Aktif;
+        if (chk2) chk2.checked = sesi2Aktif;
+        if (chk3) chk3.checked = sesi3Aktif;
+        if (cur1) cur1.textContent = sesi1Aktif ? '✅' : '❌';
+        if (cur2) cur2.textContent = sesi2Aktif ? '✅' : '❌';
+        if (cur3) cur3.textContent = sesi3Aktif ? '✅' : '❌';
+
         var pinGuruInput = document.getElementById('setPinGuru');
         var curPinGuru = document.getElementById('curPinGuru');
         if (pinGuruInput) pinGuruInput.value = s.PIN_GURU || '';
@@ -2012,6 +2249,24 @@
         params.append(f, input.value);
         hasChanges = true;
       }
+    }
+
+    // Sesi Aktif
+    var sesi1Input = document.getElementById('setSesi1Aktif');
+    var sesi2Input = document.getElementById('setSesi2Aktif');
+    var sesi3Input = document.getElementById('setSesi3Aktif');
+    
+    if (sesi1Input) {
+      params.append('Sesi1Aktif', sesi1Input.checked ? 'true' : 'false');
+      hasChanges = true;
+    }
+    if (sesi2Input) {
+      params.append('Sesi2Aktif', sesi2Input.checked ? 'true' : 'false');
+      hasChanges = true;
+    }
+    if (sesi3Input) {
+      params.append('Sesi3Aktif', sesi3Input.checked ? 'true' : 'false');
+      hasChanges = true;
     }
 
     var pinGuru = document.getElementById('setPinGuru');
@@ -2073,7 +2328,7 @@
     });
   }
 
-    // ===== INIT =====
+  // ===== INIT =====
   var todayStr = new Date().toISOString().split('T')[0];
   
   var ortuTglAwal = document.getElementById('ortuTglAwal');
