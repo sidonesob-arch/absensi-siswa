@@ -408,6 +408,18 @@
       cursor: pointer;
     }
 
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 56px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 99;
+    }
+    .sidebar-overlay.show { display: block; }
+
     @media (max-width: 820px) {
       .sidebar-toggle { display: block; }
       .sidebar {
@@ -417,21 +429,10 @@
         height: calc(100vh - 56px);
         transform: translateX(-100%);
         width: 240px;
-        z-index: 1000;
+        z-index: 100;
         box-shadow: 2px 0 20px rgba(0,0,0,0.3);
       }
       .sidebar.open { transform: translateX(0); }
-      .sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: 56px;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.4);
-        z-index: 999;
-      }
-      .sidebar-overlay.show { display: block; }
       .topbar .left h2 { font-size: 12px; }
       .topbar .right .clock { font-size: 10px; padding: 3px 8px; min-width: 60px; }
       .main-content { padding: 8px; }
@@ -530,6 +531,11 @@
       </div>
       <div class="menu-item disabled" data-mode="adminStatus" onclick="navigateTo('adminStatus')">
         <i class="fas fa-pen"></i> Izin/Sakit Guru
+      </div>
+      
+      <div class="menu-label">🔐 Akses Khusus</div>
+      <div class="menu-item" data-mode="settingsLogin" onclick="navigateTo('settingsLogin')">
+        <i class="fas fa-key"></i> Login Pengaturan
       </div>
       <div class="menu-item disabled" data-mode="adminSettings" onclick="navigateTo('adminSettings')">
         <i class="fas fa-cog"></i> Pengaturan
@@ -643,8 +649,8 @@
         <h3><i class="fas fa-chalkboard-teacher"></i> Verifikasi Guru</h3>
         <div style="max-width:280px;">
           <label>PIN Guru</label>
-          <input type="password" id="guruPin" placeholder="Masukkan PIN..." onkeydown="if(event.key==='Enter') verifyPin()">
-          <button class="btn-success" onclick="verifyPin()"><i class="fas fa-unlock"></i> Masuk</button>
+          <input type="password" id="guruPin" placeholder="Masukkan PIN..." onkeydown="if(event.key==='Enter') verifyPin('guru')">
+          <button class="btn-success" onclick="verifyPin('guru')"><i class="fas fa-unlock"></i> Masuk</button>
           <div id="guruAuthMsg" style="margin-top:6px;color:#c62828;font-size:12px;"></div>
         </div>
       </div>
@@ -709,8 +715,8 @@
         <h3><i class="fas fa-user-shield"></i> Verifikasi Admin Guru</h3>
         <div style="max-width:280px;">
           <label>PIN Admin</label>
-          <input type="password" id="adminPin" placeholder="Masukkan PIN Admin..." onkeydown="if(event.key==='Enter') verifyAdminPin()">
-          <button class="btn-purple" onclick="verifyAdminPin()"><i class="fas fa-unlock"></i> Masuk</button>
+          <input type="password" id="adminPin" placeholder="Masukkan PIN Admin..." onkeydown="if(event.key==='Enter') verifyPin('admin')">
+          <button class="btn-purple" onclick="verifyPin('admin')"><i class="fas fa-unlock"></i> Masuk</button>
           <div id="adminAuthMsg" style="margin-top:6px;color:#c62828;font-size:12px;"></div>
         </div>
       </div>
@@ -763,6 +769,23 @@
         <div><label>Keterangan</label><input type="text" id="statusKeteranganGuru" placeholder="Opsional..."></div>
         <button class="btn-orange btn-sm" onclick="inputStatusGuru()"><i class="fas fa-save"></i> Simpan</button>
         <div id="statusResultGuru" style="margin-top:6px;font-size:12px;"></div>
+      </div>
+
+      <!-- ===== PANEL SETTINGS LOGIN ===== -->
+      <div id="panelSettingsLogin" class="panel hidden">
+        <h3><i class="fas fa-key"></i> Akses Pengaturan Sistem</h3>
+        <p style="color:#666;font-size:12px;margin-bottom:10px;">
+          <i class="fas fa-info-circle"></i> 
+          PIN ini khusus untuk mengakses menu <b>Pengaturan</b>. 
+          Gunakan jika Anda ingin memberikan akses sementara ke guru terpercaya.
+        </p>
+        <div style="max-width:280px;">
+          <label>PIN Pengaturan</label>
+          <input type="password" id="settingsPin" placeholder="Masukkan PIN Pengaturan..." 
+                 onkeydown="if(event.key==='Enter') verifyPin('settings')">
+          <button class="btn-warning" onclick="verifyPin('settings')"><i class="fas fa-unlock"></i> Masuk</button>
+          <div id="settingsAuthMsg" style="margin-top:6px;color:#c62828;font-size:12px;"></div>
+        </div>
       </div>
 
       <!-- ===== PANEL ADMIN SETTINGS ===== -->
@@ -828,6 +851,14 @@
                 <label>PIN Admin</label>
                 <input type="password" id="setPinAdmin" placeholder="4 digit" maxlength="4" pattern="[0-9]{4}">
                 <span class="current-value" id="curPinAdmin">****</span>
+              </div>
+              <div>
+                <label>PIN Pengaturan</label>
+                <input type="password" id="setPinSettings" placeholder="4 digit" maxlength="4" pattern="[0-9]{4}">
+                <span class="current-value" id="curPinSettings">****</span>
+                <p style="font-size:9px;color:#888;margin-top:2px;">
+                  <i class="fas fa-info-circle"></i> Khusus akses menu Pengaturan
+                </p>
               </div>
             </div>
           </div>
@@ -929,10 +960,11 @@
   <script>
   // ===== KONFIGURASI =====
   // GANTI URL INI DENGAN URL DEPLOY SCRIPT ANDA!
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCi6I7WG4ai_8Q7aTseD4fFSqsohzXqVlOzH_Zvai2u90SK8G2hkk_NgKtZMhXW5FHMg/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzsTRGxq-p7nx8uAIgX4o-gMvVTuCd4vRDpTkVWZl3xAsnpRQoUsDC1BUz6b48ZkQHNCw/exec";
   
   let PIN_GURU = "1234";
   let PIN_ADMIN = "9999";
+  let PIN_SETTINGS = "8888";
   let cachedSettings = null;
   let currentRekapData = null;
   let currentRekapType = 'siswa';
@@ -942,6 +974,7 @@
   let rekapMode = 'harian';
   let isGuruLoggedIn = false;
   let isAdminLoggedIn = false;
+  let isSettingsLoggedIn = false;
   let html5QrCode = null, isScanning = false, isProcessing = false;
   let html5QrCodeAdmin = null, isScanningAdmin = false, isProcessingAdmin = false;
 
@@ -968,6 +1001,7 @@
     JamTutupPulangGuru: '17:00',
     PIN_GURU: '1234',
     PIN_ADMIN: '9999',
+    PIN_SETTINGS: '8888',
     Sesi1Aktif: 'true',
     Sesi2Aktif: 'true',
     Sesi3Aktif: 'true'
@@ -1058,6 +1092,13 @@
       if (adminStatus) adminStatus.classList.remove('disabled');
       if (adminSettings) adminSettings.classList.remove('disabled');
       document.getElementById('adminPhoto').style.display = 'flex';
+    } else if (isSettingsLoggedIn) {
+      // Settings login hanya bisa akses pengaturan
+      if (adminScan) adminScan.classList.add('disabled');
+      if (adminRekap) adminRekap.classList.add('disabled');
+      if (adminStatus) adminStatus.classList.add('disabled');
+      if (adminSettings) adminSettings.classList.remove('disabled');
+      document.getElementById('adminPhoto').style.display = 'flex';
     } else {
       if (adminScan) adminScan.classList.add('disabled');
       if (adminRekap) adminRekap.classList.add('disabled');
@@ -1065,6 +1106,107 @@
       if (adminSettings) adminSettings.classList.add('disabled');
       document.getElementById('adminPhoto').style.display = 'none';
     }
+  }
+
+  // ===== VERIFY PIN =====
+  function verifyPin(type) {
+    var pinInput, msgElement, pinValue;
+    
+    if (type === 'guru') {
+      pinInput = document.getElementById('guruPin');
+      msgElement = document.getElementById('guruAuthMsg');
+      pinValue = pinInput.value;
+    } else if (type === 'admin') {
+      pinInput = document.getElementById('adminPin');
+      msgElement = document.getElementById('adminAuthMsg');
+      pinValue = pinInput.value;
+    } else if (type === 'settings') {
+      pinInput = document.getElementById('settingsPin');
+      msgElement = document.getElementById('settingsAuthMsg');
+      pinValue = pinInput.value;
+    } else {
+      return;
+    }
+    
+    if (!pinValue) {
+      msgElement.textContent = '❌ Masukkan PIN!';
+      msgElement.style.color = '#c62828';
+      return;
+    }
+    
+    // Cek PIN lokal dulu untuk respons cepat
+    if (type === 'guru' && pinValue === PIN_GURU) {
+      isGuruLoggedIn = true;
+      msgElement.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'guruScan\'); return false;" style="color:#2e7d32;">Klik untuk lanjut</a>';
+      msgElement.style.color = '#2e7d32';
+      updateMenuState();
+      navigateTo('guruScan');
+      showToast('✅ Login Guru berhasil!', 'success');
+      return;
+    }
+    
+    if (type === 'admin' && pinValue === PIN_ADMIN) {
+      isAdminLoggedIn = true;
+      msgElement.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'adminScan\'); return false;" style="color:#2e7d32;">Klik untuk lanjut</a>';
+      msgElement.style.color = '#2e7d32';
+      updateMenuState();
+      navigateTo('adminScan');
+      showToast('✅ Login Admin berhasil!', 'success');
+      return;
+    }
+    
+    if (type === 'settings' && pinValue === PIN_SETTINGS) {
+      isSettingsLoggedIn = true;
+      msgElement.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'adminSettings\'); return false;" style="color:#2e7d32;">Klik untuk buka Pengaturan</a>';
+      msgElement.style.color = '#2e7d32';
+      updateMenuState();
+      navigateTo('adminSettings');
+      showToast('✅ Login Pengaturan berhasil!', 'success');
+      return;
+    }
+    
+    // Jika PIN lokal tidak cocok, cek ke server
+    msgElement.textContent = '⏳ Verifikasi...';
+    msgElement.style.color = '#666';
+    
+    fetch(SCRIPT_URL + '?action=verifyPin&type=' + type + '&pin=' + encodeURIComponent(pinValue))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          if (type === 'guru') {
+            isGuruLoggedIn = true;
+            msgElement.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'guruScan\'); return false;" style="color:#2e7d32;">Klik untuk lanjut</a>';
+            msgElement.style.color = '#2e7d32';
+            updateMenuState();
+            navigateTo('guruScan');
+            showToast('✅ Login Guru berhasil!', 'success');
+          } else if (type === 'admin') {
+            isAdminLoggedIn = true;
+            msgElement.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'adminScan\'); return false;" style="color:#2e7d32;">Klik untuk lanjut</a>';
+            msgElement.style.color = '#2e7d32';
+            updateMenuState();
+            navigateTo('adminScan');
+            showToast('✅ Login Admin berhasil!', 'success');
+          } else if (type === 'settings') {
+            isSettingsLoggedIn = true;
+            msgElement.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'adminSettings\'); return false;" style="color:#2e7d32;">Klik untuk buka Pengaturan</a>';
+            msgElement.style.color = '#2e7d32';
+            updateMenuState();
+            navigateTo('adminSettings');
+            showToast('✅ Login Pengaturan berhasil!', 'success');
+          }
+        } else {
+          msgElement.textContent = '❌ ' + data.message;
+          msgElement.style.color = '#c62828';
+          pinInput.value = '';
+          pinInput.focus();
+          showToast('❌ ' + data.message, 'error');
+        }
+      })
+      .catch(function(e) {
+        msgElement.textContent = '❌ Error: ' + e.message;
+        msgElement.style.color = '#c62828';
+      });
   }
 
   // ===== NAVIGATE =====
@@ -1103,6 +1245,7 @@
       'adminScan': 'panelAdminScan',
       'adminRekap': 'panelAdminRekap',
       'adminStatus': 'panelAdminStatus',
+      'settingsLogin': 'panelSettingsLogin',
       'adminSettings': 'panelAdminSettings'
     };
     var panelId = panelMap[mode] || 'panelDashboard';
@@ -1120,6 +1263,7 @@
       'adminScan': '📷 Scan Guru',
       'adminRekap': '📊 Rekap Guru',
       'adminStatus': '📝 Izin/Sakit Guru',
+      'settingsLogin': '🔐 Login Pengaturan',
       'adminSettings': '⚙️ Pengaturan'
     };
     modeBadge.textContent = labelMap[mode] || 'Dashboard';
@@ -1283,15 +1427,14 @@
           cachedSettings = data.data;
           PIN_GURU = data.data.PIN_GURU || '1234';
           PIN_ADMIN = data.data.PIN_ADMIN || '9999';
+          PIN_SETTINGS = data.data.PIN_SETTINGS || '8888';
           updateOperationalInfo(new Date());
         } else {
-          // Jika gagal, gunakan default
           cachedSettings = JSON.parse(JSON.stringify(defaultSettings));
         }
         refreshDashboard();
       })
       .catch(function(e) {
-        // Jika error, gunakan default dan coba refresh
         cachedSettings = JSON.parse(JSON.stringify(defaultSettings));
         refreshDashboard();
         console.warn('Gagal memuat settings:', e);
@@ -1304,7 +1447,6 @@
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.success) {
-          // Update stats
           document.getElementById('statSiswa').textContent = data.data.totalSiswa || 0;
           document.getElementById('totalSiswaBadge').textContent = data.data.totalSiswa || 0;
           document.getElementById('statGuru').textContent = data.data.totalGuru || 0;
@@ -1324,7 +1466,6 @@
           document.getElementById('statAlpaGuru').textContent = data.data.alpaGuru || 0;
           document.getElementById('statBolosGuru').textContent = '0';
           
-          // Libur info
           if (data.data.isLibur) {
             showLiburInfo(data.data.keteranganLibur);
             document.getElementById('rekapContainer').classList.add('hidden-rekap');
@@ -1339,7 +1480,6 @@
           
           showLiburInfo(null);
           
-          // Update sesi aktif
           if (cachedSettings) {
             cachedSettings.Sesi1Aktif = data.data.sesi1Aktif ? 'true' : 'false';
             cachedSettings.Sesi2Aktif = data.data.sesi2Aktif ? 'true' : 'false';
@@ -1347,7 +1487,6 @@
             updateOperationalInfo(new Date());
           }
           
-          // Render rekap
           var now = new Date();
           var jamSekarang = now.getHours() + (now.getMinutes() / 60);
           var cfg = cachedSettings || {};
@@ -1565,46 +1704,6 @@
       .catch(function(e) {
         resDiv.innerHTML = '<p style="color:red;font-size:12px;">Error: ' + e.message + '</p>';
       });
-  }
-
-  // ===== GURU LOGIN =====
-  function verifyPin() {
-    var pin = document.getElementById('guruPin').value;
-    var msg = document.getElementById('guruAuthMsg');
-    if (pin === PIN_GURU) {
-      isGuruLoggedIn = true;
-      msg.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'guruScan\'); return false;" style="color:#2e7d32;">Klik untuk lanjut</a>';
-      msg.style.color = '#2e7d32';
-      updateMenuState();
-      navigateTo('guruScan');
-      showToast('✅ Login Guru berhasil!', 'success');
-    } else {
-      msg.textContent = '❌ PIN salah!';
-      msg.style.color = '#c62828';
-      document.getElementById('guruPin').value = '';
-      document.getElementById('guruPin').focus();
-      showToast('❌ PIN salah!', 'error');
-    }
-  }
-
-  // ===== ADMIN LOGIN =====
-  function verifyAdminPin() {
-    var pin = document.getElementById('adminPin').value;
-    var msg = document.getElementById('adminAuthMsg');
-    if (pin === PIN_ADMIN) {
-      isAdminLoggedIn = true;
-      msg.innerHTML = '✅ Login berhasil! <a href="#" onclick="navigateTo(\'adminSettings\'); return false;" style="color:#2e7d32;">Klik untuk lanjut</a>';
-      msg.style.color = '#2e7d32';
-      updateMenuState();
-      navigateTo('adminSettings');
-      showToast('✅ Login Admin berhasil!', 'success');
-    } else {
-      msg.textContent = '❌ PIN Admin salah!';
-      msg.style.color = '#c62828';
-      document.getElementById('adminPin').value = '';
-      document.getElementById('adminPin').focus();
-      showToast('❌ PIN Admin salah!', 'error');
-    }
   }
 
   // ===== CAMERA FUNCTIONS =====
@@ -2140,6 +2239,7 @@
         cachedSettings = s;
         PIN_GURU = s.PIN_GURU || '1234';
         PIN_ADMIN = s.PIN_ADMIN || '9999';
+        PIN_SETTINGS = s.PIN_SETTINGS || '8888';
 
         var fields = [
           'JamBukaMasuk', 'BatasTepatWaktu', 'BatasScanMasuk',
@@ -2188,6 +2288,11 @@
         var curPinAdmin = document.getElementById('curPinAdmin');
         if (pinAdminInput) pinAdminInput.value = s.PIN_ADMIN || '';
         if (curPinAdmin) curPinAdmin.textContent = s.PIN_ADMIN || '****';
+        
+        var pinSettingsInput = document.getElementById('setPinSettings');
+        var curPinSettings = document.getElementById('curPinSettings');
+        if (pinSettingsInput) pinSettingsInput.value = s.PIN_SETTINGS || '';
+        if (curPinSettings) curPinSettings.textContent = s.PIN_SETTINGS || '****';
 
         updateOperationalInfo(new Date());
         result.innerHTML = '<p style="color:green;font-size:12px;">✅ Pengaturan berhasil dimuat dari Google Sheet</p>';
@@ -2247,6 +2352,8 @@
 
     var pinGuru = document.getElementById('setPinGuru');
     var pinAdmin = document.getElementById('setPinAdmin');
+    var pinSettings = document.getElementById('setPinSettings');
+    
     if (pinGuru && pinGuru.value) {
       if (/^\d{4}$/.test(pinGuru.value)) {
         params.append('pinGuru', pinGuru.value);
@@ -2264,6 +2371,16 @@
       } else {
         result.innerHTML = '<p style="color:red;font-size:12px;">❌ PIN Admin harus 4 digit angka!</p>';
         showToast('❌ PIN Admin harus 4 digit angka!', 'error');
+        return;
+      }
+    }
+    if (pinSettings && pinSettings.value) {
+      if (/^\d{4}$/.test(pinSettings.value)) {
+        params.append('pinSettings', pinSettings.value);
+        hasChanges = true;
+      } else {
+        result.innerHTML = '<p style="color:red;font-size:12px;">❌ PIN Pengaturan harus 4 digit angka!</p>';
+        showToast('❌ PIN Pengaturan harus 4 digit angka!', 'error');
         return;
       }
     }
@@ -2289,6 +2406,7 @@
           cachedSettings = data.data;
           PIN_GURU = data.data.PIN_GURU || '1234';
           PIN_ADMIN = data.data.PIN_ADMIN || '9999';
+          PIN_SETTINGS = data.data.PIN_SETTINGS || '8888';
           updateOperationalInfo(new Date());
         }
         
@@ -2363,6 +2481,7 @@
   console.log('✅ Portal Absensi SMP Negeri 1 Sobang siap digunakan!');
   console.log('📅 Tanggal: ' + todayStr);
   console.log('🔗 Script URL: ' + SCRIPT_URL);
+  console.log('🔑 PIN Settings default: 8888');
   </script>
 </body>
 </html>
