@@ -438,11 +438,53 @@
       color: #333;
       cursor: pointer;
     }
+    /* PERBAIKAN: Ukuran lebih kecil untuk HP */
+      .stats-grid-inner .stat-card {
+        padding: 8px 6px;
+        gap: 6px;
+      }
+      .stats-grid-inner .stat-card .icon { font-size: 14px; width: 24px; }
+      .stats-grid-inner .stat-card .info h4 { font-size: 14px; }
+      .stats-grid-inner .stat-card .info p { font-size: 9px; }
+      
+      .stats-section .total-card { padding: 10px; }
+      .stats-section .total-card h2 { font-size: 22px; }
+      
+      /* Tabel lebih kecil */
+      .table-wrapper table { font-size: 11px; }
+      .table-wrapper th, .table-wrapper td { padding: 4px 6px; }
+      .badge { font-size: 9px; padding: 2px 6px; }
+      
+      /* Info scan lebih kecil */
+      .info-scan-box { padding: 10px 12px; }
+      .info-scan-box .jam-range { font-size: 16px; }
+      .info-scan-box h4 { font-size: 11px; }
+      .info-scan-box .label-scan { font-size: 9px; }
+      
+      /* Topbar lebih ringkas */
+      .topbar { padding: 8px 12px; }
+      .topbar .left h2 { font-size: 14px; }
+      .topbar .left span { font-size: 10px; }
+      .topbar .right .clock { font-size: 11px; padding: 3px 10px; }
+      
+      /* Panel */
+      .panel { padding: 12px; }
+      .panel h3 { font-size: 15px; }
+      
+      @media (max-width: 480px) {
+        .stats-grid-inner { grid-template-columns: 1fr 1fr; gap: 4px; }
+        .stats-grid-inner .stat-card { padding: 6px 4px; }
+        .stats-grid-inner .stat-card .info h4 { font-size: 12px; }
+        .stats-section .section-title { font-size: 12px; }
+        .table-wrapper table { font-size: 9px; }
+        .table-wrapper th, .table-wrapper td { padding: 2px 4px; }
+        .badge { font-size: 8px; padding: 1px 4px; }
+        .info-scan-box { padding: 6px 8px; }
+        .info-scan-box .jam-range { font-size: 13px; }
+      }
   </style>
-</head>
-
+</hea
 <body>
-
   <header class="topbar">
     <div class="left">
       <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
@@ -1115,7 +1157,7 @@
     var sesi2Aktif = cachedSettings && cachedSettings.Sesi2Aktif !== 'false';
     var sesi3Aktif = cachedSettings && cachedSettings.Sesi3Aktif !== 'false';
     
-    var headers = ['No', 'Nama', 'NISN', 'Kelas'];
+    var headers = ['No', 'Nama', 'Kelas'];
     if (sesi1Aktif) headers.push('Sesi 1');
     if (sesi2Aktif) headers.push('Sesi 2');
     if (sesi3Aktif) headers.push('Sesi 3');
@@ -1133,7 +1175,6 @@
       html += '<tr>';
       html += '<td>' + (i + 1) + '</td>';
       html += '<td>' + s.nama + '</td>';
-      html += '<td>' + s.nisn + '</td>';
       html += '<td>' + (s.kelas || '-') + '</td>';
       
       if (sesi1Aktif) html += '<td>' + (s.sesi1 || '-') + '</td>';
@@ -1147,6 +1188,7 @@
     container.innerHTML = html;
   }
 
+  // ===== RENDER REKAP GURU (tanpa kolom NIP) =====
   function renderRekapGuru(data) {
     var container = document.getElementById('rekapGuruCepat');
     if (!data || data.length === 0) {
@@ -1158,7 +1200,7 @@
     var sesi2Aktif = cachedSettings && cachedSettings.Sesi2Aktif !== 'false';
     var sesi3Aktif = cachedSettings && cachedSettings.Sesi3Aktif !== 'false';
     
-    var headers = ['No', 'Nama', 'NIP', 'Jabatan'];
+    var headers = ['No', 'Nama', 'Jabatan'];
     if (sesi1Aktif) headers.push('Sesi 1');
     if (sesi2Aktif) headers.push('Sesi 2');
     if (sesi3Aktif) headers.push('Sesi 3');
@@ -1176,7 +1218,6 @@
       html += '<tr>';
       html += '<td>' + (i + 1) + '</td>';
       html += '<td>' + g.nama + '</td>';
-      html += '<td>' + g.nip + '</td>';
       html += '<td>' + (g.jabatan || '-') + '</td>';
       
       if (sesi1Aktif) html += '<td>' + (g.sesi1 || '-') + '</td>';
@@ -1592,7 +1633,7 @@
   }
 
     // ===== CAMERA FUNCTIONS =====
-  function startCamera() {
+function startCamera() {
     if (isScanning) return;
     var reader = document.getElementById('reader');
     reader.innerHTML = '';
@@ -1600,10 +1641,13 @@
     html5QrCode.start(
       { facingMode: "environment" },
       { 
-        fps: 30, 
-        qrbox: { width: 280, height: 280 },
+        fps: 60,  // DITINGKATKAN dari 30 ke 60 untuk deteksi lebih cepat
+        qrbox: { width: 240, height: 240 },
         aspectRatio: 1.0,
-        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.CODE_128 ]
+        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true  // Gunakan barcode detector native jika ada
+        }
       },
       onScanSuccess,
       onScanFailure
@@ -1617,60 +1661,6 @@
     });
   }
 
-  function stopCamera() {
-    if (html5QrCode && isScanning) {
-      html5QrCode.stop().then(function() {
-        isScanning = false;
-        document.getElementById('btnStopCamera').disabled = true;
-        document.getElementById('scanMsg').className = 'scan-result scan-info';
-        document.getElementById('scanMsg').textContent = '📷 Kamera ditutup';
-        document.getElementById('reader').innerHTML = '<span style="color:#999;">Kamera non-aktif</span>';
-      }).catch(function() {});
-    }
-  }
-
-  function onScanSuccess(text) {
-    if (isProcessing) return;
-    isProcessing = true;
-    var msg = document.getElementById('scanMsg');
-    msg.className = 'scan-result scan-info';
-    msg.textContent = '⏳ Memproses NISN: ' + text + '...';
-
-    fetch(SCRIPT_URL + '?action=absen&nisn=' + encodeURIComponent(text))
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.success) {
-          msg.className = 'scan-result scan-success';
-          msg.textContent = '✅ ' + data.message;
-          showToast('✅ ' + data.message, 'success');
-        } else {
-          msg.className = 'scan-result scan-error';
-          msg.textContent = '❌ ' + data.message;
-          showToast('❌ ' + data.message, 'error');
-        }
-      })
-      .catch(function(error) {
-        msg.className = 'scan-result scan-error';
-        msg.textContent = '❌ Error: ' + error.message;
-        showToast('❌ Error: ' + error.message, 'error');
-      })
-      .finally(function() {
-        setTimeout(function() {
-          isProcessing = false;
-          if (isScanning) {
-            try { html5QrCode.resume(); } catch(e) {}
-          }
-        }, 1000);
-      });
-
-    if (isScanning) {
-      try { html5QrCode.pause(); } catch(e) {}
-    }
-  }
-
-  function onScanFailure(error) {}
-
-  // ===== ADMIN CAMERA =====
   function startCameraAdmin() {
     if (isScanningAdmin) return;
     var reader = document.getElementById('readerAdmin');
@@ -1679,10 +1669,13 @@
     html5QrCodeAdmin.start(
       { facingMode: "environment" },
       { 
-        fps: 30, 
-        qrbox: { width: 280, height: 280 },
+        fps: 60,  // DITINGKATKAN dari 30 ke 60
+        qrbox: { width: 240, height: 240 },
         aspectRatio: 1.0,
-        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.CODE_128 ]
+        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        }
       },
       onScanSuccessAdmin,
       onScanFailureAdmin
@@ -1695,59 +1688,6 @@
       showToast('Gagal buka kamera: ' + e, 'error');
     });
   }
-
-  function stopCameraAdmin() {
-    if (html5QrCodeAdmin && isScanningAdmin) {
-      html5QrCodeAdmin.stop().then(function() {
-        isScanningAdmin = false;
-        document.getElementById('btnStopCameraAdmin').disabled = true;
-        document.getElementById('scanMsgAdmin').className = 'scan-result scan-info';
-        document.getElementById('scanMsgAdmin').textContent = '📷 Kamera ditutup';
-        document.getElementById('readerAdmin').innerHTML = '<span style="color:#999;">Kamera non-aktif</span>';
-      }).catch(function() {});
-    }
-  }
-
-  function onScanSuccessAdmin(text) {
-    if (isProcessingAdmin) return;
-    isProcessingAdmin = true;
-    var msg = document.getElementById('scanMsgAdmin');
-    msg.className = 'scan-result scan-info';
-    msg.textContent = '⏳ Memproses NIP: ' + text + '...';
-
-    fetch(SCRIPT_URL + '?action=absenGuru&nip=' + encodeURIComponent(text))
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.success) {
-          msg.className = 'scan-result scan-success';
-          msg.textContent = '✅ ' + data.message;
-          showToast('✅ ' + data.message, 'success');
-        } else {
-          msg.className = 'scan-result scan-error';
-          msg.textContent = '❌ ' + data.message;
-          showToast('❌ ' + data.message, 'error');
-        }
-      })
-      .catch(function(error) {
-        msg.className = 'scan-result scan-error';
-        msg.textContent = '❌ Error: ' + error.message;
-        showToast('❌ Error: ' + error.message, 'error');
-      })
-      .finally(function() {
-        setTimeout(function() {
-          isProcessingAdmin = false;
-          if (isScanningAdmin) {
-            try { html5QrCodeAdmin.resume(); } catch(e) {}
-          }
-        }, 1000);
-      });
-
-    if (isScanningAdmin) {
-      try { html5QrCodeAdmin.pause(); } catch(e) {}
-    }
-  }
-
-  function onScanFailureAdmin(error) {}
 
   // ===== STATUS SISWA =====
   function inputStatusSiswa() {
