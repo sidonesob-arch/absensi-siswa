@@ -382,7 +382,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxw5EUMK9dVR93brw7JMLTiQYLRJtmgralfanldZRcpVHjmhvu8RAgoPoZYkmB43NA4Kw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwX205j7IER9Iq4sVs2r_2HreDKJ9mJ8kGMNBb8jntjvGdrgMZaR-QGHlfpL_ijN95cFQ/exec";
 
   let currentRole = 'siswa';
   let html5QrcodeScanner = null;
@@ -747,18 +747,28 @@
   }
 
   function cariKehadiran() {
+    const keyword = document.getElementById('cariKeyword').value.trim();
+    const tglMulai = document.getElementById('cariTglMulai').value;
+    const tglSelesai = document.getElementById('cariTglSelesai').value;
+    const peran = document.getElementById('cariPeran').value;
+
     sendRequest({
-      action: 'cari_kehadiran', peran: document.getElementById('cariPeran').value,
-      keyword: document.getElementById('cariKeyword').value,
-      tglMulai: document.getElementById('cariTglMulai').value, tglSelesai: document.getElementById('cariTglSelesai').value
+      action: 'cari_kehadiran', 
+      peran: peran,
+      keyword: keyword,
+      tglMulai: tglMulai, 
+      tglSelesai: tglSelesai
     }, res => {
       const thead = document.getElementById('tableCariHead');
       const tbody = document.getElementById('tableCariBody');
       tbody.innerHTML = '';
-      if (!res.data.length) {
+      
+      if (!res.data || res.data.length === 0) {
         thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status/Sesi</th></tr>';
-        return tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Data tidak ditemukan.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Data tidak ditemukan.</td></tr>';
+        return;
       }
+      
       thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status/Sesi</th></tr>';
       res.data.forEach(r => {
         tbody.innerHTML += `<tr><td>${r.timestamp}</td><td>${r.peran}</td><td>${r.id}</td><td>${r.nama}</td><td>${r.sesi}</td></tr>`;
