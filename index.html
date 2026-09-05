@@ -130,7 +130,13 @@
     <a class="nav-item locked" id="nav-izin" onclick="checkMenuAccess('izin', this)">📝 Input Izin / Sakit</a>
     <a class="nav-item locked" id="nav-rekap" onclick="checkMenuAccess('rekap', this)">📊 Rekap Data</a>
     <a class="nav-item locked" id="nav-pengaturan" onclick="checkMenuAccess('pengaturan', this)">⚙️ Pengaturan Sesi & Libur</a>
-    <a class="nav-item" id="nav-logout" style="display:none; color:#ff8a8a;" onclick="logoutSession()">🚪 Keluar / Logout</a>
+
+    <div class="nav-category">PEMBELAJARAN</div>
+    <a class="nav-item" onclick="switchMenu('jadwal-mapel', this)">📅 Jadwal Mapel</a>
+    <a class="nav-item" onclick="switchMenu('nilai', this)">📈 Nilai</a>
+    <a class="nav-item" onclick="switchMenu('kelulusan', this)">🎓 Kelulusan</a>
+
+    <a class="nav-item" id="nav-logout" style="display:none; color:#ff8a8a; margin-top: 15px;" onclick="logoutSession()">🚪 Keluar / Logout</a>
   </div>
 
   <div class="content-container" id="appContent">
@@ -175,7 +181,6 @@
         <h4 id="realtimeActiveSesi" style="margin:4px 0 0 0; color:#05285e; font-size:15px;">Memuat Waktu...</h4>
       </div>
 
-      <!-- Container Tabel Rekap Kehadiran Hari Ini -->
       <div id="containerTabelHariIni">
         <h4 style="margin-bottom:5px; color:#05285e;">Rekap Kehadiran Guru Hari Ini</h4>
         <div class="table-responsive">
@@ -212,7 +217,6 @@
         </div>
       </div>
 
-      <!-- Pesan Jelas Jika Sesi Belum Mulai atau Sudah Berakhir -->
       <div id="pesanTabelNonAktif" style="display:none; background:#fff; padding:25px; border-radius:8px; text-align:center; border:1px solid #ddd; margin-top:10px;">
         <h4 id="teksPesanNonAktif" style="color:#05285e; margin:0; font-size:15px;">-</h4>
       </div>
@@ -254,7 +258,13 @@
     <!-- 4. INPUT IZIN / SAKIT -->
     <div id="menu-izin" class="section">
       <h3 style="color:#05285e;">Input Izin / Sakit Manual</h3>
-      <div class="form-group" id="izinRoleContainer"><label>Peran:</label><select id="izinRole"><option value="siswa">Siswa</option></select></div>
+      <div class="form-group" id="izinRoleContainer">
+        <label>Peran:</label>
+        <select id="izinRole">
+          <option value="siswa">Siswa</option>
+          <option id="optIzinGuru" value="guru" style="display:none;">Guru</option>
+        </select>
+      </div>
       <div class="form-group"><label>ID (NISN / NIP):</label><input type="text" id="izinId" placeholder="Masukkan ID"></div>
       <div class="form-group"><label>Tanggal:</label><input type="date" id="izinTanggal"></div>
       <div class="form-group"><label>Status:</label><select id="izinStatus"><option value="Izin">Izin</option><option value="Sakit">Sakit</option><option value="Alpa">Alpa</option></select></div>
@@ -340,6 +350,30 @@
       </div>
     </div>
 
+    <!-- 7. PEMBELAJARAN - JADWAL MAPEL -->
+    <div id="menu-jadwal-mapel" class="section">
+      <h3 style="color:#05285e;">Jadwal Mata Pelajaran</h3>
+      <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ddd; text-align:center;">
+        <p style="color:#666; font-size:14px; margin:0;">Jadwal Mapel akan diisi perlahan dari sekarang.</p>
+      </div>
+    </div>
+
+    <!-- 8. PEMBELAJARAN - NILAI -->
+    <div id="menu-nilai" class="section">
+      <h3 style="color:#05285e;">Nilai Siswa</h3>
+      <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ddd; text-align:center;">
+        <p style="color:#666; font-size:14px; margin:0;">Data nilai akan diisi perlahan dari sekarang.</p>
+      </div>
+    </div>
+
+    <!-- 9. PEMBELAJARAN - KELULUSAN -->
+    <div id="menu-kelulusan" class="section">
+      <h3 style="color:#05285e;">Pengumuman Kelulusan</h3>
+      <div style="background:#e0e8f5; padding:25px; border-radius:8px; border-left:5px solid #05285e; text-align:center;">
+        <h4 style="color:#05285e; margin:0; font-size:16px; font-weight:700;">PENGUMUMAN KELULUSAN DILAKSANAKAN TANGGAL 7 JULI 2027</h4>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -348,7 +382,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz6hyVGJsLwhdyLfsOPbnoWnuA2AbkABnh08DHWUI_ewwKJAqpBGRofXB0UjW-jq9TkNw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxIZGlykKnysw4B907ZbdkNWE2bNJ0Ewqo68ktcoF8h8m3lyv978iEuULrTdAj0QC3J6A/exec";
 
   let currentRole = 'siswa';
   let html5QrcodeScanner = null;
@@ -539,9 +573,17 @@
       return;
     }
 
-    if (userSession === 'admin' || (userSession === 'guru' && menuName !== 'pengaturan') || userSession === 'pengaturan') {
-      switchMenu(menuName, el);
-      return;
+    // Perbaikan Logika Hak Akses Menu Pengaturan & Lainnya
+    if (menuName === 'pengaturan') {
+      if (userSession === 'pengaturan') {
+        switchMenu(menuName, el);
+        return;
+      }
+    } else {
+      if (userSession === 'pengaturan' || userSession === 'admin' || (userSession === 'guru' && menuName !== 'pengaturan')) {
+        switchMenu(menuName, el);
+        return;
+      }
     }
 
     pendingMenu = { name: menuName, el: el };
@@ -590,11 +632,19 @@
   function applyRoleAccessUI(role) {
     document.getElementById('nav-logout').style.display = 'block';
 
+    const optGuru = document.getElementById('optIzinGuru');
+
     if (role === 'guru') {
       ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => document.getElementById(id).classList.remove('locked'));
       document.getElementById('nav-pengaturan').classList.add('locked');
-    } else if (role === 'admin' || role === 'pengaturan') {
+      if (optGuru) optGuru.style.display = 'none'; // Guru hanya bisa input izin siswa
+    } else if (role === 'admin') {
+      ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => document.getElementById(id).classList.remove('locked'));
+      document.getElementById('nav-pengaturan').classList.add('locked'); // Admin tidak bisa akses pengaturan
+      if (optGuru) optGuru.style.display = 'block'; // Admin bisa input izin siswa/guru
+    } else if (role === 'pengaturan') {
       ['nav-scanner', 'nav-izin', 'nav-rekap', 'nav-pengaturan'].forEach(id => document.getElementById(id).classList.remove('locked'));
+      if (optGuru) optGuru.style.display = 'block'; // Pengaturan bisa input izin siswa/guru
     }
   }
 
@@ -605,7 +655,8 @@
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     
     if (el) el.classList.add('active');
-    document.getElementById(`menu-${menuName}`).classList.add('active');
+    const targetSection = document.getElementById(`menu-${menuName}`);
+    if (targetSection) targetSection.classList.add('active');
 
     if (menuName === 'scanner') setupScannerView();
     if (menuName === 'rekap') loadOpsiKelas();
@@ -628,14 +679,11 @@
   }
 
   function toggleCamera() {
-    preloadPinConfig();
-    setTimeout(() => {
-      if (!currentActiveSesiName) {
-        showScanPopup("warning", "Sesi Tutup", "Tidak ada sesi absen aktif saat ini!");
-        return;
-      }
-      isCameraOn ? stopCamera() : startCamera();
-    }, 300);
+    if (!currentActiveSesiName) {
+      showScanPopup("warning", "Sesi Tutup", "Tidak ada sesi absen aktif saat ini!");
+      return;
+    }
+    isCameraOn ? stopCamera() : startCamera();
   }
 
   function startCamera() {
@@ -660,9 +708,6 @@
         const btn = document.getElementById('btnCameraToggle');
         btn.innerText = "Buka Kamera"; btn.classList.remove('off');
         showScanPopup("warning", "Kamera Tutup", "Kamera scanner dimatikan.");
-      }).catch(err => {
-        isCameraOn = false;
-        document.getElementById('reader').innerHTML = '';
       });
     }
   }
@@ -818,10 +863,7 @@
     });
     sendRequest({ action: 'save_pengaturan', config: config }, res => {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Pengaturan Sesi", res.message);
-      if (res.status === 'success') {
-        preloadPinConfig();
-        loadPengaturanDataFromServer();
-      }
+      if (res.status === 'success') loadPengaturanDataFromServer();
     });
   }
 
