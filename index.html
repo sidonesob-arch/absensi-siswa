@@ -382,7 +382,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxIZGlykKnysw4B907ZbdkNWE2bNJ0Ewqo68ktcoF8h8m3lyv978iEuULrTdAj0QC3J6A/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxw5EUMK9dVR93brw7JMLTiQYLRJtmgralfanldZRcpVHjmhvu8RAgoPoZYkmB43NA4Kw/exec";
 
   let currentRole = 'siswa';
   let html5QrcodeScanner = null;
@@ -573,7 +573,6 @@
       return;
     }
 
-    // Perbaikan Logika Hak Akses Menu Pengaturan & Lainnya
     if (menuName === 'pengaturan') {
       if (userSession === 'pengaturan') {
         switchMenu(menuName, el);
@@ -637,14 +636,14 @@
     if (role === 'guru') {
       ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => document.getElementById(id).classList.remove('locked'));
       document.getElementById('nav-pengaturan').classList.add('locked');
-      if (optGuru) optGuru.style.display = 'none'; // Guru hanya bisa input izin siswa
+      if (optGuru) optGuru.style.display = 'none';
     } else if (role === 'admin') {
       ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => document.getElementById(id).classList.remove('locked'));
-      document.getElementById('nav-pengaturan').classList.add('locked'); // Admin tidak bisa akses pengaturan
-      if (optGuru) optGuru.style.display = 'block'; // Admin bisa input izin siswa/guru
+      document.getElementById('nav-pengaturan').classList.add('locked');
+      if (optGuru) optGuru.style.display = 'block';
     } else if (role === 'pengaturan') {
       ['nav-scanner', 'nav-izin', 'nav-rekap', 'nav-pengaturan'].forEach(id => document.getElementById(id).classList.remove('locked'));
-      if (optGuru) optGuru.style.display = 'block'; // Pengaturan bisa input izin siswa/guru
+      if (optGuru) optGuru.style.display = 'block';
     }
   }
 
