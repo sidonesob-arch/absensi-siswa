@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[source: 4]<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -175,6 +175,7 @@
         <h4 id="realtimeActiveSesi" style="margin:4px 0 0 0; color:#05285e; font-size:15px;">Memuat Waktu...</h4>
       </div>
 
+      <!-- Container Tabel Rekap Kehadiran Hari Ini -->
       <div id="containerTabelHariIni">
         <h4 style="margin-bottom:5px; color:#05285e;">Rekap Kehadiran Guru Hari Ini</h4>
         <div class="table-responsive">
@@ -211,6 +212,7 @@
         </div>
       </div>
 
+      <!-- Pesan Jelas Jika Sesi Belum Mulai atau Sudah Berakhir -->
       <div id="pesanTabelNonAktif" style="display:none; background:#fff; padding:25px; border-radius:8px; text-align:center; border:1px solid #ddd; margin-top:10px;">
         <h4 id="teksPesanNonAktif" style="color:#05285e; margin:0; font-size:15px;">-</h4>
       </div>
@@ -277,8 +279,8 @@
       <div class="table-responsive" style="margin-top:15px;">
         <p id="labelTotalHari" style="font-weight:bold; color:#05285e;"></p>
         <table id="tableRekap">
-          <thead><tr><th>ID</th><th>Nama</th><th>Unit/Kelas</th><th>TW</th><th>TL</th><th>Izin</th><th>Sakit</th><th>Alpa</th><th>Bolos</th><th>Total Hadir</th><th>% Kehadiran</th></tr></thead>
-          <tbody id="tableRekapBody"><tr><td colspan="11" style="text-align:center;">Pilih filter dan klik Tampilkan.</td></tr></tbody>
+          <thead><tr><th>ID</th><th>Nama</th><th>Unit/Kelas</th><th>TW</th><th>TL</th><th>Izin</th><th>Sakit</th><th>Alpa</th><th>Total Hadir</th><th>% Kehadiran</th></tr></thead>
+          <tbody id="tableRekapBody"><tr><td colspan="10" style="text-align:center;">Pilih filter dan klik Tampilkan.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -295,7 +297,7 @@
       </div>
       <div class="table-responsive">
         <table>
-          <thead><tr><th>Sesi / PIN Key</th><th>Mulai / Nilai PIN</th><th>Batas TW (TL)</th><th>Tutup Sesi</th></tr></thead>
+          <thead><tr><th>Sesi / PIN Key</th><th>Mulai / Nilai PIN</th><th>Batas TW (TL)</th><th>Tutup Sesi</th><th>Absen Otomatis</th></tr></thead>
           <tbody id="tablePengaturanBody"></tbody>
         </table>
       </div>
@@ -346,7 +348,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbx4gRp-I4bpO9Ye7KpcI7rc1vVkHju9NZjytV6xIbgNeqabPXldcQgAfG0nvMb3owCPkA/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz6hyVGJsLwhdyLfsOPbnoWnuA2AbkABnh08DHWUI_ewwKJAqpBGRofXB0UjW-jq9TkNw/exec";
 
   let currentRole = 'siswa';
   let html5QrcodeScanner = null;
@@ -626,11 +628,14 @@
   }
 
   function toggleCamera() {
-    if (!currentActiveSesiName) {
-      showScanPopup("warning", "Sesi Tutup", "Tidak ada sesi absen aktif saat ini!");
-      return;
-    }
-    isCameraOn ? stopCamera() : startCamera();
+    preloadPinConfig();
+    setTimeout(() => {
+      if (!currentActiveSesiName) {
+        showScanPopup("warning", "Sesi Tutup", "Tidak ada sesi absen aktif saat ini!");
+        return;
+      }
+      isCameraOn ? stopCamera() : startCamera();
+    }, 300);
   }
 
   function startCamera() {
@@ -655,6 +660,9 @@
         const btn = document.getElementById('btnCameraToggle');
         btn.innerText = "Buka Kamera"; btn.classList.remove('off');
         showScanPopup("warning", "Kamera Tutup", "Kamera scanner dimatikan.");
+      }).catch(err => {
+        isCameraOn = false;
+        document.getElementById('reader').innerHTML = '';
       });
     }
   }
@@ -733,9 +741,9 @@
       const tbody = document.getElementById('tableRekapBody');
       tbody.innerHTML = '';
       document.getElementById('labelTotalHari').innerText = `Total Hari Efektif Kerja: ${res.totalHari} Hari`;
-      if (!res.data.length) return tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Data tidak ditemukan.</td></tr>';
+      if (!res.data.length) return tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Data tidak ditemukan.</td></tr>';
       res.data.forEach(s => {
-        tbody.innerHTML += `<tr><td>${s.id}</td><td>${s.nama}</td><td>${s.unit}</td><td>${s.tw}</td><td>${s.tl}</td><td>${s.izin}</td><td>${s.sakit}</td><td>${s.alpa}</td><td>${s.bolos}</td><td><b>${s.totalHadir}</b></td><td><b>${s.persentase}%</b></td></tr>`;
+        tbody.innerHTML += `<tr><td>${s.id}</td><td>${s.nama}</td><td>${s.unit}</td><td>${s.tw}</td><td>${s.tl}</td><td>${s.izin}</td><td>${s.sakit}</td><td>${s.alpa}</td><td><b>${s.totalHadir}</b></td><td><b>${s.persentase}%</b></td></tr>`;
       });
     });
   }
@@ -774,11 +782,11 @@
 
     let rows = [];
     checkedSesi.forEach(sName => {
-      let found = globalPengaturanData.find(p => p.sesi === sName) || { sesi: sName, mulai: '07:00', batasTW: '07:15', tutup: '12:00' };
+      let found = globalPengaturanData.find(p => p.sesi === sName) || { sesi: sName, mulai: '07:00', batasTW: '07:15', tutup: '12:00', alpa: 'Alpa' };
       rows.push(found);
     });
     ['PIN_Guru', 'PIN_Admin', 'PIN_Pengaturan'].forEach(k => {
-      let found = globalPengaturanData.find(p => p.sesi === k) || { sesi: k, mulai: '1234', batasTW: '', tutup: '' };
+      let found = globalPengaturanData.find(p => p.sesi === k) || { sesi: k, mulai: '1234', batasTW: '', tutup: '', alpa: '' };
       rows.push(found);
     });
 
@@ -790,6 +798,7 @@
           <td><input type="${isPin?'text':'time'}" class="p-mulai" value="${p.mulai}"></td>
           <td>${isPin?'-':`<input type="time" class="p-tw" value="${p.batasTW}">`}</td>
           <td>${isPin?'-':`<input type="time" class="p-tutup" value="${p.tutup}">`}</td>
+          <td>${isPin?'-':`<select class="p-alpa"><option value="Alpa"${p.alpa==='Alpa'?' selected':''}>Alpa</option><option value="Bolos"${p.alpa==='Bolos'?' selected':''}>Bolos</option></select>`}</td>
         </tr>`;
     });
   }
@@ -803,12 +812,16 @@
         sesi: sesi, 
         mulai: r.querySelector('.p-mulai').value,
         batasTW: isPin ? '' : r.querySelector('.p-tw').value,
-        tutup: isPin ? '' : r.querySelector('.p-tutup').value
+        tutup: isPin ? '' : r.querySelector('.p-tutup').value,
+        alpa: isPin ? '' : r.querySelector('.p-alpa').value
       });
     });
     sendRequest({ action: 'save_pengaturan', config: config }, res => {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Pengaturan Sesi", res.message);
-      if (res.status === 'success') loadPengaturanDataFromServer();
+      if (res.status === 'success') {
+        preloadPinConfig();
+        loadPengaturanDataFromServer();
+      }
     });
   }
 
