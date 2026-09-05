@@ -58,7 +58,6 @@
     @media(max-width: 900px) { .stats-container { grid-template-columns: 1fr; } }
     .stats-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     
-    /* HEADER KARTU STATISTIK DENGAN HARI/TOTAL DIBUAT SEJAJAR */
     .stats-card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
     .stats-card-header h4 { margin: 0; color: #05285e; font-size: 14px; }
     .stats-badge-total { background: #05285e; color: #ffffff; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
@@ -92,32 +91,27 @@
 </head>
 <body>
 
-<!-- TOPBAR - BIRU #05285e DENGAN WAKTU REALTIME -->
 <div class="topbar">
   <div class="topbar-left">
     <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Buka/Tutup Menu">☰</button>
-    <!-- Tag HTML untuk Logo -->
-<img src="https://lh3.googleusercontent.com/d/1ja4Fpeq35ZDwgTrwFE2evToYfHKQsbiF" alt="Logo Dashboard" class="brand-logo">
+    <img src="https://lh3.googleusercontent.com/d/1ja4Fpeq35ZDwgTrwFE2evToYfHKQsbiF" alt="Logo Dashboard" class="brand-logo">
   </div>
   <div class="topbar-center">
     <div class="topbar-title">SMP NEGERI 1 SOBANG</div>
     <div class="topbar-clock" id="topbarClock">Memuat Waktu...</div>
   </div>
   <div class="topbar-right">
-    <img src="https://lh3.googleusercontent.com/d/1fuzeo-H9bHA9YgCcEFYdOv-_cD4E8cre " alt="Foto Admin" class="profile-avatar">
+    <img src="https://lh3.googleusercontent.com/d/1fuzeo-H9bHA9YgCcEFYdOv-_cD4E8cre" alt="Foto Admin" class="profile-avatar">
   </div>
 </div>
 
-<!-- POPUP NOTIFICATION SYSTEM (CEPAT REALTIME) -->
 <div id="scanPopup">
   <b id="popupTitle" style="display:block; font-size:13px; margin-bottom:2px;">Notifikasi</b>
   <span id="popupMessage" style="font-size:12px; display:block; line-height:1.3;">Pesan sistem...</span>
 </div>
 
-<!-- OVERLAY BISA DIKLIK DI MANA SAJA UNTUK MENUTUP SIDEBAR -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<!-- MODAL LOGIN PIN -->
 <div id="loginModal" style="display:none;">
   <div class="modal-content">
     <h3>Autentikasi PIN</h3>
@@ -130,10 +124,8 @@
   </div>
 </div>
 
-<!-- MAIN LAYOUT -->
 <div class="main-wrapper">
   
-  <!-- SIDEBAR - BIRU #05285e (DEFAULT TERTUTUP) -->
   <div class="sidebar" id="appSidebar">
     <div class="nav-category">DASHBOARD</div>
     <a class="nav-item active" onclick="switchMenu('dashboard', this)">🏠 Dashboard Utama</a>
@@ -150,14 +142,12 @@
     <a class="nav-item" id="nav-logout" style="display:none; color:#ff8a8a;" onclick="logoutSession()">🚪 Keluar / Logout</a>
   </div>
 
-  <!-- CONTENT CONTAINER - FIXED POSISI (TIDAK BERGESER SAAT SIDEBAR DIBUKA) -->
   <div class="content-container" id="appContent">
 
     <!-- 1. DASHBOARD UTAMA -->
     <div id="menu-dashboard" class="section active">
       <h3 style="margin-top:0; color:#05285e;">Dashboard Real-Absensi Digital</h3>
       
-      <!-- STATISTIK DENGAN JUMLAH TOTAL GURU & SISWA SEJAJAR -->
       <div class="stats-container">
         <div class="stats-card">
           <div class="stats-card-header">
@@ -190,11 +180,10 @@
       </div>
 
       <div style="background:#e0e8f5; padding:12px; border-radius:8px; margin-bottom:20px; border-left:4px solid #05285e;">
-        <span style="font-size:12px; color:#05285e; font-weight:700;">Sesi Absensi Yang Sedang Berlangsung:</span>
+        <span style="font-size:12px; color:#05285e; font-weight:700;">Status & Sesi Absensi:</span>
         <h4 id="realtimeActiveSesi" style="margin:4px 0 0 0; color:#05285e; font-size:15px;">Memuat Sesi...</h4>
       </div>
 
-      <!-- TABEL REKAP KEHADIRAN HARI INI GURU -->
       <h4 style="margin-bottom:5px; color:#05285e;">Rekap Kehadiran Guru Hari Ini</h4>
       <div class="table-responsive">
         <table>
@@ -212,7 +201,6 @@
         </table>
       </div>
 
-      <!-- TABEL REKAP KEHADIRAN HARI INI SISWA -->
       <h4 style="margin-top:20px; margin-bottom:5px; color:#05285e;">Rekap Kehadiran Siswa Hari Ini</h4>
       <div class="table-responsive">
         <table>
@@ -301,7 +289,6 @@
     <div id="menu-pengaturan" class="section">
       <h3 style="color:#05285e;">Pengaturan Sesi, PIN & Hari Libur</h3>
       
-      <!-- TAB PENGATURAN SESI -->
       <h4 style="color:#05285e; margin-bottom:8px;">Pengaturan Sesi Absensi & PIN</h4>
       <div style="display:flex; gap:15px; margin-bottom:15px; background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd;">
         <label style="font-weight:normal; cursor:pointer;"><input type="checkbox" id="chkSesi1" checked onchange="renderPengaturanTable()"> Sesi 1</label>
@@ -318,7 +305,6 @@
 
       <hr style="margin: 30px 0; border: 0; border-top: 2px dashed #ccc;">
 
-      <!-- MENU INPUT HARI LIBUR & TABEL DAFTAR HARI LIBUR -->
       <h4 style="color:#05285e; margin-bottom:8px;">Input & Kelola Hari Libur</h4>
       <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #ddd;">
         <input type="hidden" id="editHariLiburRowIndex" value="0">
@@ -357,13 +343,12 @@
   </div>
 </div>
 
-<!-- FOOTER - BIRU #05285e -->
 <div class="footer">
   &copy; 2026 SMP NEGERI 1 SOBANG &bull; By M TAUPIK
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwIpGal3CVaW9yzqcwsA80WEbWXxPlhq1XiqQNpmmWrDcTmv6f_erVpeaD7Co5bW1MGFg/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwAEBuUCuf5cUCgUzz5FXFkvNtD3arHyi73Dgcez8ex_BBpkjVmsp9PmlDLYj9uq7KbAQ/exec";
 
   let currentRole = 'siswa';
   let html5QrcodeScanner = null;
@@ -379,12 +364,10 @@
 
   document.getElementById('izinTanggal').value = new Date().toISOString().split('T')[0];
 
-  // JALANKAN JAM REALTIME TOPBAR
   startRealtimeClock();
   preloadPinConfig();
   startRealtimeDashboard();
 
-  // FUNGSI WAKTU / JAM REALTIME TOPBAR
   function startRealtimeClock() {
     updateClock();
     setInterval(updateClock, 1000);
@@ -405,7 +388,6 @@
     if (clockEl) clockEl.innerText = strWaktu;
   }
 
-  // FUNGSI KONTROL SIDEBAR (DEFAULT TERTUTUP DAN OVERLAY)
   function toggleSidebar() {
     const sidebar = document.getElementById('appSidebar');
     const overlay = document.getElementById('sidebarOverlay');
@@ -430,6 +412,16 @@
       if (res.status === 'success') {
         if (res.totalGuru !== undefined) document.getElementById('totalGuruCount').innerText = res.totalGuru;
         if (res.totalSiswa !== undefined) document.getElementById('totalSiswaCount').innerText = res.totalSiswa;
+        
+        const sesiEl = document.getElementById('realtimeActiveSesi');
+        if (sesiEl) {
+          if (res.infoPesanSistem) {
+            sesiEl.innerText = res.infoPesanSistem;
+          } else {
+            sesiEl.innerText = `Sesi Aktif Hari Ini (${res.countSesi} Sesi)`;
+          }
+        }
+        
         updateStatsUI(res.stats);
         updateDashboardTables(res.guruList, res.siswaList);
       }
@@ -476,7 +468,6 @@
     }
   }
 
-  // OPTIMASI POPUP DIKIRIM LANGSUNG & SERTA-MERTA
   function showScanPopup(type, title, message) {
     const popup = document.getElementById('scanPopup');
     if (popupTimeout) clearTimeout(popupTimeout);
@@ -506,7 +497,6 @@
     if (!list) return;
     const now = new Date();
     const currentMin = now.getHours() * 60 + now.getMinutes();
-    let activeSesiLabel = "Tidak Ada Sesi Aktif Saat Ini";
     currentActiveSesiName = "";
 
     list.forEach(p => {
@@ -514,13 +504,10 @@
         const mulai = parseJamToMin(p.mulai);
         const tutup = parseJamToMin(p.tutup);
         if (currentMin >= mulai && currentMin <= tutup) {
-          activeSesiLabel = `${p.sesi} (Berlangsung Pukul ${p.mulai} - ${p.tutup})`;
           currentActiveSesiName = p.sesi;
         }
       }
     });
-    const sesiEl = document.getElementById('realtimeActiveSesi');
-    if (sesiEl) sesiEl.innerText = activeSesiLabel;
   }
 
   function parseJamToMin(jamStr) {
@@ -665,7 +652,6 @@
     }
   }
 
-  // OPTIMASI RESPON CEPAT SCANNER (SERTA-MERTA)
   function onScanSuccess(code, sesiTarget) {
     if (isProcessing) return;
     isProcessing = true;
@@ -679,11 +665,7 @@
     .then(text => {
       const res = JSON.parse(text);
       let popupType = res.status === 'success' ? 'success' : (res.status === 'warning' ? 'warning' : 'danger');
-      
-      // Tampilkan popup seketika
       showScanPopup(popupType, "Hasil Scan", res.message);
-      
-      // Berikan jeda sebentar sebelum memperbolehkan scan berikutnya
       setTimeout(() => { isProcessing = false; }, 1800);
     })
     .catch(err => {
@@ -760,6 +742,16 @@
     sendRequest({ action: 'get_pengaturan' }, res => {
       if (res.status === 'success') {
         globalPengaturanData = res.data;
+        
+        // Sesuaikan checkbox sesi berdasarkan data yang tersimpan dari server
+        ['Sesi 1', 'Sesi 2', 'Sesi 3'].forEach((sName, i) => {
+          let found = globalPengaturanData.find(p => p.sesi === sName);
+          const chk = document.getElementById(`chkSesi${i+1}`);
+          if (chk) {
+            chk.checked = found ? true : (i === 0 ? true : false); // Default Sesi 1 aktif jika belum ada
+          }
+        });
+
         renderPengaturanTable();
       }
     });
@@ -770,7 +762,8 @@
     tbody.innerHTML = '';
     let checkedSesi = [];
     ['Sesi 1', 'Sesi 2', 'Sesi 3'].forEach((s, i) => {
-      if (document.getElementById(`chkSesi${i+1}`).checked) checkedSesi.push(s);
+      const chk = document.getElementById(`chkSesi${i+1}`);
+      if (chk && chk.checked) checkedSesi.push(s);
     });
 
     let rows = [];
@@ -802,7 +795,8 @@
       const sesi = r.querySelector('.p-sesi').value;
       const isPin = sesi.startsWith('PIN_');
       config.push({
-        sesi: sesi, mulai: r.querySelector('.p-mulai').value,
+        sesi: sesi, 
+        mulai: r.querySelector('.p-mulai').value,
         batasTW: isPin ? '' : r.querySelector('.p-tw').value,
         tutup: isPin ? '' : r.querySelector('.p-tutup').value,
         alpa: isPin ? '' : r.querySelector('.p-alpa').value
