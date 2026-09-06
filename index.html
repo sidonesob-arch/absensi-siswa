@@ -32,8 +32,9 @@
     .nav-category { font-size: 11px; font-weight: bold; color: #9bb3de; margin: 15px 10px 5px 10px; letter-spacing: 0.5px; }
     .nav-item { padding: 10px 12px; display: block; color: #e2e8f0; text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 6px; margin-bottom: 3px; cursor: pointer; transition: background 0.2s, color 0.2s; }
     .nav-item:hover, .nav-item.active { background: #0b3c85; color: #ffffff; }
-    .nav-item.locked { opacity: 0.5; color: #8fa0bd; cursor: not-allowed; }
+    .nav-item.locked { opacity: 0.4; color: #8fa0bd; cursor: not-allowed; }
     .nav-item.locked:hover { background: transparent; color: #8fa0bd; }
+    .nav-item .badge-role { font-size: 9px; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
     
     .content-container { margin-left: 0; padding: 20px; flex: 1; width: 100%; background: #f4f6f9; }
     .section { display: none; }
@@ -72,6 +73,7 @@
     .btn-edit { background: #ffc107; color: #333; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 5px; }
     .btn-success { background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
     .btn-success:hover { background: #218838; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; width: auto; }
     
     #reader { width: 100%; max-width: 400px; border-radius: 8px; overflow: hidden; margin-top: 10px; background: #111; }
     .table-responsive { overflow-x: auto; margin-top: 10px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -84,9 +86,9 @@
 
     .input-nilai-sm { width: 80px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
     
-    .nav-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
-    .nav-indicator.locked { background: #ff6b6b; }
-    .nav-indicator.unlocked { background: #51cf66; }
+    .jadwal-header { background: #e8f0fe; padding: 15px; border-radius: 8px; border-left: 4px solid #05285e; margin-bottom: 15px; }
+    .jadwal-header h4 { margin: 0; color: #05285e; }
+    .jadwal-header .sub { font-size: 12px; color: #666; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -113,29 +115,16 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<!-- Login Modal Utama -->
+<!-- Login Modal -->
 <div id="loginModal" style="display:none;">
   <div class="modal-content">
-    <h3>Autentikasi PIN</h3>
-    <p id="modalInfo" style="font-size:12px; color:#666;">Masukkan PIN untuk membuka menu ini.</p>
+    <h3>Login Sistem</h3>
+    <p id="modalInfo" style="font-size:12px; color:#666;">Masukkan PIN Anda untuk login.</p>
     <div class="form-group">
       <input type="password" id="inputPinModal" placeholder="Masukkan PIN..." maxlength="8" style="text-align:center; font-size:18px; letter-spacing:3px;">
     </div>
-    <button class="btn-primary" onclick="submitLoginPin()">Masuk</button>
-    <button style="background:#ccc; color:#333; border:none; margin-top:8px;" onclick="closeModal()">Batal</button>
-  </div>
-</div>
-
-<!-- PIN Guru Modal untuk Input Nilai -->
-<div id="guruPinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:4000;">
-  <div class="modal-content" style="background:#fff; padding:25px; border-radius:10px; width:90%; max-width:350px; text-align:center;">
-    <h3 style="color:#05285e;">Verifikasi Guru</h3>
-    <p style="font-size:12px; color:#666;">Masukkan PIN Guru untuk mengakses menu Input Nilai</p>
-    <div class="form-group">
-      <input type="password" id="inputGuruPinModal" placeholder="Masukkan PIN Guru..." maxlength="8" style="text-align:center; font-size:18px; letter-spacing:3px;">
-    </div>
-    <button class="btn-primary" onclick="submitGuruPin()">Verifikasi</button>
-    <button style="background:#ccc; color:#333; border:none; margin-top:8px;" onclick="closeGuruPinModal()">Batal</button>
+    <button class="btn-primary" onclick="submitLogin()">Masuk</button>
+    <button style="background:#ccc; color:#333; border:none; margin-top:8px;" onclick="closeLoginModal()">Batal</button>
   </div>
 </div>
 
@@ -149,7 +138,7 @@
     <a class="nav-item" onclick="switchMenu('cari', this)">🔍 Cari Data Siswa</a>
 
     <div class="nav-category">MENU UTAMA</div>
-    <a class="nav-item" onclick="checkMenuAccess('login', this)">🔑 Login Sistem</a>
+    <a class="nav-item" id="nav-login" onclick="openLoginModal()">🔑 Login Sistem</a>
     <a class="nav-item locked" id="nav-scanner" onclick="checkMenuAccess('scanner', this)">📷 Scanner Barcode</a>
     <a class="nav-item locked" id="nav-izin" onclick="checkMenuAccess('izin', this)">📝 Input Izin / Sakit</a>
     <a class="nav-item locked" id="nav-rekap" onclick="checkMenuAccess('rekap', this)">📊 Rekap Data</a>
@@ -251,7 +240,6 @@
     <!-- 2. CARI DATA SISWA -->
     <div id="menu-cari" class="section">
       <h3 style="color:#05285e;">Pencarian Data Kehadiran</h3>
-      <div class="form-group" style="display:none;"><select id="cariPeran"><option value="SISWA" selected>Siswa</option></select></div>
       <div class="form-group"><label>Kata Kunci (NISN / Nama Siswa):</label><input type="text" id="cariKeyword" placeholder="Ketik NISN atau Nama Siswa..."></div>
       <div style="display:flex; gap:10px;">
         <div class="form-group" style="flex:1;"><label>Dari Tanggal:</label><input type="date" id="cariTglMulai"></div>
@@ -377,9 +365,27 @@
 
     <!-- 7. PEMBELAJARAN - JADWAL MAPEL -->
     <div id="menu-jadwal-mapel" class="section">
-      <h3 style="color:#05285e;">Jadwal Mata Pelajaran</h3>
-      <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ddd; text-align:center;">
-        <p style="color:#666; font-size:14px; margin:0;">Jadwal Mapel masih dalam proses finishing.</p>
+      <h3 style="color:#05285e;">📅 Jadwal Mata Pelajaran</h3>
+      
+      <div class="jadwal-header">
+        <h4 id="jadwalHariDisplay">Hari: <span id="jadwalHariText">-</span></h4>
+        <div class="sub" id="jadwalInfoDisplay">Menampilkan jadwal untuk hari ini</div>
+      </div>
+      
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:50px;">No</th>
+              <th style="width:120px;">Waktu</th>
+              <th>Mata Pelajaran</th>
+              <th style="width:100px;">Kelas</th>
+            </tr>
+          </thead>
+          <tbody id="tableJadwalBody">
+            <tr><td colspan="4" style="text-align:center;">Memuat data jadwal...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -387,12 +393,12 @@
     <div id="menu-input-nilai" class="section">
       <h3 style="color:#05285e;">Input Penilaian Siswa</h3>
       
-      <div style="background:#e8f0fe; padding:12px 15px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="background:#e8f0fe; padding:12px 15px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div>
           <span style="font-weight:600; color:#05285e;">👤 Guru:</span>
           <span id="guruNamaDisplay" style="color:#05285e; font-weight:bold;">-</span>
         </div>
-        <button class="btn-success" onclick="switchMenu('daftar-nilai', document.getElementById('nav-daftar-nilai'))">📋 Lihat Daftar Nilai</button>
+        <button class="btn-success btn-sm" onclick="switchMenu('daftar-nilai', document.getElementById('nav-daftar-nilai'))">📋 Lihat Daftar Nilai</button>
       </div>
       
       <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
@@ -431,12 +437,12 @@
     <div id="menu-daftar-nilai" class="section">
       <h3 style="color:#05285e;">Daftar Nilai Siswa (Rekap Penilaian)</h3>
       
-      <div style="background:#e8f0fe; padding:12px 15px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="background:#e8f0fe; padding:12px 15px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div>
           <span style="font-weight:600; color:#05285e;">👤 Guru:</span>
           <span id="guruNamaDisplayDaftar" style="color:#05285e; font-weight:bold;">-</span>
         </div>
-        <button class="btn-primary" onclick="switchMenu('input-nilai', document.getElementById('nav-input-nilai'))">📝 Kembali ke Input Nilai</button>
+        <button class="btn-primary btn-sm" onclick="switchMenu('input-nilai', document.getElementById('nav-input-nilai'))">📝 Kembali ke Input Nilai</button>
       </div>
       
       <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
@@ -488,24 +494,21 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwdyjF_Q9C_fk4FAh6CeuJaRgx1uDqELmuBy_a09jlZLntP1r4u8MvnDkIv8VTML_PjgQ/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby_t8y2eMEhRrR9e_dtL7uzvP28JGBKB7BvQmIvoCAsE1Awv_5LnI8RMMmPkRkFSjDlTg/exec";
 
   let currentRole = 'siswa';
   let html5QrcodeScanner = null;
   let isCameraOn = false;
   let isProcessing = false;
-  let userSession = 'tamu'; 
-  let pendingMenu = '';
+  let userRole = 'tamu'; 
+  let userData = null;
+  let pendingMenu = null;
   let globalPengaturanData = [];
   let currentActiveSesiName = "";
   let cachedPinConfig = null;
   let dashboardTimer = null;
   let popupTimeout = null;
   let currentInputNilaiList = [];
-  
-  // Data guru yang login
-  let guruLoginData = null;
-  let isGuruLoggedIn = false;
 
   document.getElementById('izinTanggal').value = new Date().toISOString().split('T')[0];
 
@@ -692,219 +695,178 @@
     return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
   }
 
-  function checkMenuAccess(menuName, el) {
-    closeSidebar();
-    
-    // Menu login - selalu bisa diakses
-    if (menuName === 'login') {
-      if (userSession !== 'tamu') {
-        showScanPopup("warning", "Info Status", "Anda sudah dalam status login.");
-        return;
-      }
-      pendingMenu = '';
-      document.getElementById('inputPinModal').value = '';
-      document.getElementById('modalInfo').innerText = "Masukkan PIN Guru, Admin, atau Pengaturan.";
-      document.getElementById('loginModal').style.display = 'flex';
+  // ================= LOGIN SYSTEM ================= //
+
+  function openLoginModal() {
+    if (userRole !== 'tamu') {
+      showScanPopup("warning", "Info", "Anda sudah login sebagai " + userRole);
       return;
     }
-
-    // Menu pembelajaran - cek apakah guru sudah login
-    const pembelajaranMenus = ['jadwal-mapel', 'input-nilai', 'daftar-nilai', 'kelulusan'];
-    if (pembelajaranMenus.includes(menuName)) {
-      if (userSession === 'pengaturan') {
-        // Super admin bisa akses semua
-        switchMenu(menuName, el);
-        return;
-      }
-      
-      // Cek apakah sudah login sebagai guru
-      if (isGuruLoggedIn && guruLoginData) {
-        switchMenu(menuName, el);
-        return;
-      }
-      
-      // Jika belum login sebagai guru, tampilkan PIN modal
-      if (menuName === 'input-nilai') {
-        pendingMenu = { name: menuName, el: el };
-        document.getElementById('inputGuruPinModal').value = '';
-        document.getElementById('guruPinModal').style.display = 'flex';
-        return;
-      } else if (menuName === 'daftar-nilai' && isGuruLoggedIn) {
-        // Daftar nilai bisa diakses tanpa PIN jika sudah login
-        switchMenu(menuName, el);
-        return;
-      } else if (menuName === 'daftar-nilai' && !isGuruLoggedIn) {
-        // Jika belum login, minta PIN
-        pendingMenu = { name: menuName, el: el };
-        document.getElementById('inputGuruPinModal').value = '';
-        document.getElementById('guruPinModal').style.display = 'flex';
-        return;
-      } else {
-        // Menu pembelajaran lain selain input nilai dan daftar nilai
-        if (isGuruLoggedIn) {
-          switchMenu(menuName, el);
-        } else {
-          pendingMenu = { name: menuName, el: el };
-          document.getElementById('inputGuruPinModal').value = '';
-          document.getElementById('guruPinModal').style.display = 'flex';
-        }
-        return;
-      }
-    }
-
-    // Menu lain - cek role biasa
-    if (menuName === 'pengaturan') {
-      if (userSession === 'pengaturan') {
-        switchMenu(menuName, el);
-        return;
-      }
-    } else {
-      if (userSession === 'pengaturan' || userSession === 'admin' || (userSession === 'guru' && menuName !== 'pengaturan')) {
-        switchMenu(menuName, el);
-        return;
-      }
-    }
-
-    pendingMenu = { name: menuName, el: el };
     document.getElementById('inputPinModal').value = '';
-    document.getElementById('modalInfo').innerText = (menuName === 'pengaturan') ? "Masukkan PIN Pengaturan." : "Masukkan PIN Akses.";
+    document.getElementById('modalInfo').innerText = "Masukkan PIN Anda untuk login.";
     document.getElementById('loginModal').style.display = 'flex';
   }
 
-  function closeModal() { document.getElementById('loginModal').style.display = 'none'; pendingMenu = ''; }
-
-  function closeGuruPinModal() { 
-    document.getElementById('guruPinModal').style.display = 'none'; 
-    pendingMenu = ''; 
+  function closeLoginModal() {
+    document.getElementById('loginModal').style.display = 'none';
+    pendingMenu = null;
   }
 
-  function submitLoginPin() {
+  function submitLogin() {
     const pin = document.getElementById('inputPinModal').value.trim();
     if (!pin) return showScanPopup("warning", "Peringatan", "PIN tidak boleh kosong!");
 
-    sendRequest({ action: 'login_pin', pin: pin }, res => {
+    sendRequest({ action: 'login', pin: pin }, res => {
       if (res.status === 'success') {
-        userSession = res.role;
-        closeModal();
-        applyRoleAccessUI(userSession);
+        userRole = res.role;
+        userData = res;
+        closeLoginModal();
+        applyRoleAccessUI();
         showScanPopup("success", "Login Berhasil", res.message);
-        if (pendingMenu) { switchMenu(pendingMenu.name, pendingMenu.el); pendingMenu = ''; }
+        
+        // Jika ada menu yang tertunda, buka
+        if (pendingMenu) {
+          switchMenu(pendingMenu.name, pendingMenu.el);
+          pendingMenu = null;
+        }
+        
+        // Update UI berdasarkan role
+        updateUIByRole();
       } else {
         showScanPopup("danger", "Login Gagal", res.message);
       }
     });
   }
 
-  function submitGuruPin() {
-    const pin = document.getElementById('inputGuruPinModal').value.trim();
-    if (!pin) return showScanPopup("warning", "Peringatan", "PIN Guru tidak boleh kosong!");
-
-    sendRequest({ action: 'login_guru_pin', pin: pin }, res => {
-      if (res.status === 'success') {
-        isGuruLoggedIn = true;
-        guruLoginData = {
-          nip: res.nip,
-          nama: res.nama,
-          mapel: res.mapel || [],
-          kelas: res.kelas || []
-        };
-        
-        closeGuruPinModal();
-        showScanPopup("success", "Verifikasi Berhasil", `Selamat datang, ${res.nama}!`);
-        
-        // Update UI
-        document.getElementById('userStatusBadge').innerHTML = `👤 ${res.nama}`;
-        document.getElementById('userStatusBadge').style.background = 'rgba(81, 207, 102, 0.25)';
-        
-        // Buka menu pembelajaran
-        unlockPembelajaranMenus(true);
-        
-        // Jika ada menu yang tertunda, buka menu tersebut
-        if (pendingMenu) {
-          switchMenu(pendingMenu.name, pendingMenu.el);
-          pendingMenu = '';
-        } else {
-          // Default ke input nilai
-          switchMenu('input-nilai', document.getElementById('nav-input-nilai'));
-        }
-        
-        // Load data untuk input nilai
-        loadFilterInputNilaiWithGuru();
-        
-      } else {
-        showScanPopup("danger", "Verifikasi Gagal", res.message);
-      }
-    });
+  function updateUIByRole() {
+    // Update status badge
+    const badge = document.getElementById('userStatusBadge');
+    if (userRole === 'super_admin') {
+      badge.innerHTML = '👑 Super Admin';
+      badge.style.background = 'rgba(255, 215, 0, 0.25)';
+    } else if (userRole === 'admin') {
+      badge.innerHTML = '🛡️ Admin';
+      badge.style.background = 'rgba(255, 255, 255, 0.15)';
+    } else if (userRole === 'guru') {
+      badge.innerHTML = `👤 ${userData.nama || 'Guru'}`;
+      badge.style.background = 'rgba(81, 207, 102, 0.25)';
+    }
   }
 
-  function unlockPembelajaranMenus(unlocked) {
-    const menus = ['nav-jadwal-mapel', 'nav-input-nilai', 'nav-daftar-nilai', 'nav-kelulusan'];
-    menus.forEach(id => {
-      const el = document.getElementById(id);
-      if (unlocked) {
-        el.classList.remove('locked');
-        el.style.cursor = 'pointer';
-      } else {
-        el.classList.add('locked');
-        el.style.cursor = 'not-allowed';
-      }
-    });
-  }
-
-  function applyRoleAccessUI(role) {
+  function applyRoleAccessUI() {
     document.getElementById('nav-logout').style.display = 'block';
-    document.getElementById('userStatusBadge').innerHTML = '🔑 ' + role.toUpperCase();
-    document.getElementById('userStatusBadge').style.background = 'rgba(255,255,255,0.15)';
-
+    document.getElementById('nav-login').style.display = 'none';
+    
     const optGuru = document.getElementById('optIzinGuru');
-
-    if (role === 'guru') {
-      ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => document.getElementById(id).classList.remove('locked'));
+    const isAdmin = (userRole === 'admin' || userRole === 'super_admin');
+    const isSuperAdmin = (userRole === 'super_admin');
+    
+    // Menu dasar untuk semua yang login
+    ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => {
+      document.getElementById(id).classList.remove('locked');
+    });
+    
+    // Menu pengaturan hanya untuk super admin
+    if (isSuperAdmin) {
+      document.getElementById('nav-pengaturan').classList.remove('locked');
+    } else {
       document.getElementById('nav-pengaturan').classList.add('locked');
+    }
+    
+    // Menu pembelajaran
+    if (isSuperAdmin || isAdmin || userRole === 'guru') {
+      ['nav-jadwal-mapel', 'nav-input-nilai', 'nav-daftar-nilai', 'nav-kelulusan'].forEach(id => {
+        document.getElementById(id).classList.remove('locked');
+      });
+    }
+    
+    // Tampilkan opsi guru di izin untuk admin/super admin
+    if (isAdmin || isSuperAdmin) {
+      if (optGuru) optGuru.style.display = 'block';
+    } else {
       if (optGuru) optGuru.style.display = 'none';
-      // Guru juga bisa akses pembelajaran jika sudah login PIN guru
-      // Tapi untuk pembelajaran perlu PIN guru terpisah
-    } else if (role === 'admin') {
-      ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => document.getElementById(id).classList.remove('locked'));
-      document.getElementById('nav-pengaturan').classList.add('locked');
-      if (optGuru) optGuru.style.display = 'block';
-    } else if (role === 'pengaturan') {
-      ['nav-scanner', 'nav-izin', 'nav-rekap', 'nav-pengaturan'].forEach(id => document.getElementById(id).classList.remove('locked'));
-      if (optGuru) optGuru.style.display = 'block';
-      // Super admin bisa akses semua pembelajaran
-      unlockPembelajaranMenus(true);
+    }
+    
+    // Update UI untuk guru
+    if (userRole === 'guru' && userData) {
+      document.getElementById('guruNamaDisplay').innerText = userData.nama || '-';
+      document.getElementById('guruNamaDisplayDaftar').innerText = userData.nama || '-';
+      
+      // Load data untuk input nilai
+      setTimeout(() => {
+        loadFilterInputNilaiWithGuru();
+        loadJadwalMapelForGuru();
+      }, 500);
+    } else if (isSuperAdmin || isAdmin) {
+      document.getElementById('guruNamaDisplay').innerText = 'Admin';
+      document.getElementById('guruNamaDisplayDaftar').innerText = 'Admin';
     }
   }
 
   function logoutSession() {
     closeSidebar();
     if (isCameraOn) stopCamera();
-    userSession = 'tamu';
-    isGuruLoggedIn = false;
-    guruLoginData = null;
-    currentRole = 'siswa';
     
+    userRole = 'tamu';
+    userData = null;
+    
+    // Reset semua menu ke locked
     document.querySelectorAll('.sidebar .nav-item').forEach(b => {
-      if (b.id !== 'nav-scanner' && b.id !== 'nav-izin' && b.id !== 'nav-rekap' && b.id !== 'nav-pengaturan' && 
-          b.id !== 'nav-logout' && b.id !== 'nav-jadwal-mapel' && b.id !== 'nav-input-nilai' && 
-          b.id !== 'nav-daftar-nilai' && b.id !== 'nav-kelulusan') {
-        b.classList.remove('locked');
-      } else {
+      if (b.id === 'nav-login') {
+        b.style.display = 'block';
+      } else if (b.id !== 'nav-logout') {
         b.classList.add('locked');
       }
     });
-    unlockPembelajaranMenus(false);
+    
     document.getElementById('nav-logout').style.display = 'none';
     document.getElementById('userStatusBadge').innerHTML = 'Tamu';
     document.getElementById('userStatusBadge').style.background = 'rgba(255,255,255,0.15)';
-    
-    // Reset guru display
     document.getElementById('guruNamaDisplay').innerText = '-';
     document.getElementById('guruNamaDisplayDaftar').innerText = '-';
     
     switchMenu('dashboard', document.querySelector('.sidebar .nav-item'));
     showScanPopup("success", "Logout Berhasil", "Anda telah keluar dari akun.");
   }
+
+  function checkMenuAccess(menuName, el) {
+    closeSidebar();
+    
+    // Jika belum login
+    if (userRole === 'tamu') {
+      pendingMenu = { name: menuName, el: el };
+      openLoginModal();
+      return;
+    }
+    
+    // Cek akses berdasarkan role
+    const isAdmin = (userRole === 'admin' || userRole === 'super_admin');
+    const isSuperAdmin = (userRole === 'super_admin');
+    
+    // Menu pengaturan hanya super admin
+    if (menuName === 'pengaturan' && !isSuperAdmin) {
+      showScanPopup("warning", "Akses Ditolak", "Menu Pengaturan hanya untuk Super Admin!");
+      return;
+    }
+    
+    // Menu pembelajaran bisa diakses oleh semua role yang login
+    const pembelajaranMenus = ['jadwal-mapel', 'input-nilai', 'daftar-nilai', 'kelulusan'];
+    if (pembelajaranMenus.includes(menuName)) {
+      if (userRole === 'guru' || isAdmin || isSuperAdmin) {
+        switchMenu(menuName, el);
+        // Jika guru, load data spesifik
+        if (userRole === 'guru' && menuName === 'jadwal-mapel') {
+          loadJadwalMapelForGuru();
+        }
+        return;
+      }
+    }
+    
+    // Menu lain
+    switchMenu(menuName, el);
+  }
+
+  // ================= MENU SWITCHER ================= //
 
   function switchMenu(menuName, el) {
     closeSidebar();
@@ -928,12 +890,21 @@
     if (menuName === 'daftar-nilai') {
       loadFilterDaftarNilaiWithGuru();
     }
+    if (menuName === 'jadwal-mapel') {
+      loadJadwalMapel();
+    }
   }
+
+  // ================= SCANNER ================= //
 
   function setupScannerView() {
     const adminSwitch = document.getElementById('scannerAdminSwitch');
-    if (userSession === 'admin' || userSession === 'pengaturan') adminSwitch.style.display = 'block';
-    else { adminSwitch.style.display = 'none'; setRole('siswa'); }
+    if (userRole === 'admin' || userRole === 'super_admin') {
+      adminSwitch.style.display = 'block';
+    } else {
+      adminSwitch.style.display = 'none';
+      setRole('siswa');
+    }
   }
 
   function setRole(role) {
@@ -998,6 +969,8 @@
     });
   }
 
+  // ================= IZIN ================= //
+
   function simpanIzin() {
     const id = document.getElementById('izinId').value;
     if (!id) return showScanPopup("warning", "Peringatan", "ID wajib diisi!");
@@ -1010,6 +983,8 @@
       if (res.status === 'success') { document.getElementById('izinId').value = ''; fetchDashboardData(); }
     });
   }
+
+  // ================= CARI ================= //
 
   function cariKehadiran() {
     const keyword = document.getElementById('cariKeyword').value.trim();
@@ -1038,6 +1013,8 @@
       });
     });
   }
+
+  // ================= REKAP ================= //
 
   function loadOpsiKelas() {
     sendRequest({ action: 'get_kelas' }, res => {
@@ -1076,6 +1053,8 @@
     XLSX.writeFile(wb, "Rekap_Kehadiran_SMPN1Sobang.xlsx");
   }
 
+  // ================= PENGATURAN ================= //
+
   function loadPengaturanDataFromServer() {
     sendRequest({ action: 'get_pengaturan' }, res => {
       if (res.status === 'success') {
@@ -1097,7 +1076,6 @@
       { sesi: "Sesi 1", mulai: "07:00", batasTW: "07:15", tutup: "12:00", alpa: "Alpa" },
       { sesi: "Sesi 2", mulai: "12:00", batasTW: "12:15", tutup: "15:00", alpa: "Alpa" },
       { sesi: "Sesi 3", mulai: "15:00", batasTW: "15:15", tutup: "17:00", alpa: "Alpa" },
-      { sesi: "PIN_Guru", mulai: "1234", batasTW: "-", tutup: "-", alpa: "-" },
       { sesi: "PIN_Admin", mulai: "123456", batasTW: "-", tutup: "-", alpa: "-" },
       { sesi: "PIN_Pengaturan", mulai: "456789", batasTW: "-", tutup: "-", alpa: "-" }
     ];
@@ -1219,54 +1197,101 @@
     });
   }
 
-  // ================= FUNGSI FITUR INPUT & DAFTAR NILAI ================= //
+  // ================= JADWAL MAPEL ================= //
 
-  function loadFilterInputNilaiWithGuru() {
-    // Jika guru sudah login, gunakan PIN dari guru
-    if (isGuruLoggedIn && guruLoginData) {
-      const pin = document.getElementById('inputGuruPinModal').value || '';
-      // Gunakan PIN yang sudah tersimpan atau minta ulang
-      if (pin) {
-        loadFilterInputNilai(pin);
-      } else {
-        // Jika belum ada PIN, coba ambil dari session
-        sendRequest({ action: 'get_filter_nilai', pin: '' }, res => {
-          if (res.status === 'success') {
-            populateFilterInputNilai(res);
-          }
-        });
-      }
-    } else {
-      // Untuk super admin
-      sendRequest({ action: 'get_filter_nilai', pin: '' }, res => {
-        if (res.status === 'success') {
-          populateFilterInputNilai(res);
-        }
-      });
+  function loadJadwalMapel() {
+    const now = new Date();
+    const hariIni = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][now.getDay()];
+    
+    document.getElementById('jadwalHariText').innerText = hariIni;
+    document.getElementById('jadwalInfoDisplay').innerHTML = `Menampilkan jadwal untuk hari ini, <b>${hariIni}</b>`;
+    
+    // Jika guru login, kirim nip untuk filter
+    let payload = { action: 'get_jadwal_mapel', hari: hariIni };
+    if (userRole === 'guru' && userData && userData.nip) {
+      payload.nip = userData.nip;
+      payload.role = 'guru';
     }
-  }
-
-  function loadFilterInputNilai(pin) {
-    sendRequest({ action: 'get_filter_nilai', pin: pin }, res => {
-      if (res.status === 'success') {
-        populateFilterInputNilai(res);
+    
+    sendRequest(payload, res => {
+      const tbody = document.getElementById('tableJadwalBody');
+      tbody.innerHTML = '';
+      
+      if (res.status === 'success' && res.data && res.data.length > 0) {
+        // Filter untuk guru: hanya tampilkan mapel yang diajar oleh guru tersebut
+        let filteredData = res.data;
+        if (userRole === 'guru' && userData && userData.mapel) {
+          filteredData = res.data.filter(item => {
+            // Cek apakah mapel ini ada di daftar mapel yang diajar guru
+            return userData.mapel.some(m => item.mapel.includes(m));
+          });
+        }
+        
+        if (filteredData.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada jadwal untuk hari ini.</td></tr>';
+          return;
+        }
+        
+        filteredData.forEach((item, idx) => {
+          tbody.innerHTML += `<tr>
+            <td>${idx + 1}</td>
+            <td>${item.waktu}</td>
+            <td><b>${item.mapel}</b></td>
+            <td>${item.kelas}</td>
+          </tr>`;
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada data jadwal untuk hari ini.</td></tr>';
       }
     });
   }
 
-  function populateFilterInputNilai(res) {
-    const selectMapel = document.getElementById('filterInputNilaiMapel');
-    const selectKelas = document.getElementById('filterInputNilaiKelas');
+  function loadJadwalMapelForGuru() {
+    // Panggil loadJadwalMapel dengan data guru
+    loadJadwalMapel();
+  }
 
-    selectMapel.innerHTML = '<option value="">-- Pilih Mapel --</option>';
-    res.mapelList.forEach(m => selectMapel.innerHTML += `<option value="${m}">${m}</option>`);
+  // ================= INPUT NILAI ================= //
 
-    selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
-    res.kelasList.forEach(k => selectKelas.innerHTML += `<option value="${k}">${k}</option>`);
-
-    if (res.guruNama) {
-      document.getElementById('guruNamaDisplay').innerText = res.guruNama;
-      document.getElementById('guruNamaDisplayDaftar').innerText = res.guruNama;
+  function loadFilterInputNilaiWithGuru() {
+    // Jika guru sudah login, gunakan data dari userData
+    if (userRole === 'guru' && userData) {
+      const selectMapel = document.getElementById('filterInputNilaiMapel');
+      const selectKelas = document.getElementById('filterInputNilaiKelas');
+      
+      selectMapel.innerHTML = '<option value="">-- Pilih Mapel --</option>';
+      if (userData.mapel && userData.mapel.length > 0) {
+        userData.mapel.forEach(m => {
+          selectMapel.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+      }
+      
+      selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
+      if (userData.kelas && userData.kelas.length > 0) {
+        userData.kelas.forEach(k => {
+          selectKelas.innerHTML += `<option value="${k}">${k}</option>`;
+        });
+      }
+      
+      document.getElementById('guruNamaDisplay').innerText = userData.nama || '-';
+    } else {
+      // Untuk admin/super admin, ambil semua data
+      sendRequest({ action: 'get_filter_nilai', pin: '' }, res => {
+        if (res.status === 'success') {
+          const selectMapel = document.getElementById('filterInputNilaiMapel');
+          const selectKelas = document.getElementById('filterInputNilaiKelas');
+          
+          selectMapel.innerHTML = '<option value="">-- Pilih Mapel --</option>';
+          res.mapelList.forEach(m => selectMapel.innerHTML += `<option value="${m}">${m}</option>`);
+          
+          selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
+          res.kelasList.forEach(k => selectKelas.innerHTML += `<option value="${k}">${k}</option>`);
+          
+          if (res.guruNama) {
+            document.getElementById('guruNamaDisplay').innerText = res.guruNama;
+          }
+        }
+      });
     }
   }
 
@@ -1279,14 +1304,12 @@
     }
 
     const guru = document.getElementById('guruNamaDisplay').innerText;
-    const pin = document.getElementById('inputGuruPinModal').value || '';
 
     sendRequest({ 
       action: 'get_nilai', 
       guru: guru, 
       mapel: mapel, 
-      kelas: kelas,
-      pin: pin
+      kelas: kelas
     }, res => {
       const tbody = document.getElementById('tableInputNilaiBody');
       tbody.innerHTML = '';
@@ -1311,7 +1334,7 @@
     const guru = document.getElementById('guruNamaDisplay').innerText;
     const mapel = document.getElementById('filterInputNilaiMapel').value;
 
-    if (!guru || guru === '-') {
+    if (!guru || guru === '-' || guru === 'Admin') {
       return showScanPopup("warning", "Peringatan", "Guru tidak teridentifikasi!");
     }
 
@@ -1350,7 +1373,6 @@
     }, res => {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Simpan Nilai", res.message);
       if (res.status === 'success') {
-        // Kosongkan input setelah berhasil disimpan
         currentInputNilaiList.forEach((item, idx) => {
           document.getElementById(`nilai_${idx}`).value = '';
         });
@@ -1358,34 +1380,30 @@
     });
   }
 
+  // ================= DAFTAR NILAI ================= //
+
   function loadFilterDaftarNilaiWithGuru() {
-    // Gunakan data guru yang sudah login
-    if (isGuruLoggedIn && guruLoginData) {
-      const guruNama = guruLoginData.nama;
-      document.getElementById('guruNamaDisplayDaftar').innerText = guruNama;
-      
-      // Isi filter mapel berdasarkan mapel yang diajar
+    if (userRole === 'guru' && userData) {
       const selectMapel = document.getElementById('filterDaftarNilaiMapel');
+      const selectKelas = document.getElementById('filterDaftarNilaiKelas');
+      
       selectMapel.innerHTML = '<option value="">-- Semua Mapel --</option>';
-      if (guruLoginData.mapel && guruLoginData.mapel.length > 0) {
-        guruLoginData.mapel.forEach(m => {
+      if (userData.mapel && userData.mapel.length > 0) {
+        userData.mapel.forEach(m => {
           selectMapel.innerHTML += `<option value="${m}">${m}</option>`;
         });
       }
       
-      // Isi filter kelas berdasarkan kelas yang diajar
-      const selectKelas = document.getElementById('filterDaftarNilaiKelas');
       selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
-      if (guruLoginData.kelas && guruLoginData.kelas.length > 0) {
-        guruLoginData.kelas.forEach(k => {
+      if (userData.kelas && userData.kelas.length > 0) {
+        userData.kelas.forEach(k => {
           selectKelas.innerHTML += `<option value="${k}">${k}</option>`;
         });
       }
       
-      // Load data daftar nilai
+      document.getElementById('guruNamaDisplayDaftar').innerText = userData.nama || '-';
       loadDaftarNilaiData();
     } else {
-      // Super admin - load semua
       sendRequest({ action: 'get_filter_nilai', pin: '' }, res => {
         if (res.status === 'success') {
           const selectMapel = document.getElementById('filterDaftarNilaiMapel');
@@ -1400,7 +1418,6 @@
           if (res.guruNama) {
             document.getElementById('guruNamaDisplayDaftar').innerText = res.guruNama;
           }
-          
           loadDaftarNilaiData();
         }
       });
