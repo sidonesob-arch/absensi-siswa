@@ -117,7 +117,6 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     
-    /* Warna avatar */
     .avatar-bg-1 { background: #e74c3c; }
     .avatar-bg-2 { background: #3498db; }
     .avatar-bg-3 { background: #2ecc71; }
@@ -181,9 +180,6 @@
       .topbar-user .user-role-display { display: none; }
     }
 
-    /* ===== SIDEBAR ===== */
-    .sidebar-toggle-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #ffffff; padding: 5px; }
-
     .main-wrapper { display: flex; margin-top: 65px; margin-bottom: 45px; flex: 1; position: relative; }
 
     .sidebar-overlay { display: none; position: fixed; top: 65px; left: 0; width: 100%; height: calc(100vh - 110px); background: rgba(0,0,0,0.3); z-index: 980; }
@@ -226,7 +222,9 @@
     .btn-primary { background: #05285e; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 4px; }
     .btn-primary:hover { background: #0b3c85; }
     .btn-excel { background: #1d6f42; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .btn-excel:hover { background: #155a34; }
     .btn-pdf { background: #d93025; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .btn-pdf:hover { background: #c0392b; }
     .btn-toggle { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
     .btn-toggle.off { background: #dc3545; }
     .btn-danger { background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
@@ -234,6 +232,8 @@
     .btn-success { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
     .btn-success:hover { background: #218838; }
     .btn-sm { padding: 4px 10px; font-size: 11px; width: auto; }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .btn-group .btn-excel, .btn-group .btn-pdf { width: auto; padding: 8px 16px; }
     
     #reader { width: 100%; max-width: 400px; border-radius: 8px; overflow: hidden; margin-top: 10px; background: #111; }
     .table-responsive { overflow-x: auto; margin-top: 10px; background: #fff; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -248,13 +248,31 @@
     .jadwal-header { background: #e8f0fe; padding: 12px 15px; border-radius: 8px; border-left: 4px solid #05285e; margin-bottom: 15px; }
     .jadwal-header h4 { margin: 0; color: #05285e; font-size: 14px; }
     .jadwal-header .sub { font-size: 11px; color: #666; margin-top: 3px; }
+    
+    /* Export buttons di daftar nilai */
+    .export-section { 
+      display: flex; 
+      gap: 10px; 
+      margin: 10px 0; 
+      flex-wrap: wrap; 
+      align-items: center;
+    }
+    .export-section .btn-excel, .export-section .btn-pdf {
+      width: auto;
+      padding: 8px 18px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+    .export-section .btn-excel { background: #1d6f42; color: white; border: none; cursor: pointer; font-weight: bold; }
+    .export-section .btn-excel:hover { background: #155a34; }
+    .export-section .btn-pdf { background: #d93025; color: white; border: none; cursor: pointer; font-weight: bold; }
+    .export-section .btn-pdf:hover { background: #c0392b; }
   </style>
 </head>
 <body>
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <!-- Baris Atas: Logo, Judul, Jam, Avatar -->
   <div class="topbar-row">
     <div class="topbar-left">
       <button class="sidebar-toggle-btn" onclick="toggleSidebar()">☰</button>
@@ -271,7 +289,6 @@
     </div>
   </div>
   
-  <!-- Baris Bawah: Nama User & Role -->
   <div class="topbar-user" id="topbarUserInfo">
     <span class="user-name-display" id="topbarUserName">Tamu</span>
     <span class="user-role-display" id="topbarUserRole">Tamu</span>
@@ -332,7 +349,6 @@
 
     <!-- DASHBOARD -->
     <div id="menu-dashboard" class="section active">
-      
       <h3 style="margin-top:0; color:#05285e; font-size:16px;">📊 Dashboard Real-Absensi Digital</h3>
       
       <div class="stats-container">
@@ -450,7 +466,7 @@
       </div>
       <button class="btn-primary" onclick="loadRekap()">Tampilkan</button>
       <div style="display:flex; gap:10px; margin-top:10px;">
-        <button class="btn-excel" onclick="exportToExcel()">📊 Excel</button>
+        <button class="btn-excel" onclick="exportRekapToExcel()">📊 Excel</button>
         <button class="btn-pdf" onclick="window.print()">🖨️ PDF</button>
       </div>
       <div class="table-responsive">
@@ -534,12 +550,15 @@
       <button class="btn-primary" style="margin-top:12px;" onclick="simpanDataNilai()">Simpan</button>
     </div>
 
+    <!-- DAFTAR NILAI -->
     <div id="menu-daftar-nilai" class="section">
       <h3 style="color:#05285e; font-size:15px;">📋 Daftar Nilai</h3>
+      
       <div style="background:#e8f0fe; padding:10px 12px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <div><span style="font-weight:600; color:#05285e; font-size:12px;">👤 Guru:</span> <span id="guruNamaDisplayDaftar" style="color:#05285e; font-weight:bold; font-size:13px;">-</span></div>
         <button class="btn-primary btn-sm" onclick="switchMenu('input-nilai', document.getElementById('nav-input-nilai'))">📝 Kembali</button>
       </div>
+      
       <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:12px;">
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
           <div class="form-group" style="flex:1; min-width:180px;"><label>Mapel:</label><select id="filterDaftarNilaiMapel"><option value="">-- Semua --</option></select></div>
@@ -547,6 +566,13 @@
         </div>
         <button class="btn-primary" onclick="loadDaftarNilaiData()">Tampilkan</button>
       </div>
+
+      <!-- Tombol Export Excel & PDF -->
+      <div class="export-section">
+        <button class="btn-excel" onclick="exportDaftarNilaiToExcel()">📊 Export Excel</button>
+        <button class="btn-pdf" onclick="exportDaftarNilaiToPDF()">📄 Export PDF</button>
+      </div>
+
       <div class="table-responsive">
         <table id="tableDaftarNilaiResult">
           <thead id="tableDaftarNilaiHead"><tr><th>No</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Guru</th><th>Mapel</th></tr></thead>
@@ -570,7 +596,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycby9OtlXEYGU2CpkGaLHHoO2LGTRDZspum_sRZ_omNVjHWxjkWiDDVKmtMb15Qg_Vl8lqQ/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby_z_33RBlDdUQ0-R6qH3IpuDtRbw5oB2AzgABWHPS4R38PoTPtZdfhrNJ8YSqdUgCnOg/exec";
 
   // ================= VARIABEL GLOBAL ================= //
   let currentRole = 'siswa';
@@ -646,6 +672,9 @@
     document.getElementById('popupMessage').innerText = message;
     popup.style.display = 'block';
     popupTimeout = setTimeout(() => { popup.style.display = 'none'; }, 2800);
+    
+    // Tutup sidebar setelah popup muncul (untuk login)
+    closeSidebar();
   }
 
   // ================= AVATAR ================= //
@@ -875,6 +904,8 @@
       showScanPopup("warning", "Info", "Anda sudah login.");
       return;
     }
+    // Tutup sidebar saat membuka modal login
+    closeSidebar();
     document.getElementById('inputPinModal').value = '';
     document.getElementById('modalInfo').innerText = "Masukkan PIN Anda.";
     document.getElementById('loginModal').style.display = 'flex';
@@ -883,11 +914,16 @@
   function closeLoginModal() {
     document.getElementById('loginModal').style.display = 'none';
     pendingMenu = null;
+    // Tutup sidebar setelah modal ditutup
+    closeSidebar();
   }
 
   function submitLogin() {
     const pin = document.getElementById('inputPinModal').value.trim();
-    if (!pin) return showScanPopup("warning", "Peringatan", "PIN tidak boleh kosong!");
+    if (!pin) {
+      showScanPopup("warning", "Peringatan", "PIN tidak boleh kosong!");
+      return;
+    }
 
     sendRequest({ action: 'login', pin: pin }, res => {
       if (res.status === 'success') {
@@ -912,8 +948,13 @@
           pendingMenu = null;
         }
         updateUIByRole();
+        
+        // Tutup sidebar setelah login berhasil
+        closeSidebar();
       } else {
         showScanPopup("danger", "Login Gagal", res.message);
+        // Tutup sidebar setelah login gagal
+        closeSidebar();
       }
     });
   }
@@ -989,6 +1030,7 @@
     updateTopbarUserInfo();
     switchMenu('dashboard', document.querySelector('.sidebar .nav-item'));
     showScanPopup("success", "Logout Berhasil", "Anda telah keluar.");
+    closeSidebar();
   }
 
   function checkMenuAccess(menuName, el) {
@@ -1204,9 +1246,9 @@
     if (container) container.style.display = (role === 'siswa') ? 'block' : 'none';
   }
 
-  function exportToExcel() {
+  function exportRekapToExcel() {
     const table = document.getElementById('tableRekap');
-    const wb = XLSX.utils.table_to_book(table, { sheet: "Rekap" });
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Rekap Kehadiran" });
     XLSX.writeFile(wb, "Rekap_Kehadiran.xlsx");
   }
 
@@ -1648,6 +1690,21 @@
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada data nilai.</td></tr>';
       }
     });
+  }
+
+  // ================= EXPORT DAFTAR NILAI ================= //
+
+  function exportDaftarNilaiToExcel() {
+    const table = document.getElementById('tableDaftarNilaiResult');
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Daftar Nilai" });
+    XLSX.writeFile(wb, "Daftar_Nilai_Siswa.xlsx");
+    showScanPopup("success", "Export Berhasil", "File Excel berhasil diunduh!");
+  }
+
+  function exportDaftarNilaiToPDF() {
+    // Gunakan window.print() untuk export PDF
+    window.print();
+    showScanPopup("success", "Export PDF", "Silakan pilih 'Save as PDF' pada dialog print.");
   }
 
 </script>
