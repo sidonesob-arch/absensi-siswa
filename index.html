@@ -32,7 +32,8 @@
     .nav-category { font-size: 11px; font-weight: bold; color: #9bb3de; margin: 15px 10px 5px 10px; letter-spacing: 0.5px; }
     .nav-item { padding: 10px 12px; display: block; color: #e2e8f0; text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 6px; margin-bottom: 3px; cursor: pointer; transition: background 0.2s, color 0.2s; }
     .nav-item:hover, .nav-item.active { background: #0b3c85; color: #ffffff; }
-    .nav-item.locked { opacity: 0.5; color: #8fa0bd; }
+    .nav-item.locked { opacity: 0.5; color: #8fa0bd; cursor: not-allowed; }
+    .nav-item.locked:hover { background: none; color: #8fa0bd; }
 
     .content-container { margin-left: 0; padding: 20px; flex: 1; width: 100%; background: #f4f6f9; }
     .section { display: none; }
@@ -80,10 +81,17 @@
     #loginModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
     .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 350px; text-align: center; }
 
+    #pinGuruModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 3001; }
+    #pinGuruModal .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 350px; text-align: center; }
+
     .input-nilai-sm { width: 80px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
     
     .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
     .btn-group .btn-primary { flex: 1; min-width: 120px; }
+    .btn-group .btn-success { flex: 1; min-width: 120px; }
+    
+    .info-badge { background: #e8f0fe; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #05285e; }
+    .info-badge span { font-weight: 600; color: #05285e; }
   </style>
 </head>
 <body>
@@ -123,7 +131,7 @@
 </div>
 
 <!-- Modal PIN Khusus Guru untuk Nilai -->
-<div id="pinGuruModal" style="display:none;">
+<div id="pinGuruModal">
   <div class="modal-content">
     <h3>Verifikasi PIN Guru</h3>
     <p id="pinGuruInfo" style="font-size:12px; color:#666;">Masukkan PIN Guru untuk mengakses menu Nilai.</p>
@@ -152,10 +160,10 @@
     <a class="nav-item locked" id="nav-pengaturan" onclick="checkMenuAccess('pengaturan', this)">⚙️ Pengaturan Sesi & Libur</a>
 
     <div class="nav-category">PEMBELAJARAN</div>
-    <a class="nav-item" onclick="switchMenu('jadwal-mapel', this)">📅 Jadwal Mapel</a>
-    <a class="nav-item" id="nav-input-nilai" onclick="openPinGuruModal('input-nilai', this)">📈 Input Nilai</a>
-    <a class="nav-item" id="nav-daftar-nilai" onclick="openPinGuruModal('daftar-nilai', this)">📋 Daftar Nilai</a>
-    <a class="nav-item" onclick="switchMenu('kelulusan', this)">🎓 Kelulusan</a>
+    <a class="nav-item locked" id="nav-jadwal-mapel" onclick="checkMenuAccess('jadwal-mapel', this)">📅 Jadwal Mapel</a>
+    <a class="nav-item locked" id="nav-input-nilai" onclick="openPinGuruModal('input-nilai', this)">📈 Input Nilai</a>
+    <a class="nav-item locked" id="nav-daftar-nilai" onclick="openPinGuruModal('daftar-nilai', this)">📋 Daftar Nilai</a>
+    <a class="nav-item locked" id="nav-kelulusan" onclick="checkMenuAccess('kelulusan', this)">🎓 Kelulusan</a>
 
     <a class="nav-item" id="nav-logout" style="display:none; color:#ff8a8a; margin-top: 15px;" onclick="logoutSession()">🚪 Keluar / Logout</a>
   </div>
@@ -382,8 +390,9 @@
     <!-- 8. PEMBELAJARAN - INPUT NILAI -->
     <div id="menu-input-nilai" class="section">
       <h3 style="color:#05285e;">Input Penilaian Siswa</h3>
-      <div style="background:#e8f0fe; padding:10px 15px; border-radius:6px; margin-bottom:15px; border-left:4px solid #05285e;">
-        <span style="font-weight:600; color:#05285e;">Guru: <span id="labelGuruAktif">-</span></span>
+      <div class="info-badge">
+        <span>Guru: <span id="labelGuruAktif">-</span></span>
+        <span style="margin-left:20px;">Mapel yang diampu: <span id="labelMapelAktif">-</span></span>
       </div>
       <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
         <div style="display:flex; gap:15px; flex-wrap:wrap;">
@@ -425,10 +434,9 @@
     <div id="menu-daftar-nilai" class="section">
       <h3 style="color:#05285e;">Daftar Nilai Siswa (Rekap Penilaian)</h3>
       
-      <!-- Info Guru Aktif -->
-      <div style="background:#e8f0fe; padding:10px 15px; border-radius:6px; margin-bottom:15px; border-left:4px solid #05285e;">
-        <span style="font-weight:600; color:#05285e;">Guru: <span id="labelGuruDaftarNilai">-</span></span>
-        <span style="margin-left:20px; font-weight:600; color:#05285e;">Mapel: <span id="labelMapelDaftarNilai">-</span></span>
+      <div class="info-badge">
+        <span>Guru: <span id="labelGuruDaftarNilai">-</span></span>
+        <span style="margin-left:20px;">Mapel yang diampu: <span id="labelMapelDaftarNilai">-</span></span>
       </div>
       
       <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
@@ -442,8 +450,10 @@
             <select id="filterDaftarNilaiMapel" onchange="loadDaftarNilaiData()"><option value="">-- Semua Mapel --</option></select>
           </div>
         </div>
-        <button class="btn-primary" onclick="loadDaftarNilaiData()">Tampilkan Tabel Daftar Nilai</button>
-        <button class="btn-success" style="margin-left:10px;" onclick="gotoInputNilai()">📝 Kembali ke Input Nilai</button>
+        <div class="btn-group">
+          <button class="btn-primary" onclick="loadDaftarNilaiData()">Tampilkan Tabel Daftar Nilai</button>
+          <button class="btn-success" onclick="gotoInputNilai()">📝 Kembali ke Input Nilai</button>
+        </div>
       </div>
 
       <div class="table-responsive">
@@ -481,14 +491,14 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzYC6lMUG_8rlfj_Fs5LRGMrzD9sRL2LMZyOH774E2rnjoCOr_EAnYCxFEtWH-ZBZuNYw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwRR8qWF8fbuDuP35rVd3kkcCwOEuQbTpiYRnJLXghIfSU5LL_zmkKVR0znE4KITDek5w/exec";
 
   let currentRole = 'siswa';
   let html5QrcodeScanner = null;
   let isCameraOn = false;
   let isProcessing = false;
   let userSession = 'tamu'; 
-  let pendingMenu = '';
+  let pendingMenu = null;
   let globalPengaturanData = [];
   let currentActiveSesiName = "";
   let cachedPinConfig = null;
@@ -498,6 +508,7 @@
   
   // Data guru yang sudah diverifikasi PIN
   let verifiedGuruData = null;
+  let isGuruVerified = false;
 
   document.getElementById('izinTanggal').value = new Date().toISOString().split('T')[0];
 
@@ -696,7 +707,7 @@
 
   function closePinGuruModal() {
     document.getElementById('pinGuruModal').style.display = 'none';
-    pendingMenu = '';
+    pendingMenu = null;
   }
 
   function submitPinGuru() {
@@ -712,18 +723,27 @@
           mapelList: res.mapelList || [],
           kelasList: res.kelasList || []
         };
+        isGuruVerified = true;
         
         closePinGuruModal();
         showScanPopup("success", "Verifikasi Berhasil", "Selamat datang, " + res.nama);
         
+        // Unlock menu Pembelajaran
+        unlockPembelajaranMenus();
+        
         if (pendingMenu) {
-          switchMenu(pendingMenu.name, pendingMenu.el);
-          if (pendingMenu.name === 'input-nilai') {
+          var targetMenu = pendingMenu.name;
+          var targetEl = pendingMenu.el;
+          pendingMenu = null;
+          
+          // Switch ke menu yang diminta
+          switchMenu(targetMenu, targetEl);
+          
+          if (targetMenu === 'input-nilai') {
             setupInputNilaiMenu();
-          } else if (pendingMenu.name === 'daftar-nilai') {
+          } else if (targetMenu === 'daftar-nilai') {
             setupDaftarNilaiMenu();
           }
-          pendingMenu = '';
         }
       } else {
         showScanPopup("danger", "Verifikasi Gagal", res.message);
@@ -733,13 +753,26 @@
     });
   }
 
+  function unlockPembelajaranMenus() {
+    document.getElementById('nav-input-nilai').classList.remove('locked');
+    document.getElementById('nav-daftar-nilai').classList.remove('locked');
+    document.getElementById('nav-jadwal-mapel').classList.remove('locked');
+    document.getElementById('nav-kelulusan').classList.remove('locked');
+  }
+
+  function lockPembelajaranMenus() {
+    document.getElementById('nav-input-nilai').classList.add('locked');
+    document.getElementById('nav-daftar-nilai').classList.add('locked');
+    document.getElementById('nav-jadwal-mapel').classList.add('locked');
+    document.getElementById('nav-kelulusan').classList.add('locked');
+  }
+
   function setupInputNilaiMenu() {
     if (!verifiedGuruData) return;
     
-    // Set label guru aktif
     document.getElementById('labelGuruAktif').innerText = verifiedGuruData.nama;
+    document.getElementById('labelMapelAktif').innerText = verifiedGuruData.mapelList.join(', ') || '-';
     
-    // Set mapel yang diampu
     const selectMapel = document.getElementById('filterInputNilaiMapel');
     selectMapel.innerHTML = '<option value="">-- Pilih Mapel --</option>';
     if (verifiedGuruData.mapelList && verifiedGuruData.mapelList.length > 0) {
@@ -748,7 +781,6 @@
       });
     }
     
-    // Set kelas yang diajar
     const selectKelas = document.getElementById('filterInputNilaiKelas');
     selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
     if (verifiedGuruData.kelasList && verifiedGuruData.kelasList.length > 0) {
@@ -761,10 +793,9 @@
   function setupDaftarNilaiMenu() {
     if (!verifiedGuruData) return;
     
-    // Set label guru aktif
     document.getElementById('labelGuruDaftarNilai').innerText = verifiedGuruData.nama;
+    document.getElementById('labelMapelDaftarNilai').innerText = verifiedGuruData.mapelList.join(', ') || '-';
     
-    // Set mapel yang diampu
     const selectMapel = document.getElementById('filterDaftarNilaiMapel');
     selectMapel.innerHTML = '<option value="">-- Semua Mapel --</option>';
     if (verifiedGuruData.mapelList && verifiedGuruData.mapelList.length > 0) {
@@ -773,12 +804,6 @@
       });
     }
     
-    // Set label mapel di info
-    if (verifiedGuruData.mapelList && verifiedGuruData.mapelList.length > 0) {
-      document.getElementById('labelMapelDaftarNilai').innerText = verifiedGuruData.mapelList.join(', ');
-    }
-    
-    // Set kelas yang diajar
     const selectKelas = document.getElementById('filterDaftarNilaiKelas');
     selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
     if (verifiedGuruData.kelasList && verifiedGuruData.kelasList.length > 0) {
@@ -789,34 +814,49 @@
   }
 
   function gotoDaftarNilai() {
-    // Pindah ke menu daftar nilai dengan data guru yang sama
-    const menuItem = document.getElementById('nav-daftar-nilai');
-    if (verifiedGuruData) {
-      switchMenu('daftar-nilai', menuItem);
-      setupDaftarNilaiMenu();
-      // Load data otomatis
-      setTimeout(loadDaftarNilaiData, 300);
+    if (!verifiedGuruData) {
+      showScanPopup("warning", "Akses Ditolak", "Silakan verifikasi PIN guru terlebih dahulu!");
+      return;
     }
+    const menuItem = document.getElementById('nav-daftar-nilai');
+    switchMenu('daftar-nilai', menuItem);
+    setTimeout(function() {
+      setupDaftarNilaiMenu();
+      loadDaftarNilaiData();
+    }, 300);
   }
 
   function gotoInputNilai() {
+    if (!verifiedGuruData) {
+      showScanPopup("warning", "Akses Ditolak", "Silakan verifikasi PIN guru terlebih dahulu!");
+      return;
+    }
     const menuItem = document.getElementById('nav-input-nilai');
     switchMenu('input-nilai', menuItem);
-    if (verifiedGuruData) {
+    setTimeout(function() {
       setupInputNilaiMenu();
-    }
+    }, 300);
   }
 
-  // ================= FUNGSI LAINNYA (TIDAK BERUBAH) ================= //
+  // ================= FUNGSI LAINNYA ================= //
 
   function checkMenuAccess(menuName, el) {
     closeSidebar();
+    
+    // Jika menu adalah pembelajaran dan belum diverifikasi
+    if (menuName === 'jadwal-mapel' || menuName === 'input-nilai' || menuName === 'daftar-nilai' || menuName === 'kelulusan') {
+      if (!isGuruVerified) {
+        showScanPopup("warning", "Akses Ditolak", "Silakan verifikasi PIN guru terlebih dahulu melalui menu Input Nilai atau Daftar Nilai!");
+        return;
+      }
+    }
+    
     if (menuName === 'login') {
       if (userSession !== 'tamu') {
         showScanPopup("warning", "Info Status", "Anda sudah dalam status login.");
         return;
       }
-      pendingMenu = '';
+      pendingMenu = null;
       document.getElementById('inputPinModal').value = '';
       document.getElementById('modalInfo').innerText = "Masukkan PIN Guru, Admin, atau Pengaturan.";
       document.getElementById('loginModal').style.display = 'flex';
@@ -841,7 +881,7 @@
     document.getElementById('loginModal').style.display = 'flex';
   }
 
-  function closeModal() { document.getElementById('loginModal').style.display = 'none'; pendingMenu = ''; }
+  function closeModal() { document.getElementById('loginModal').style.display = 'none'; pendingMenu = null; }
 
   function submitLoginPin() {
     const pin = document.getElementById('inputPinModal').value.trim();
@@ -853,7 +893,11 @@
         closeModal();
         applyRoleAccessUI(userSession);
         showScanPopup("success", "Login Berhasil", res.message);
-        if (pendingMenu) { switchMenu(pendingMenu.name, pendingMenu.el); pendingMenu = ''; }
+        if (pendingMenu) { 
+          var tempMenu = pendingMenu;
+          pendingMenu = null;
+          switchMenu(tempMenu.name, tempMenu.el); 
+        }
       } else {
         showScanPopup("danger", "Login Gagal", res.message);
       }
@@ -866,14 +910,24 @@
     userSession = 'tamu';
     currentRole = 'siswa';
     verifiedGuruData = null;
+    isGuruVerified = false;
     
-    document.querySelectorAll('.sidebar .nav-item').forEach(b => {
-      if (b.id !== 'nav-scanner' && b.id !== 'nav-izin' && b.id !== 'nav-rekap' && b.id !== 'nav-pengaturan' && b.id !== 'nav-logout' && b.id !== 'nav-input-nilai' && b.id !== 'nav-daftar-nilai') {
-        b.classList.remove('locked');
-      } else {
+    // Lock semua menu
+    document.querySelectorAll('.sidebar .nav-item').forEach(function(b) {
+      if (b.id !== 'nav-logout') {
         b.classList.add('locked');
       }
     });
+    // Unlock menu dasar yang selalu bisa diakses
+    document.querySelectorAll('.nav-item').forEach(function(b) {
+      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('switchMenu')) {
+        var onclick = b.getAttribute('onclick');
+        if (onclick.includes('dashboard') || onclick.includes('cari') || onclick.includes('login')) {
+          b.classList.remove('locked');
+        }
+      }
+    });
+    
     document.getElementById('nav-logout').style.display = 'none';
     switchMenu('dashboard', document.querySelector('.sidebar .nav-item'));
     showScanPopup("success", "Logout Berhasil", "Anda telah keluar dari akun.");
@@ -882,18 +936,27 @@
   function applyRoleAccessUI(role) {
     document.getElementById('nav-logout').style.display = 'block';
 
-    const optGuru = document.getElementById('optIzinGuru');
+    var optGuru = document.getElementById('optIzinGuru');
 
     if (role === 'guru') {
-      ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => document.getElementById(id).classList.remove('locked'));
+      ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('locked');
+      });
       document.getElementById('nav-pengaturan').classList.add('locked');
       if (optGuru) optGuru.style.display = 'none';
     } else if (role === 'admin') {
-      ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => document.getElementById(id).classList.remove('locked'));
+      ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('locked');
+      });
       document.getElementById('nav-pengaturan').classList.add('locked');
       if (optGuru) optGuru.style.display = 'block';
     } else if (role === 'pengaturan') {
-      ['nav-scanner', 'nav-izin', 'nav-rekap', 'nav-pengaturan'].forEach(id => document.getElementById(id).classList.remove('locked'));
+      ['nav-scanner', 'nav-izin', 'nav-rekap', 'nav-pengaturan'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('locked');
+      });
       if (optGuru) optGuru.style.display = 'block';
     }
   }
@@ -901,11 +964,15 @@
   function switchMenu(menuName, el) {
     closeSidebar();
     if (isCameraOn) stopCamera();
-    document.querySelectorAll('.sidebar .nav-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.sidebar .nav-item').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    document.querySelectorAll('.section').forEach(function(s) {
+      s.classList.remove('active');
+    });
     
     if (el) el.classList.add('active');
-    const targetSection = document.getElementById(`menu-${menuName}`);
+    var targetSection = document.getElementById('menu-' + menuName);
     if (targetSection) targetSection.classList.add('active');
 
     if (menuName === 'scanner') setupScannerView();
@@ -914,16 +981,10 @@
       loadPengaturanDataFromServer();
       loadHariLiburData();
     }
-    if (menuName === 'input-nilai') {
-      if (verifiedGuruData) setupInputNilaiMenu();
-    }
-    if (menuName === 'daftar-nilai') {
-      if (verifiedGuruData) setupDaftarNilaiMenu();
-    }
   }
 
   function setupScannerView() {
-    const adminSwitch = document.getElementById('scannerAdminSwitch');
+    var adminSwitch = document.getElementById('scannerAdminSwitch');
     if (userSession === 'admin' || userSession === 'pengaturan') adminSwitch.style.display = 'block';
     else { adminSwitch.style.display = 'none'; setRole('siswa'); }
   }
@@ -947,21 +1008,21 @@
     html5QrcodeScanner.start(
       { facingMode: "environment" },
       { fps: 15, qrbox: { width: 220, height: 220 } },
-      (code) => onScanSuccess(code, currentActiveSesiName)
-    ).then(() => {
+      function(code) { onScanSuccess(code, currentActiveSesiName); }
+    ).then(function() {
       isCameraOn = true;
-      const btn = document.getElementById('btnCameraToggle');
+      var btn = document.getElementById('btnCameraToggle');
       btn.innerText = "Tutup Kamera"; btn.classList.add('off');
       showScanPopup("success", "Kamera Ready", "Kamera scanner berhasil diaktifkan.");
-    }).catch(err => showScanPopup("danger", "Error Kamera", err));
+    }).catch(function(err) { showScanPopup("danger", "Error Kamera", err); });
   }
 
   function stopCamera() {
     if (html5QrcodeScanner) {
-      html5QrcodeScanner.stop().then(() => {
+      html5QrcodeScanner.stop().then(function() {
         html5QrcodeScanner.clear();
         isCameraOn = false;
-        const btn = document.getElementById('btnCameraToggle');
+        var btn = document.getElementById('btnCameraToggle');
         btn.innerText = "Buka Kamera"; btn.classList.remove('off');
         showScanPopup("warning", "Kamera Tutup", "Kamera scanner dimatikan.");
       });
@@ -977,45 +1038,45 @@
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action: 'absen_qr', role: currentRole, code: code, sesi: sesiTarget })
     })
-    .then(r => r.text())
-    .then(text => {
-      const res = JSON.parse(text);
-      let popupType = res.status === 'success' ? 'success' : (res.status === 'warning' ? 'warning' : 'danger');
+    .then(function(r) { return r.text(); })
+    .then(function(text) {
+      var res = JSON.parse(text);
+      var popupType = res.status === 'success' ? 'success' : (res.status === 'warning' ? 'warning' : 'danger');
       showScanPopup(popupType, "Hasil Scan", res.message);
-      setTimeout(() => { isProcessing = false; }, 1800);
+      setTimeout(function() { isProcessing = false; }, 1800);
     })
-    .catch(err => {
+    .catch(function(err) {
       showScanPopup("danger", "Gagal", "Koneksi server gagal.");
       isProcessing = false;
     });
   }
 
   function simpanIzin() {
-    const id = document.getElementById('izinId').value;
+    var id = document.getElementById('izinId').value;
     if (!id) return showScanPopup("warning", "Peringatan", "ID wajib diisi!");
     sendRequest({
       action: 'input_izin', role: document.getElementById('izinRole').value,
       id: id, tanggal: document.getElementById('izinTanggal').value,
       status: document.getElementById('izinStatus').value, keterangan: document.getElementById('izinKet').value
-    }, res => {
+    }, function(res) {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Izin", res.message);
       if (res.status === 'success') { document.getElementById('izinId').value = ''; fetchDashboardData(); }
     });
   }
 
   function cariKehadiran() {
-    const keyword = document.getElementById('cariKeyword').value.trim();
-    const tglMulai = document.getElementById('cariTglMulai').value;
-    const tglSelesai = document.getElementById('cariTglSelesai').value;
+    var keyword = document.getElementById('cariKeyword').value.trim();
+    var tglMulai = document.getElementById('cariTglMulai').value;
+    var tglSelesai = document.getElementById('cariTglSelesai').value;
 
     sendRequest({
       action: 'cari_kehadiran', 
       keyword: keyword,
       tglMulai: tglMulai, 
       tglSelesai: tglSelesai
-    }, res => {
-      const thead = document.getElementById('tableCariHead');
-      const tbody = document.getElementById('tableCariBody');
+    }, function(res) {
+      var thead = document.getElementById('tableCariHead');
+      var tbody = document.getElementById('tableCariBody');
       tbody.innerHTML = '';
       
       if (!res.data || res.data.length === 0) {
@@ -1025,18 +1086,20 @@
       }
       
       thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status/Sesi</th></tr>';
-      res.data.forEach(r => {
-        tbody.innerHTML += `<tr><td>${r.timestamp}</td><td>${r.peran}</td><td>${r.id}</td><td>${r.nama}</td><td>${r.sesi}</td></tr>`;
+      res.data.forEach(function(r) {
+        tbody.innerHTML += '<tr><td>' + r.timestamp + '</td><td>' + r.peran + '</td><td>' + r.id + '</td><td>' + r.nama + '</td><td>' + r.sesi + '</td></tr>';
       });
     });
   }
 
   function loadOpsiKelas() {
-    sendRequest({ action: 'get_kelas' }, res => {
+    sendRequest({ action: 'get_kelas' }, function(res) {
       if (res.status === 'success') {
-        const select = document.getElementById('rekapKelas');
+        var select = document.getElementById('rekapKelas');
         select.innerHTML = '<option value="">-- Semua Kelas --</option>';
-        res.data.forEach(k => select.innerHTML += `<option value="${k}">${k}</option>`);
+        res.data.forEach(function(k) {
+          select.innerHTML += '<option value="' + k + '">' + k + '</option>';
+        });
       }
     });
   }
@@ -1046,30 +1109,30 @@
       action: 'rekap_kehadiran', role: document.getElementById('rekapRole').value,
       kelas: document.getElementById('rekapKelas').value,
       tglMulai: document.getElementById('rekapTglMulai').value, tglSelesai: document.getElementById('rekapTglSelesai').value
-    }, res => {
-      const tbody = document.getElementById('tableRekapBody');
+    }, function(res) {
+      var tbody = document.getElementById('tableRekapBody');
       tbody.innerHTML = '';
-      document.getElementById('labelTotalHari').innerText = `Total Hari Efektif Kerja: ${res.totalHari} Hari`;
+      document.getElementById('labelTotalHari').innerText = 'Total Hari Efektif Kerja: ' + res.totalHari + ' Hari';
       if (!res.data.length) return tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Data tidak ditemukan.</td></tr>';
-      res.data.forEach(s => {
-        tbody.innerHTML += `<tr><td>${s.id}</td><td>${s.nama}</td><td>${s.unit}</td><td>${s.tw}</td><td>${s.tl}</td><td>${s.izin}</td><td>${s.sakit}</td><td>${s.alpa}</td><td>${s.totalHadir}</td><td>${s.persentase}%</td></tr>`;
+      res.data.forEach(function(s) {
+        tbody.innerHTML += '<tr><td>' + s.id + '</td><td>' + s.nama + '</td><td>' + s.unit + '</td><td>' + s.tw + '</td><td>' + s.tl + '</td><td>' + s.izin + '</td><td>' + s.sakit + '</td><td>' + s.alpa + '</td><td>' + s.totalHadir + '</td><td>' + s.persentase + '%</td></tr>';
       });
     });
   }
 
   function toggleRekapFilter() {
-    const role = document.getElementById('rekapRole').value;
+    var role = document.getElementById('rekapRole').value;
     document.getElementById('rekapKelasContainer').style.display = (role === 'siswa') ? 'block' : 'none';
   }
 
   function exportToExcel() {
-    const table = document.getElementById('tableRekap');
-    const wb = XLSX.utils.table_to_book(table, { sheet: "Rekap Kehadiran" });
+    var table = document.getElementById('tableRekap');
+    var wb = XLSX.utils.table_to_book(table, { sheet: "Rekap Kehadiran" });
     XLSX.writeFile(wb, "Rekap_Kehadiran_SMPN1Sobang.xlsx");
   }
 
   function loadPengaturanDataFromServer() {
-    sendRequest({ action: 'get_pengaturan' }, res => {
+    sendRequest({ action: 'get_pengaturan' }, function(res) {
       if (res.status === 'success') {
         globalPengaturanData = res.data;
         renderPengaturanTable();
@@ -1078,14 +1141,14 @@
   }
 
   function renderPengaturanTable() {
-    const tbody = document.getElementById('tablePengaturanBody');
+    var tbody = document.getElementById('tablePengaturanBody');
     tbody.innerHTML = '';
 
-    const show1 = document.getElementById('chkSesi1').checked;
-    const show2 = document.getElementById('chkSesi2').checked;
-    const show3 = document.getElementById('chkSesi3').checked;
+    var show1 = document.getElementById('chkSesi1').checked;
+    var show2 = document.getElementById('chkSesi2').checked;
+    var show3 = document.getElementById('chkSesi3').checked;
 
-    let defaults = [
+    var defaults = [
       { sesi: "Sesi 1", mulai: "07:00", batasTW: "07:15", tutup: "12:00", alpa: "Alpa" },
       { sesi: "Sesi 2", mulai: "12:00", batasTW: "12:15", tutup: "15:00", alpa: "Alpa" },
       { sesi: "Sesi 3", mulai: "15:00", batasTW: "15:15", tutup: "17:00", alpa: "Alpa" },
@@ -1094,46 +1157,39 @@
       { sesi: "PIN_Pengaturan", mulai: "456789", batasTW: "-", tutup: "-", alpa: "-" }
     ];
 
-    let currentList = globalPengaturanData.length ? globalPengaturanData : defaults;
+    var currentList = globalPengaturanData.length ? globalPengaturanData : defaults;
 
-    currentList.forEach((item, idx) => {
+    currentList.forEach(function(item) {
       if (item.sesi === "Sesi 1" && !show1) return;
       if (item.sesi === "Sesi 2" && !show2) return;
       if (item.sesi === "Sesi 3" && !show3) return;
 
-      const isPin = item.sesi.startsWith("PIN_");
+      var isPin = item.sesi.startsWith("PIN_");
       
-      let rowHtml = `<tr>
-        <td><b>${item.sesi}</b><input type="hidden" class="cfg-sesi" value="${item.sesi}"></td>
-        <td><input type="${isPin ? 'text' : 'time'}" class="cfg-mulai" value="${item.mulai}"></td>
-        <td>${isPin ? '-' : `<input type="time" class="cfg-batasTW" value="${item.batasTW}">`}</td>
-        <td>${isPin ? '-' : `<input type="time" class="cfg-tutup" value="${item.tutup}">`}</td>
-        <td>${isPin ? '-' : `
-          <select class="cfg-alpa">
-            <option value="Alpa" ${item.alpa === 'Alpa' ? 'selected' : ''}>Alpa</option>
-            <option value="Bolos" ${item.alpa === 'Bolos' ? 'selected' : ''}>Bolos</option>
-          </select>
-        `}</td>
-      </tr>`;
+      var rowHtml = '<tr><td><b>' + item.sesi + '</b><input type="hidden" class="cfg-sesi" value="' + item.sesi + '"></td>';
+      rowHtml += '<td><input type="' + (isPin ? 'text' : 'time') + '" class="cfg-mulai" value="' + item.mulai + '"></td>';
+      rowHtml += '<td>' + (isPin ? '-' : '<input type="time" class="cfg-batasTW" value="' + item.batasTW + '">') + '</td>';
+      rowHtml += '<td>' + (isPin ? '-' : '<input type="time" class="cfg-tutup" value="' + item.tutup + '">') + '</td>';
+      rowHtml += '<td>' + (isPin ? '-' : '<select class="cfg-alpa"><option value="Alpa"' + (item.alpa === 'Alpa' ? ' selected' : '') + '>Alpa</option><option value="Bolos"' + (item.alpa === 'Bolos' ? ' selected' : '') + '>Bolos</option></select>') + '</td></tr>';
       tbody.innerHTML += rowHtml;
     });
   }
 
   function savePengaturan() {
-    let configList = [];
-    const rows = document.querySelectorAll('#tablePengaturanBody tr');
+    var configList = [];
+    var rows = document.querySelectorAll('#tablePengaturanBody tr');
 
-    rows.forEach(r => {
-      const sesi = r.querySelector('.cfg-sesi').value;
-      const mulai = r.querySelector('.cfg-mulai').value;
-      const batasTW = r.querySelector('.cfg-batasTW') ? r.querySelector('.cfg-batasTW').value : '';
-      const tutup = r.querySelector('.cfg-tutup') ? r.querySelector('.cfg-tutup').value : '';
-      const alpa = r.querySelector('.cfg-alpa') ? r.querySelector('.cfg-alpa').value : 'Alpa';
+    rows.forEach(function(r) {
+      var sesi = r.querySelector('.cfg-sesi').value;
+      var mulai = r.querySelector('.cfg-mulai').value;
+      var batasTW = r.querySelector('.cfg-batasTW') ? r.querySelector('.cfg-batasTW').value : '';
+      var tutup = r.querySelector('.cfg-tutup') ? r.querySelector('.cfg-tutup').value : '';
+      var alpa = r.querySelector('.cfg-alpa') ? r.querySelector('.cfg-alpa').value : 'Alpa';
 
-      configList.push({ sesi, mulai, batasTW, tutup, alpa });
+      configList.push({ sesi: sesi, mulai: mulai, batasTW: batasTW, tutup: tutup, alpa: alpa });
     });
 
-    sendRequest({ action: 'save_pengaturan', config: configList }, res => {
+    sendRequest({ action: 'save_pengaturan', config: configList }, function(res) {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Pengaturan", res.message);
       if (res.status === 'success') {
         globalPengaturanData = configList;
@@ -1143,20 +1199,12 @@
   }
 
   function loadHariLiburData() {
-    sendRequest({ action: 'get_hari_libur' }, res => {
-      const tbody = document.getElementById('tableHariLiburBody');
+    sendRequest({ action: 'get_hari_libur' }, function(res) {
+      var tbody = document.getElementById('tableHariLiburBody');
       tbody.innerHTML = '';
       if (res.status === 'success' && res.data.length > 0) {
-        res.data.forEach((item, index) => {
-          tbody.innerHTML += `<tr>
-            <td>${index + 1}</td>
-            <td>${item.tanggal}</td>
-            <td>${item.keterangan}</td>
-            <td style="text-align:center;">
-              <button class="btn-edit" onclick="editHariLibur(${item.rowIndex}, '${item.tanggal}', '${item.keterangan}')">Edit</button>
-              <button class="btn-danger" onclick="hapusHariLibur(${item.rowIndex})">Hapus</button>
-            </td>
-          </tr>`;
+        res.data.forEach(function(item, index) {
+          tbody.innerHTML += '<tr><td>' + (index + 1) + '</td><td>' + item.tanggal + '</td><td>' + item.keterangan + '</td><td style="text-align:center;"><button class="btn-edit" onclick="editHariLibur(' + item.rowIndex + ', \'' + item.tanggal + '\', \'' + item.keterangan + '\')">Edit</button><button class="btn-danger" onclick="hapusHariLibur(' + item.rowIndex + ')">Hapus</button></td></tr>';
         });
       } else {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada hari libur terdaftar.</td></tr>';
@@ -1165,9 +1213,9 @@
   }
 
   function simpanHariLibur() {
-    const tgl = document.getElementById('inputTglLibur').value;
-    const ket = document.getElementById('inputKetLibur').value;
-    const rowIndex = document.getElementById('editHariLiburRowIndex').value;
+    var tgl = document.getElementById('inputTglLibur').value;
+    var ket = document.getElementById('inputKetLibur').value;
+    var rowIndex = document.getElementById('editHariLiburRowIndex').value;
 
     if (!tgl) return showScanPopup("warning", "Peringatan", "Tanggal libur wajib diisi!");
 
@@ -1176,7 +1224,7 @@
       tanggal: tgl,
       keterangan: ket,
       rowIndex: rowIndex
-    }, res => {
+    }, function(res) {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Hari Libur", res.message);
       if (res.status === 'success') {
         resetFormHariLibur();
@@ -1202,7 +1250,7 @@
 
   function hapusHariLibur(rowIndex) {
     if (!confirm("Apakah Anda yakin ingin menghapus hari libur ini?")) return;
-    sendRequest({ action: 'delete_hari_libur', rowIndex: rowIndex }, res => {
+    sendRequest({ action: 'delete_hari_libur', rowIndex: rowIndex }, function(res) {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Hari Libur", res.message);
       if (res.status === 'success') {
         loadHariLiburData();
@@ -1218,27 +1266,22 @@
       return showScanPopup("warning", "Akses Ditolak", "Silakan verifikasi PIN guru terlebih dahulu!");
     }
     
-    const guru = verifiedGuruData.nama;
-    const mapel = document.getElementById('filterInputNilaiMapel').value;
-    const kelas = document.getElementById('filterInputNilaiKelas').value;
+    var guru = verifiedGuruData.nama;
+    var mapel = document.getElementById('filterInputNilaiMapel').value;
+    var kelas = document.getElementById('filterInputNilaiKelas').value;
 
     if (!mapel) {
       return showScanPopup("warning", "Filter Belum Lengkap", "Pilih Mata Pelajaran terlebih dahulu!");
     }
 
-    sendRequest({ action: 'get_nilai', guru: guru, mapel: mapel, kelas: kelas }, res => {
-      const tbody = document.getElementById('tableInputNilaiBody');
+    sendRequest({ action: 'get_nilai', guru: guru, mapel: mapel, kelas: kelas }, function(res) {
+      var tbody = document.getElementById('tableInputNilaiBody');
       tbody.innerHTML = '';
 
       if (res.status === 'success' && res.data.length > 0) {
         currentInputNilaiList = res.data;
-        res.data.forEach((item, idx) => {
-          tbody.innerHTML += `<tr>
-            <td>${idx + 1}</td>
-            <td><b>${item.nama}</b><br><small style="color:#666;">NISN: ${item.nisn}</small></td>
-            <td>${item.kelas}</td>
-            <td><input type="number" step="any" class="input-nilai-sm" id="nilai_${idx}" placeholder="Nilai"></td>
-          </tr>`;
+        res.data.forEach(function(item, idx) {
+          tbody.innerHTML += '<tr><td>' + (idx + 1) + '</td><td><b>' + item.nama + '</b><br><small style="color:#666;">NISN: ' + item.nisn + '</small></td><td>' + item.kelas + '</td><td><input type="number" step="any" class="input-nilai-sm" id="nilai_' + idx + '" placeholder="Nilai"></td></tr>';
         });
       } else {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Data siswa tidak ditemukan.</td></tr>';
@@ -1251,8 +1294,8 @@
       return showScanPopup("warning", "Akses Ditolak", "Silakan verifikasi PIN guru terlebih dahulu!");
     }
     
-    const guru = verifiedGuruData.nama;
-    const mapel = document.getElementById('filterInputNilaiMapel').value;
+    var guru = verifiedGuruData.nama;
+    var mapel = document.getElementById('filterInputNilaiMapel').value;
 
     if (!mapel) {
       return showScanPopup("warning", "Peringatan", "Pilih Mapel terlebih dahulu!");
@@ -1262,9 +1305,9 @@
       return showScanPopup("warning", "Peringatan", "Tidak ada daftar siswa yang dimuat!");
     }
 
-    let payloadList = [];
-    currentInputNilaiList.forEach((item, idx) => {
-      let val = document.getElementById(`nilai_${idx}`).value;
+    var payloadList = [];
+    currentInputNilaiList.forEach(function(item, idx) {
+      var val = document.getElementById('nilai_' + idx).value;
       payloadList.push({
         nisn: item.nisn,
         nama: item.nama,
@@ -1278,11 +1321,11 @@
       guru: guru,
       mapel: mapel,
       listNilai: payloadList
-    }, res => {
+    }, function(res) {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Simpan Nilai", res.message);
       if (res.status === 'success') {
-        currentInputNilaiList.forEach((item, idx) => {
-          document.getElementById(`nilai_${idx}`).value = '';
+        currentInputNilaiList.forEach(function(item, idx) {
+          document.getElementById('nilai_' + idx).value = '';
         });
       }
     });
@@ -1295,55 +1338,35 @@
       return showScanPopup("warning", "Akses Ditolak", "Silakan verifikasi PIN guru terlebih dahulu!");
     }
     
-    const guru = verifiedGuruData.nama;
-    const mapel = document.getElementById('filterDaftarNilaiMapel').value;
-    const kelas = document.getElementById('filterDaftarNilaiKelas').value;
+    var guru = verifiedGuruData.nama;
+    var mapel = document.getElementById('filterDaftarNilaiMapel').value;
+    var kelas = document.getElementById('filterDaftarNilaiKelas').value;
 
-    sendRequest({ action: 'get_daftar_nilai', guru: guru, mapel: mapel, kelas: kelas }, res => {
-      const thead = document.getElementById('tableDaftarNilaiHead');
-      const tbody = document.getElementById('tableDaftarNilaiBody');
+    sendRequest({ action: 'get_daftar_nilai', guru: guru, mapel: mapel, kelas: kelas }, function(res) {
+      var thead = document.getElementById('tableDaftarNilaiHead');
+      var tbody = document.getElementById('tableDaftarNilaiBody');
       tbody.innerHTML = '';
 
       if (res.status === 'success' && res.data && res.data.length > 0) {
-        let headers = res.headers || [];
-        let headerHtml = `<tr>
-          <th>No</th>
-          <th>NISN</th>
-          <th>Nama Siswa</th>
-          <th>Kelas</th>
-          <th>Guru</th>
-          <th>Mapel</th>`;
-        headers.forEach(h => {
-          headerHtml += `<th>${h}</th>`;
+        var headers = res.headers || [];
+        var headerHtml = '<tr><th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Guru</th><th>Mapel</th>';
+        headers.forEach(function(h) {
+          headerHtml += '<th>' + h + '</th>';
         });
-        headerHtml += `</tr>`;
+        headerHtml += '</tr>';
         thead.innerHTML = headerHtml;
 
-        res.data.forEach((item, idx) => {
-          let rowHtml = `<tr>
-            <td>${idx + 1}</td>
-            <td>${item.nisn}</td>
-            <td><b>${item.nama}</b></td>
-            <td>${item.kelas}</td>
-            <td>${item.guru}</td>
-            <td>${item.mapel}</td>`;
-          
-          headers.forEach((h, hIdx) => {
-            let val = item.nilaiList[hIdx] !== undefined ? item.nilaiList[hIdx] : '';
-            rowHtml += `<td>${val}</td>`;
+        res.data.forEach(function(item, idx) {
+          var rowHtml = '<tr><td>' + (idx + 1) + '</td><td>' + item.nisn + '</td><td><b>' + item.nama + '</b></td><td>' + item.kelas + '</td><td>' + item.guru + '</td><td>' + item.mapel + '</td>';
+          headers.forEach(function(h, hIdx) {
+            var val = item.nilaiList[hIdx] !== undefined ? item.nilaiList[hIdx] : '';
+            rowHtml += '<td>' + val + '</td>';
           });
-          rowHtml += `</tr>`;
+          rowHtml += '</tr>';
           tbody.innerHTML += rowHtml;
         });
       } else {
-        thead.innerHTML = `<tr>
-          <th>No</th>
-          <th>NISN</th>
-          <th>Nama Siswa</th>
-          <th>Kelas</th>
-          <th>Guru</th>
-          <th>Mapel</th>
-        </tr>`;
+        thead.innerHTML = '<tr><th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Guru</th><th>Mapel</th></tr>';
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada data nilai yang tersimpan.</td></tr>';
       }
     });
