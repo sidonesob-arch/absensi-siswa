@@ -69,6 +69,7 @@
     .btn-toggle.off { background: #dc3545; }
     .btn-danger { background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
     .btn-edit { background: #ffc107; color: #333; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 5px; }
+    .btn-success { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
     
     #reader { width: 100%; max-width: 400px; border-radius: 8px; overflow: hidden; margin-top: 10px; background: #111; }
     .table-responsive { overflow-x: auto; margin-top: 10px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -80,6 +81,9 @@
     .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 350px; text-align: center; }
 
     .input-nilai-sm { width: 80px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
+    
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-group .btn-primary { flex: 1; min-width: 120px; }
   </style>
 </head>
 <body>
@@ -105,6 +109,7 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
+<!-- Modal Login PIN Umum -->
 <div id="loginModal" style="display:none;">
   <div class="modal-content">
     <h3>Autentikasi PIN</h3>
@@ -114,6 +119,19 @@
     </div>
     <button class="btn-primary" onclick="submitLoginPin()">Masuk</button>
     <button style="background:#ccc; color:#333; border:none; margin-top:8px;" onclick="closeModal()">Batal</button>
+  </div>
+</div>
+
+<!-- Modal PIN Khusus Guru untuk Nilai -->
+<div id="pinGuruModal" style="display:none;">
+  <div class="modal-content">
+    <h3>Verifikasi PIN Guru</h3>
+    <p id="pinGuruInfo" style="font-size:12px; color:#666;">Masukkan PIN Guru untuk mengakses menu Nilai.</p>
+    <div class="form-group">
+      <input type="password" id="inputPinGuru" placeholder="Masukkan PIN Guru..." maxlength="8" style="text-align:center; font-size:18px; letter-spacing:3px;">
+    </div>
+    <button class="btn-primary" onclick="submitPinGuru()">Verifikasi</button>
+    <button style="background:#ccc; color:#333; border:none; margin-top:8px;" onclick="closePinGuruModal()">Batal</button>
   </div>
 </div>
 
@@ -135,8 +153,8 @@
 
     <div class="nav-category">PEMBELAJARAN</div>
     <a class="nav-item" onclick="switchMenu('jadwal-mapel', this)">📅 Jadwal Mapel</a>
-    <a class="nav-item" onclick="switchMenu('input-nilai', this)">📈 Input Nilai</a>
-    <a class="nav-item" onclick="switchMenu('daftar-nilai', this)">📋 Daftar Nilai</a>
+    <a class="nav-item" id="nav-input-nilai" onclick="openPinGuruModal('input-nilai', this)">📈 Input Nilai</a>
+    <a class="nav-item" id="nav-daftar-nilai" onclick="openPinGuruModal('daftar-nilai', this)">📋 Daftar Nilai</a>
     <a class="nav-item" onclick="switchMenu('kelulusan', this)">🎓 Kelulusan</a>
 
     <a class="nav-item" id="nav-logout" style="display:none; color:#ff8a8a; margin-top: 15px;" onclick="logoutSession()">🚪 Keluar / Logout</a>
@@ -364,12 +382,11 @@
     <!-- 8. PEMBELAJARAN - INPUT NILAI -->
     <div id="menu-input-nilai" class="section">
       <h3 style="color:#05285e;">Input Penilaian Siswa</h3>
+      <div style="background:#e8f0fe; padding:10px 15px; border-radius:6px; margin-bottom:15px; border-left:4px solid #05285e;">
+        <span style="font-weight:600; color:#05285e;">Guru: <span id="labelGuruAktif">-</span></span>
+      </div>
       <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
         <div style="display:flex; gap:15px; flex-wrap:wrap;">
-          <div class="form-group" style="flex:1; min-width:200px;">
-            <label>Nama Guru:</label>
-            <select id="filterInputNilaiGuru"><option value="">-- Pilih Guru --</option></select>
-          </div>
           <div class="form-group" style="flex:1; min-width:200px;">
             <label>Mata Pelajaran:</label>
             <select id="filterInputNilaiMapel"><option value="">-- Pilih Mapel --</option></select>
@@ -397,28 +414,36 @@
           </tbody>
         </table>
       </div>
-      <button class="btn-primary" style="margin-top:15px;" onclick="simpanDataNilai()">Simpan Penilaian ke Google Sheet</button>
+      
+      <div class="btn-group" style="margin-top:15px;">
+        <button class="btn-primary" onclick="simpanDataNilai()">💾 Simpan Penilaian</button>
+        <button class="btn-success" onclick="gotoDaftarNilai()">📋 Lihat Daftar Nilai</button>
+      </div>
     </div>
 
     <!-- 9. PEMBELAJARAN - DAFTAR NILAI -->
     <div id="menu-daftar-nilai" class="section">
       <h3 style="color:#05285e;">Daftar Nilai Siswa (Rekap Penilaian)</h3>
+      
+      <!-- Info Guru Aktif -->
+      <div style="background:#e8f0fe; padding:10px 15px; border-radius:6px; margin-bottom:15px; border-left:4px solid #05285e;">
+        <span style="font-weight:600; color:#05285e;">Guru: <span id="labelGuruDaftarNilai">-</span></span>
+        <span style="margin-left:20px; font-weight:600; color:#05285e;">Mapel: <span id="labelMapelDaftarNilai">-</span></span>
+      </div>
+      
       <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
         <div style="display:flex; gap:15px; flex-wrap:wrap;">
           <div class="form-group" style="flex:1; min-width:200px;">
-            <label>Filter Nama Guru:</label>
-            <select id="filterDaftarNilaiGuru" onchange="loadDaftarNilaiData()"><option value="">-- Semua Guru --</option></select>
+            <label>Filter Kelas:</label>
+            <select id="filterDaftarNilaiKelas" onchange="loadDaftarNilaiData()"><option value="">-- Semua Kelas --</option></select>
           </div>
           <div class="form-group" style="flex:1; min-width:200px;">
             <label>Filter Mapel:</label>
             <select id="filterDaftarNilaiMapel" onchange="loadDaftarNilaiData()"><option value="">-- Semua Mapel --</option></select>
           </div>
-          <div class="form-group" style="flex:1; min-width:200px;">
-            <label>Filter Kelas:</label>
-            <select id="filterDaftarNilaiKelas" onchange="loadDaftarNilaiData()"><option value="">-- Semua Kelas --</option></select>
-          </div>
         </div>
         <button class="btn-primary" onclick="loadDaftarNilaiData()">Tampilkan Tabel Daftar Nilai</button>
+        <button class="btn-success" style="margin-left:10px;" onclick="gotoInputNilai()">📝 Kembali ke Input Nilai</button>
       </div>
 
       <div class="table-responsive">
@@ -456,7 +481,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyMzozuljuQKgtVudD_eqqB9D6riB0XxII0ZQaJCkwJE_jhTn2Sa3-O0EPuRt3T4evoLw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzYC6lMUG_8rlfj_Fs5LRGMrzD9sRL2LMZyOH774E2rnjoCOr_EAnYCxFEtWH-ZBZuNYw/exec";
 
   let currentRole = 'siswa';
   let html5QrcodeScanner = null;
@@ -470,6 +495,9 @@
   let dashboardTimer = null;
   let popupTimeout = null;
   let currentInputNilaiList = [];
+  
+  // Data guru yang sudah diverifikasi PIN
+  let verifiedGuruData = null;
 
   document.getElementById('izinTanggal').value = new Date().toISOString().split('T')[0];
 
@@ -656,6 +684,131 @@
     return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
   }
 
+  // ================= FUNGSI VERIFIKASI PIN GURU UNTUK NILAI ================= //
+  
+  function openPinGuruModal(menuName, el) {
+    closeSidebar();
+    pendingMenu = { name: menuName, el: el };
+    document.getElementById('inputPinGuru').value = '';
+    document.getElementById('pinGuruInfo').innerText = 'Masukkan PIN Guru untuk mengakses menu ' + (menuName === 'input-nilai' ? 'Input Nilai' : 'Daftar Nilai') + '.';
+    document.getElementById('pinGuruModal').style.display = 'flex';
+  }
+
+  function closePinGuruModal() {
+    document.getElementById('pinGuruModal').style.display = 'none';
+    pendingMenu = '';
+  }
+
+  function submitPinGuru() {
+    const pin = document.getElementById('inputPinGuru').value.trim();
+    if (!pin) {
+      return showScanPopup("warning", "Peringatan", "PIN tidak boleh kosong!");
+    }
+
+    sendRequest({ action: 'verify_guru_pin', pin: pin }, res => {
+      if (res.status === 'success') {
+        verifiedGuruData = {
+          nama: res.nama,
+          mapelList: res.mapelList || [],
+          kelasList: res.kelasList || []
+        };
+        
+        closePinGuruModal();
+        showScanPopup("success", "Verifikasi Berhasil", "Selamat datang, " + res.nama);
+        
+        if (pendingMenu) {
+          switchMenu(pendingMenu.name, pendingMenu.el);
+          if (pendingMenu.name === 'input-nilai') {
+            setupInputNilaiMenu();
+          } else if (pendingMenu.name === 'daftar-nilai') {
+            setupDaftarNilaiMenu();
+          }
+          pendingMenu = '';
+        }
+      } else {
+        showScanPopup("danger", "Verifikasi Gagal", res.message);
+        document.getElementById('inputPinGuru').value = '';
+        document.getElementById('inputPinGuru').focus();
+      }
+    });
+  }
+
+  function setupInputNilaiMenu() {
+    if (!verifiedGuruData) return;
+    
+    // Set label guru aktif
+    document.getElementById('labelGuruAktif').innerText = verifiedGuruData.nama;
+    
+    // Set mapel yang diampu
+    const selectMapel = document.getElementById('filterInputNilaiMapel');
+    selectMapel.innerHTML = '<option value="">-- Pilih Mapel --</option>';
+    if (verifiedGuruData.mapelList && verifiedGuruData.mapelList.length > 0) {
+      verifiedGuruData.mapelList.forEach(m => {
+        selectMapel.innerHTML += `<option value="${m}">${m}</option>`;
+      });
+    }
+    
+    // Set kelas yang diajar
+    const selectKelas = document.getElementById('filterInputNilaiKelas');
+    selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
+    if (verifiedGuruData.kelasList && verifiedGuruData.kelasList.length > 0) {
+      verifiedGuruData.kelasList.forEach(k => {
+        selectKelas.innerHTML += `<option value="${k}">${k}</option>`;
+      });
+    }
+  }
+
+  function setupDaftarNilaiMenu() {
+    if (!verifiedGuruData) return;
+    
+    // Set label guru aktif
+    document.getElementById('labelGuruDaftarNilai').innerText = verifiedGuruData.nama;
+    
+    // Set mapel yang diampu
+    const selectMapel = document.getElementById('filterDaftarNilaiMapel');
+    selectMapel.innerHTML = '<option value="">-- Semua Mapel --</option>';
+    if (verifiedGuruData.mapelList && verifiedGuruData.mapelList.length > 0) {
+      verifiedGuruData.mapelList.forEach(m => {
+        selectMapel.innerHTML += `<option value="${m}">${m}</option>`;
+      });
+    }
+    
+    // Set label mapel di info
+    if (verifiedGuruData.mapelList && verifiedGuruData.mapelList.length > 0) {
+      document.getElementById('labelMapelDaftarNilai').innerText = verifiedGuruData.mapelList.join(', ');
+    }
+    
+    // Set kelas yang diajar
+    const selectKelas = document.getElementById('filterDaftarNilaiKelas');
+    selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
+    if (verifiedGuruData.kelasList && verifiedGuruData.kelasList.length > 0) {
+      verifiedGuruData.kelasList.forEach(k => {
+        selectKelas.innerHTML += `<option value="${k}">${k}</option>`;
+      });
+    }
+  }
+
+  function gotoDaftarNilai() {
+    // Pindah ke menu daftar nilai dengan data guru yang sama
+    const menuItem = document.getElementById('nav-daftar-nilai');
+    if (verifiedGuruData) {
+      switchMenu('daftar-nilai', menuItem);
+      setupDaftarNilaiMenu();
+      // Load data otomatis
+      setTimeout(loadDaftarNilaiData, 300);
+    }
+  }
+
+  function gotoInputNilai() {
+    const menuItem = document.getElementById('nav-input-nilai');
+    switchMenu('input-nilai', menuItem);
+    if (verifiedGuruData) {
+      setupInputNilaiMenu();
+    }
+  }
+
+  // ================= FUNGSI LAINNYA (TIDAK BERUBAH) ================= //
+
   function checkMenuAccess(menuName, el) {
     closeSidebar();
     if (menuName === 'login') {
@@ -712,9 +865,10 @@
     if (isCameraOn) stopCamera();
     userSession = 'tamu';
     currentRole = 'siswa';
+    verifiedGuruData = null;
     
     document.querySelectorAll('.sidebar .nav-item').forEach(b => {
-      if (b.id !== 'nav-scanner' && b.id !== 'nav-izin' && b.id !== 'nav-rekap' && b.id !== 'nav-pengaturan' && b.id !== 'nav-logout') {
+      if (b.id !== 'nav-scanner' && b.id !== 'nav-izin' && b.id !== 'nav-rekap' && b.id !== 'nav-pengaturan' && b.id !== 'nav-logout' && b.id !== 'nav-input-nilai' && b.id !== 'nav-daftar-nilai') {
         b.classList.remove('locked');
       } else {
         b.classList.add('locked');
@@ -760,8 +914,12 @@
       loadPengaturanDataFromServer();
       loadHariLiburData();
     }
-    if (menuName === 'input-nilai') loadFilterInputNilai();
-    if (menuName === 'daftar-nilai') loadFilterDaftarNilai();
+    if (menuName === 'input-nilai') {
+      if (verifiedGuruData) setupInputNilaiMenu();
+    }
+    if (menuName === 'daftar-nilai') {
+      if (verifiedGuruData) setupDaftarNilaiMenu();
+    }
   }
 
   function setupScannerView() {
@@ -1053,34 +1211,19 @@
     });
   }
 
-  // ================= FUNCTIONS FITUR INPUT & DAFTAR NILAI ================= //
-
-  function loadFilterInputNilai() {
-    sendRequest({ action: 'get_filter_nilai' }, res => {
-      if (res.status === 'success') {
-        const selectGuru = document.getElementById('filterInputNilaiGuru');
-        const selectMapel = document.getElementById('filterInputNilaiMapel');
-        const selectKelas = document.getElementById('filterInputNilaiKelas');
-
-        selectGuru.innerHTML = '<option value="">-- Pilih Guru --</option>';
-        res.guruList.forEach(g => selectGuru.innerHTML += `<option value="${g}">${g}</option>`);
-
-        selectMapel.innerHTML = '<option value="">-- Pilih Mapel --</option>';
-        res.mapelList.forEach(m => selectMapel.innerHTML += `<option value="${m}">${m}</option>`);
-
-        selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
-        res.kelasList.forEach(k => selectKelas.innerHTML += `<option value="${k}">${k}</option>`);
-      }
-    });
-  }
+  // ================= FUNGSI INPUT NILAI ================= //
 
   function loadInputNilaiData() {
-    const guru = document.getElementById('filterInputNilaiGuru').value;
+    if (!verifiedGuruData) {
+      return showScanPopup("warning", "Akses Ditolak", "Silakan verifikasi PIN guru terlebih dahulu!");
+    }
+    
+    const guru = verifiedGuruData.nama;
     const mapel = document.getElementById('filterInputNilaiMapel').value;
     const kelas = document.getElementById('filterInputNilaiKelas').value;
 
-    if (!guru || !mapel) {
-      return showScanPopup("warning", "Filter Belum Lengkap", "Pilih Guru dan Mata Pelajaran terlebih dahulu!");
+    if (!mapel) {
+      return showScanPopup("warning", "Filter Belum Lengkap", "Pilih Mata Pelajaran terlebih dahulu!");
     }
 
     sendRequest({ action: 'get_nilai', guru: guru, mapel: mapel, kelas: kelas }, res => {
@@ -1104,11 +1247,15 @@
   }
 
   function simpanDataNilai() {
-    const guru = document.getElementById('filterInputNilaiGuru').value;
+    if (!verifiedGuruData) {
+      return showScanPopup("warning", "Akses Ditolak", "Silakan verifikasi PIN guru terlebih dahulu!");
+    }
+    
+    const guru = verifiedGuruData.nama;
     const mapel = document.getElementById('filterInputNilaiMapel').value;
 
-    if (!guru || !mapel) {
-      return showScanPopup("warning", "Peringatan", "Pilih Guru dan Mapel terlebih dahulu!");
+    if (!mapel) {
+      return showScanPopup("warning", "Peringatan", "Pilih Mapel terlebih dahulu!");
     }
 
     if (!currentInputNilaiList.length) {
@@ -1134,7 +1281,6 @@
     }, res => {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Simpan Nilai", res.message);
       if (res.status === 'success') {
-        // Kosongkan input setelah berhasil disimpan
         currentInputNilaiList.forEach((item, idx) => {
           document.getElementById(`nilai_${idx}`).value = '';
         });
@@ -1142,28 +1288,14 @@
     });
   }
 
-  function loadFilterDaftarNilai() {
-    sendRequest({ action: 'get_filter_nilai' }, res => {
-      if (res.status === 'success') {
-        const selectGuru = document.getElementById('filterDaftarNilaiGuru');
-        const selectMapel = document.getElementById('filterDaftarNilaiMapel');
-        const selectKelas = document.getElementById('filterDaftarNilaiKelas');
-
-        selectGuru.innerHTML = '<option value="">-- Semua Guru --</option>';
-        res.guruList.forEach(g => selectGuru.innerHTML += `<option value="${g}">${g}</option>`);
-
-        selectMapel.innerHTML = '<option value="">-- Semua Mapel --</option>';
-        res.mapelList.forEach(m => selectMapel.innerHTML += `<option value="${m}">${m}</option>`);
-
-        selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
-        res.kelasList.forEach(k => selectKelas.innerHTML += `<option value="${k}">${k}</option>`);
-      }
-    });
-    loadDaftarNilaiData();
-  }
+  // ================= FUNGSI DAFTAR NILAI ================= //
 
   function loadDaftarNilaiData() {
-    const guru = document.getElementById('filterDaftarNilaiGuru').value;
+    if (!verifiedGuruData) {
+      return showScanPopup("warning", "Akses Ditolak", "Silakan verifikasi PIN guru terlebih dahulu!");
+    }
+    
+    const guru = verifiedGuruData.nama;
     const mapel = document.getElementById('filterDaftarNilaiMapel').value;
     const kelas = document.getElementById('filterDaftarNilaiKelas').value;
 
