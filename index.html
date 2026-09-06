@@ -79,7 +79,7 @@
     #loginModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
     .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 350px; text-align: center; }
 
-    .input-nilai-sm { width: 50px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
+    .input-nilai-sm { width: 80px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
   </style>
 </head>
 <body>
@@ -135,7 +135,8 @@
 
     <div class="nav-category">PEMBELAJARAN</div>
     <a class="nav-item" onclick="switchMenu('jadwal-mapel', this)">📅 Jadwal Mapel</a>
-    <a class="nav-item" onclick="switchMenu('nilai', this)">📈 Nilai</a>
+    <a class="nav-item" onclick="switchMenu('input-nilai', this)">📈 Input Nilai</a>
+    <a class="nav-item" onclick="switchMenu('daftar-nilai', this)">📋 Daftar Nilai</a>
     <a class="nav-item" onclick="switchMenu('kelulusan', this)">🎓 Kelulusan</a>
 
     <a class="nav-item" id="nav-logout" style="display:none; color:#ff8a8a; margin-top: 15px;" onclick="logoutSession()">🚪 Keluar / Logout</a>
@@ -360,25 +361,25 @@
       </div>
     </div>
 
-    <!-- 8. PEMBELAJARAN - NILAI -->
-    <div id="menu-nilai" class="section">
-      <h3 style="color:#05285e;">Pencarian & Input Nilai Siswa</h3>
+    <!-- 8. PEMBELAJARAN - INPUT NILAI -->
+    <div id="menu-input-nilai" class="section">
+      <h3 style="color:#05285e;">Input Penilaian Siswa</h3>
       <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
         <div style="display:flex; gap:15px; flex-wrap:wrap;">
           <div class="form-group" style="flex:1; min-width:200px;">
             <label>Nama Guru:</label>
-            <select id="filterNilaiGuru"><option value="">-- Pilih Guru --</option></select>
+            <select id="filterInputNilaiGuru"><option value="">-- Pilih Guru --</option></select>
           </div>
           <div class="form-group" style="flex:1; min-width:200px;">
-            <label>Nilai Mapel:</label>
-            <select id="filterNilaiMapel"><option value="">-- Pilih Mapel --</option></select>
+            <label>Mata Pelajaran:</label>
+            <select id="filterInputNilaiMapel"><option value="">-- Pilih Mapel --</option></select>
           </div>
           <div class="form-group" style="flex:1; min-width:200px;">
             <label>Kelas:</label>
-            <select id="filterNilaiKelas"><option value="">-- Semua Kelas --</option></select>
+            <select id="filterInputNilaiKelas"><option value="">-- Semua Kelas --</option></select>
           </div>
         </div>
-        <button class="btn-primary" onclick="cariDataNilai()">Tampilkan Data Nilai</button>
+        <button class="btn-primary" onclick="loadInputNilaiData()">Muat Daftar Siswa</button>
       </div>
 
       <div class="table-responsive">
@@ -387,24 +388,59 @@
             <tr>
               <th style="width:40px;">No</th>
               <th>Nama Siswa</th>
-              <th style="width:70px;">Kelas</th>
-              <th style="width:60px;">NH1</th>
-              <th style="width:60px;">NH2</th>
-              <th style="width:60px;">NH3</th>
-              <th style="width:60px;">NH4</th>
-              <th style="width:60px;">NH5</th>
-              <th style="width:70px;">NR</th>
+              <th style="width:80px;">Kelas</th>
+              <th style="width:150px;">Input Nilai</th>
             </tr>
           </thead>
-          <tbody id="tableNilaiBody">
-            <tr><td colspan="9" style="text-align:center;">Silakan pilih filter di atas dan klik Tampilkan.</td></tr>
+          <tbody id="tableInputNilaiBody">
+            <tr><td colspan="4" style="text-align:center;">Silakan pilih filter dan klik Muat Daftar Siswa.</td></tr>
           </tbody>
         </table>
       </div>
-      <button class="btn-primary" style="margin-top:15px;" onclick="simpanDataNilai()">Simpan Semua Nilai</button>
+      <button class="btn-primary" style="margin-top:15px;" onclick="simpanDataNilai()">Simpan Penilaian ke Google Sheet</button>
     </div>
 
-    <!-- 9. PEMBELAJARAN - KELULUSAN -->
+    <!-- 9. PEMBELAJARAN - DAFTAR NILAI -->
+    <div id="menu-daftar-nilai" class="section">
+      <h3 style="color:#05285e;">Daftar Nilai Siswa (Rekap Penilaian)</h3>
+      <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
+        <div style="display:flex; gap:15px; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; min-width:200px;">
+            <label>Filter Nama Guru:</label>
+            <select id="filterDaftarNilaiGuru" onchange="loadDaftarNilaiData()"><option value="">-- Semua Guru --</option></select>
+          </div>
+          <div class="form-group" style="flex:1; min-width:200px;">
+            <label>Filter Mapel:</label>
+            <select id="filterDaftarNilaiMapel" onchange="loadDaftarNilaiData()"><option value="">-- Semua Mapel --</option></select>
+          </div>
+          <div class="form-group" style="flex:1; min-width:200px;">
+            <label>Filter Kelas:</label>
+            <select id="filterDaftarNilaiKelas" onchange="loadDaftarNilaiData()"><option value="">-- Semua Kelas --</option></select>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="loadDaftarNilaiData()">Tampilkan Tabel Daftar Nilai</button>
+      </div>
+
+      <div class="table-responsive">
+        <table id="tableDaftarNilaiResult">
+          <thead id="tableDaftarNilaiHead">
+            <tr>
+              <th>No</th>
+              <th>NISN</th>
+              <th>Nama Siswa</th>
+              <th>Kelas</th>
+              <th>Guru</th>
+              <th>Mapel</th>
+            </tr>
+          </thead>
+          <tbody id="tableDaftarNilaiBody">
+            <tr><td colspan="6" style="text-align:center;">Silakan pilih filter dan klik Tampilkan.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 10. PEMBELAJARAN - KELULUSAN -->
     <div id="menu-kelulusan" class="section">
       <h3 style="color:#05285e;">Pengumuman Kelulusan</h3>
       <div style="background:#e0e8f5; padding:25px; border-radius:8px; border-left:5px solid #05285e; text-align:center;">
@@ -420,7 +456,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxtcV9XUXF1sOivpXenHe5rS0f1E3Gh6W3_G82csXKvt-LQm-8BgsLTBFXlPu3o_HCDZw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyMzozuljuQKgtVudD_eqqB9D6riB0XxII0ZQaJCkwJE_jhTn2Sa3-O0EPuRt3T4evoLw/exec";
 
   let currentRole = 'siswa';
   let html5QrcodeScanner = null;
@@ -433,7 +469,7 @@
   let cachedPinConfig = null;
   let dashboardTimer = null;
   let popupTimeout = null;
-  let currentNilaiList = [];
+  let currentInputNilaiList = [];
 
   document.getElementById('izinTanggal').value = new Date().toISOString().split('T')[0];
 
@@ -724,7 +760,8 @@
       loadPengaturanDataFromServer();
       loadHariLiburData();
     }
-    if (menuName === 'nilai') loadFilterNilai();
+    if (menuName === 'input-nilai') loadFilterInputNilai();
+    if (menuName === 'daftar-nilai') loadFilterDaftarNilai();
   }
 
   function setupScannerView() {
@@ -1016,14 +1053,14 @@
     });
   }
 
-  // ================= FUNCTIONS FITUR NILAI ================= //
+  // ================= FUNCTIONS FITUR INPUT & DAFTAR NILAI ================= //
 
-  function loadFilterNilai() {
+  function loadFilterInputNilai() {
     sendRequest({ action: 'get_filter_nilai' }, res => {
       if (res.status === 'success') {
-        const selectGuru = document.getElementById('filterNilaiGuru');
-        const selectMapel = document.getElementById('filterNilaiMapel');
-        const selectKelas = document.getElementById('filterNilaiKelas');
+        const selectGuru = document.getElementById('filterInputNilaiGuru');
+        const selectMapel = document.getElementById('filterInputNilaiMapel');
+        const selectKelas = document.getElementById('filterInputNilaiKelas');
 
         selectGuru.innerHTML = '<option value="">-- Pilih Guru --</option>';
         res.guruList.forEach(g => selectGuru.innerHTML += `<option value="${g}">${g}</option>`);
@@ -1037,75 +1074,55 @@
     });
   }
 
-  function cariDataNilai() {
-    const guru = document.getElementById('filterNilaiGuru').value;
-    const mapel = document.getElementById('filterNilaiMapel').value;
-    const kelas = document.getElementById('filterNilaiKelas').value;
+  function loadInputNilaiData() {
+    const guru = document.getElementById('filterInputNilaiGuru').value;
+    const mapel = document.getElementById('filterInputNilaiMapel').value;
+    const kelas = document.getElementById('filterInputNilaiKelas').value;
 
     if (!guru || !mapel) {
       return showScanPopup("warning", "Filter Belum Lengkap", "Pilih Guru dan Mata Pelajaran terlebih dahulu!");
     }
 
     sendRequest({ action: 'get_nilai', guru: guru, mapel: mapel, kelas: kelas }, res => {
-      const tbody = document.getElementById('tableNilaiBody');
+      const tbody = document.getElementById('tableInputNilaiBody');
       tbody.innerHTML = '';
 
       if (res.status === 'success' && res.data.length > 0) {
-        currentNilaiList = res.data;
+        currentInputNilaiList = res.data;
         res.data.forEach((item, idx) => {
           tbody.innerHTML += `<tr>
             <td>${idx + 1}</td>
             <td><b>${item.nama}</b><br><small style="color:#666;">NISN: ${item.nisn}</small></td>
             <td>${item.kelas}</td>
-            <td><input type="number" class="input-nilai-sm" id="nh1_${idx}" value="${item.nh1}" oninput="hitungRataRataRow(${idx})"></td>
-            <td><input type="number" class="input-nilai-sm" id="nh2_${idx}" value="${item.nh2}" oninput="hitungRataRataRow(${idx})"></td>
-            <td><input type="number" class="input-nilai-sm" id="nh3_${idx}" value="${item.nh3}" oninput="hitungRataRataRow(${idx})"></td>
-            <td><input type="number" class="input-nilai-sm" id="nh4_${idx}" value="${item.nh4}" oninput="hitungRataRataRow(${idx})"></td>
-            <td><input type="number" class="input-nilai-sm" id="nh5_${idx}" value="${item.nh5}" oninput="hitungRataRataRow(${idx})"></td>
-            <td><b id="nr_${idx}">${item.nr}</b></td>
+            <td><input type="number" step="any" class="input-nilai-sm" id="nilai_${idx}" placeholder="Nilai"></td>
           </tr>`;
         });
       } else {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Data siswa/nilai tidak ditemukan.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Data siswa tidak ditemukan.</td></tr>';
       }
     });
   }
 
-  function hitungRataRataRow(idx) {
-    let nh1 = parseFloat(document.getElementById(`nh1_${idx}`).value);
-    let nh2 = parseFloat(document.getElementById(`nh2_${idx}`).value);
-    let nh3 = parseFloat(document.getElementById(`nh3_${idx}`).value);
-    let nh4 = parseFloat(document.getElementById(`nh4_${idx}`).value);
-    let nh5 = parseFloat(document.getElementById(`nh5_${idx}`).value);
-
-    let vals = [nh1, nh2, nh3, nh4, nh5].filter(v => !isNaN(v));
-    let nr = vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : "0";
-    document.getElementById(`nr_${idx}`).innerText = nr;
-  }
-
   function simpanDataNilai() {
-    const guru = document.getElementById('filterNilaiGuru').value;
-    const mapel = document.getElementById('filterNilaiMapel').value;
+    const guru = document.getElementById('filterInputNilaiGuru').value;
+    const mapel = document.getElementById('filterInputNilaiMapel').value;
 
     if (!guru || !mapel) {
       return showScanPopup("warning", "Peringatan", "Pilih Guru dan Mapel terlebih dahulu!");
     }
 
-    if (!currentNilaiList.length) {
-      return showScanPopup("warning", "Peringatan", "Tidak ada data nilai yang ditampilkan!");
+    if (!currentInputNilaiList.length) {
+      return showScanPopup("warning", "Peringatan", "Tidak ada daftar siswa yang dimuat!");
     }
 
     let payloadList = [];
-    currentNilaiList.forEach((item, idx) => {
+    currentInputNilaiList.forEach((item, idx) => {
+      let val = document.getElementById(`nilai_${idx}`).value;
       payloadList.push({
         nisn: item.nisn,
         nama: item.nama,
         kelas: item.kelas,
-        nh1: document.getElementById(`nh1_${idx}`).value,
-        nh2: document.getElementById(`nh2_${idx}`).value,
-        nh3: document.getElementById(`nh3_${idx}`).value,
-        nh4: document.getElementById(`nh4_${idx}`).value,
-        nh5: document.getElementById(`nh5_${idx}`).value
+        nilai: val
       });
     });
 
@@ -1116,6 +1133,87 @@
       listNilai: payloadList
     }, res => {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Simpan Nilai", res.message);
+      if (res.status === 'success') {
+        // Kosongkan input setelah berhasil disimpan
+        currentInputNilaiList.forEach((item, idx) => {
+          document.getElementById(`nilai_${idx}`).value = '';
+        });
+      }
+    });
+  }
+
+  function loadFilterDaftarNilai() {
+    sendRequest({ action: 'get_filter_nilai' }, res => {
+      if (res.status === 'success') {
+        const selectGuru = document.getElementById('filterDaftarNilaiGuru');
+        const selectMapel = document.getElementById('filterDaftarNilaiMapel');
+        const selectKelas = document.getElementById('filterDaftarNilaiKelas');
+
+        selectGuru.innerHTML = '<option value="">-- Semua Guru --</option>';
+        res.guruList.forEach(g => selectGuru.innerHTML += `<option value="${g}">${g}</option>`);
+
+        selectMapel.innerHTML = '<option value="">-- Semua Mapel --</option>';
+        res.mapelList.forEach(m => selectMapel.innerHTML += `<option value="${m}">${m}</option>`);
+
+        selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>';
+        res.kelasList.forEach(k => selectKelas.innerHTML += `<option value="${k}">${k}</option>`);
+      }
+    });
+    loadDaftarNilaiData();
+  }
+
+  function loadDaftarNilaiData() {
+    const guru = document.getElementById('filterDaftarNilaiGuru').value;
+    const mapel = document.getElementById('filterDaftarNilaiMapel').value;
+    const kelas = document.getElementById('filterDaftarNilaiKelas').value;
+
+    sendRequest({ action: 'get_daftar_nilai', guru: guru, mapel: mapel, kelas: kelas }, res => {
+      const thead = document.getElementById('tableDaftarNilaiHead');
+      const tbody = document.getElementById('tableDaftarNilaiBody');
+      tbody.innerHTML = '';
+
+      if (res.status === 'success' && res.data && res.data.length > 0) {
+        let headers = res.headers || [];
+        let headerHtml = `<tr>
+          <th>No</th>
+          <th>NISN</th>
+          <th>Nama Siswa</th>
+          <th>Kelas</th>
+          <th>Guru</th>
+          <th>Mapel</th>`;
+        headers.forEach(h => {
+          headerHtml += `<th>${h}</th>`;
+        });
+        headerHtml += `</tr>`;
+        thead.innerHTML = headerHtml;
+
+        res.data.forEach((item, idx) => {
+          let rowHtml = `<tr>
+            <td>${idx + 1}</td>
+            <td>${item.nisn}</td>
+            <td><b>${item.nama}</b></td>
+            <td>${item.kelas}</td>
+            <td>${item.guru}</td>
+            <td>${item.mapel}</td>`;
+          
+          headers.forEach((h, hIdx) => {
+            let val = item.nilaiList[hIdx] !== undefined ? item.nilaiList[hIdx] : '';
+            rowHtml += `<td>${val}</td>`;
+          });
+          rowHtml += `</tr>`;
+          tbody.innerHTML += rowHtml;
+        });
+      } else {
+        thead.innerHTML = `<tr>
+          <th>No</th>
+          <th>NISN</th>
+          <th>Nama Siswa</th>
+          <th>Kelas</th>
+          <th>Guru</th>
+          <th>Mapel</th>
+        </tr>`;
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada data nilai yang tersimpan.</td></tr>';
+      }
     });
   }
 </script>
