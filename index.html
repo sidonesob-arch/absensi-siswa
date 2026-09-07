@@ -232,8 +232,6 @@
     .btn-success { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
     .btn-success:hover { background: #218838; }
     .btn-sm { padding: 4px 10px; font-size: 11px; width: auto; }
-    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    .btn-group .btn-excel, .btn-group .btn-pdf { width: auto; padding: 8px 16px; }
     
     #reader { width: 100%; max-width: 400px; border-radius: 8px; overflow: hidden; margin-top: 10px; background: #111; }
     .table-responsive { overflow-x: auto; margin-top: 10px; background: #fff; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -249,20 +247,8 @@
     .jadwal-header h4 { margin: 0; color: #05285e; font-size: 14px; }
     .jadwal-header .sub { font-size: 11px; color: #666; margin-top: 3px; }
     
-    /* Export buttons di daftar nilai */
-    .export-section { 
-      display: flex; 
-      gap: 10px; 
-      margin: 10px 0; 
-      flex-wrap: wrap; 
-      align-items: center;
-    }
-    .export-section .btn-excel, .export-section .btn-pdf {
-      width: auto;
-      padding: 8px 18px;
-      font-size: 12px;
-      border-radius: 6px;
-    }
+    .export-section { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
+    .export-section .btn-excel, .export-section .btn-pdf { width: auto; padding: 8px 18px; font-size: 12px; border-radius: 6px; }
     .export-section .btn-excel { background: #1d6f42; color: white; border: none; cursor: pointer; font-weight: bold; }
     .export-section .btn-excel:hover { background: #155a34; }
     .export-section .btn-pdf { background: #d93025; color: white; border: none; cursor: pointer; font-weight: bold; }
@@ -299,18 +285,9 @@
       background: #0b3c85;
       transform: scale(1.02);
     }
-    .fingerprint-section .btn-fingerprint.success {
-      background: #28a745;
-    }
-    .fingerprint-section .btn-fingerprint.danger {
-      background: #dc3545;
-    }
     .fingerprint-section .btn-fingerprint:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
-    }
-    .fingerprint-section .btn-fingerprint:disabled:hover {
       transform: none;
     }
     .fingerprint-status {
@@ -320,24 +297,11 @@
       font-size: 14px;
       display: none;
     }
-    .fingerprint-status.show {
-      display: block;
-    }
-    .fingerprint-status.success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    .fingerprint-status.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    .fingerprint-status.info {
-      background: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
-    }
+    .fingerprint-status.show { display: block; }
+    .fingerprint-status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .fingerprint-status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .fingerprint-status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    
     .fingerprint-badge {
       display: inline-block;
       padding: 2px 10px;
@@ -346,72 +310,71 @@
       font-weight: 600;
       margin-left: 8px;
     }
-    .fingerprint-badge.active {
-      background: #28a745;
-      color: white;
-    }
-    .fingerprint-badge.inactive {
-      background: #dc3545;
-      color: white;
-    }
+    .fingerprint-badge.active { background: #28a745; color: white; }
+    .fingerprint-badge.inactive { background: #dc3545; color: white; }
+    
     @media (max-width: 600px) {
-      .fingerprint-section .btn-fingerprint {
-        padding: 10px 20px;
-        font-size: 14px;
-        width: 100%;
-      }
-      .fingerprint-section .icon-large {
-        font-size: 36px;
-      }
+      .fingerprint-section .btn-fingerprint { padding: 10px 20px; font-size: 14px; width: 100%; }
+      .fingerprint-section .icon-large { font-size: 36px; }
     }
-    /* ===== CHECKBOX IZIN ===== */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-  margin: 0 auto;
-}
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.switch .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #dc3545;
-  transition: .3s;
-  border-radius: 24px;
-}
-.switch .slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background: white;
-  transition: .3s;
-  border-radius: 50%;
-}
-.switch input:checked + .slider {
-  background: #28a745;
-}
-.switch input:checked + .slider:before {
-  transform: translateX(20px);
-}
-.switch-label {
-  font-size: 10px;
-  font-weight: 600;
-  margin-left: 4px;
-}
-.switch-label.allowed { color: #28a745; }
-.switch-label.denied { color: #dc3545; }
+
+    /* ===== SWITCH TOGGLE ===== */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      margin: 0 auto;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .switch .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #dc3545;
+      transition: .3s;
+      border-radius: 24px;
+    }
+    .switch .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    .switch input:checked + .slider {
+      background: #28a745;
+    }
+    .switch input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    .switch-label {
+      font-size: 10px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    .switch-label.allowed { color: #28a745; }
+    .switch-label.denied { color: #dc3545; }
+    
+    .role-badge {
+      font-size: 10px;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .role-badge.guru { background: #d4edda; color: #155724; }
+    .role-badge.siswa { background: #d1ecf1; color: #0c5460; }
   </style>
 </head>
 <body>
@@ -428,12 +391,11 @@
       <div class="topbar-clock" id="topbarClock">Memuat Waktu...</div>
     </div>
     <div class="topbar-right">
-      <div class="profile-avatar" id="topbarAvatar" onclick="toggleSidebar()" title="Buka Menu">
+      <div class="profile-avatar" id="topbarAvatar" onclick="toggleSidebar()">
         <span class="avatar-initials" id="avatarText">👤</span>
       </div>
     </div>
   </div>
-  
   <div class="topbar-user" id="topbarUserInfo">
     <span class="user-name-display" id="topbarUserName">Tamu</span>
     <span class="user-role-display" id="topbarUserRole">Tamu</span>
@@ -478,7 +440,7 @@
     <a class="nav-item locked" id="nav-scanner" onclick="checkMenuAccess('scanner', this)">📷 Scanner Barcode</a>
     <a class="nav-item locked" id="nav-izin" onclick="checkMenuAccess('izin', this)">📝 Input Izin / Sakit</a>
     <a class="nav-item locked" id="nav-rekap" onclick="checkMenuAccess('rekap', this)">📊 Rekap Data</a>
-    <a class="nav-item locked" id="nav-pengaturan" onclick="checkMenuAccess('pengaturan', this)">⚙️ Pengaturan Sesi & Libur</a>
+    <a class="nav-item locked" id="nav-pengaturan" onclick="checkMenuAccess('pengaturan', this)">⚙️ Pengaturan</a>
 
     <div class="nav-category">PEMBELAJARAN</div>
     <a class="nav-item locked" id="nav-jadwal-mapel" onclick="checkMenuAccess('jadwal-mapel', this)">📅 Jadwal Mapel</a>
@@ -486,7 +448,7 @@
     <a class="nav-item locked" id="nav-daftar-nilai" onclick="checkMenuAccess('daftar-nilai', this)">📋 Daftar Nilai</a>
     <a class="nav-item locked" id="nav-kelulusan" onclick="checkMenuAccess('kelulusan', this)">🎓 Kelulusan</a>
 
-    <a class="nav-item" id="nav-logout" style="display:none; color:#ff8a8a; margin-top: 15px;" onclick="logoutSession()">🚪 Keluar / Logout</a>
+    <a class="nav-item" id="nav-logout" style="display:none; color:#ff8a8a; margin-top: 15px;" onclick="logoutSession()">🚪 Keluar</a>
   </div>
 
   <!-- CONTENT -->
@@ -555,7 +517,7 @@
       </div>
     </div>
 
-    <!-- CARI DATA -->
+    <!-- CARI DATA + SIDIK JARI SISWA -->
     <div id="menu-cari" class="section">
       <h3 style="color:#05285e; font-size:15px;">🔍 Pencarian Data Kehadiran</h3>
       <div class="form-group"><label>Kata Kunci:</label><input type="text" id="cariKeyword" placeholder="NISN atau Nama Siswa"></div>
@@ -570,40 +532,38 @@
           <tbody id="tableCariBody"><tr><td colspan="5" style="text-align:center;">Silakan lakukan pencarian.</td></tr></tbody>
         </table>
       </div>
+
+      <!-- ABSENSI SIDIK JARI SISWA -->
+      <div style="margin-top:20px; border-top:2px dashed #ddd; padding-top:15px;">
+        <h4 style="color:#05285e; font-size:14px;">👆 Absensi Sidik Jari Siswa</h4>
+        <div class="fingerprint-section" style="margin-top:5px; border-color:#05285e;">
+          <span class="icon-large" style="font-size:36px;">👨‍🎓</span>
+          <h5 style="margin:0 0 5px 0; color:#05285e;">Absensi Siswa dengan Sidik Jari HP</h5>
+          <p style="font-size:12px; color:#666; margin-bottom:10px;">
+            Masukkan NISN dan gunakan sensor sidik jari HP untuk absensi.
+          </p>
+          
+          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:400px; margin:0 auto;">
+            <div class="form-group" style="flex:2; min-width:150px; margin-bottom:0;">
+              <input type="text" id="siswaNISN" placeholder="Masukkan NISN Siswa" style="text-align:center; font-size:16px;">
+            </div>
+            <button id="btnAbsenSiswaFingerprint" class="btn-fingerprint" style="flex:1; min-width:120px;" onclick="absenSiswaWithFingerprint()">
+              👆 Absen
+            </button>
+          </div>
+          
+          <div id="siswaFingerprintStatus" class="fingerprint-status"></div>
+        </div>
+      </div>
     </div>
 
-    <!-- ===== ABSENSI SIDIK JARI SISWA ===== -->
-  <div style="margin-top:20px; border-top:2px dashed #ddd; padding-top:15px;">
-    <h4 style="color:#05285e; font-size:14px;">👆 Absensi Sidik Jari Siswa</h4>
-    <div class="fingerprint-section" style="margin-top:5px; border-color:#05285e;">
-      <span class="icon-large" style="font-size:36px;">👨‍🎓</span>
-      <h5 style="margin:0 0 5px 0; color:#05285e;">Absensi Siswa dengan Sidik Jari HP</h5>
-      <p style="font-size:12px; color:#666; margin-bottom:10px;">
-        Masukkan NISN dan gunakan sensor sidik jari HP untuk absensi.
-      </p>
-      
-      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:400px; margin:0 auto;">
-        <div class="form-group" style="flex:2; min-width:150px; margin-bottom:0;">
-          <input type="text" id="siswaNISN" placeholder="Masukkan NISN Siswa" style="text-align:center; font-size:16px;">
-        </div>
-        <button id="btnAbsenSiswaFingerprint" class="btn-fingerprint" style="flex:1; min-width:120px;" onclick="absenSiswaWithFingerprint()">
-          👆 Absen
-        </button>
-      </div>
-      
-      <div id="siswaFingerprintStatus" class="fingerprint-status"></div>
-    </div>
-  </div>
-</div>
-    
-    <!-- SCANNER + SIDIK JARI -->
+    <!-- SCANNER -->
     <div id="menu-scanner" class="section">
       <h3 style="color:#05285e; font-size:15px;">📷 Scanner QR Barcode</h3>
       
-      <!-- ===== SIDIK JARI ===== -->
       <div class="fingerprint-section">
         <span class="icon-large">🔐</span>
-        <h4 style="margin:0 0 5px 0; color:#05285e;">Absensi dengan Sidik Jari HP</h4>
+        <h4 style="margin:0 0 5px 0; color:#05285e;">Absensi Guru dengan Sidik Jari HP</h4>
         <p style="font-size:12px; color:#666; margin-bottom:10px;">
           Gunakan sensor sidik jari HP Anda untuk absensi cepat dan aman.
           <span id="fingerprintStatusBadge" class="fingerprint-badge inactive">Belum Terdaftar</span>
@@ -614,14 +574,13 @@
             📝 Daftar Sidik Jari
           </button>
           <button id="btnAbsenFingerprint" class="btn-fingerprint" onclick="absenWithFingerprint()" disabled>
-            👆 Absen dengan Sidik Jari
+            👆 Absen
           </button>
         </div>
         
         <div id="fingerprintStatus" class="fingerprint-status"></div>
       </div>
       
-      <!-- SCANNER BARCODE -->
       <div id="scannerAdminSwitch" class="form-group" style="display:none;">
         <label>Peran Absen:</label>
         <div style="display:flex; gap:10px;">
@@ -676,6 +635,7 @@
     <!-- PENGATURAN -->
     <div id="menu-pengaturan" class="section">
       <h3 style="color:#05285e; font-size:15px;">⚙️ Pengaturan</h3>
+      
       <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">Sesi Absensi & PIN</h4>
       <div style="display:flex; gap:12px; margin-bottom:10px; background:#fff; padding:8px 10px; border-radius:6px; border:1px solid #ddd; flex-wrap:wrap;">
         <label style="font-weight:normal; cursor:pointer; font-size:12px;"><input type="checkbox" id="chkSesi1" checked onchange="renderPengaturanTable()"> Sesi 1</label>
@@ -689,7 +649,9 @@
         </table>
       </div>
       <button class="btn-primary" style="margin-top:8px;" onclick="savePengaturan()">Simpan</button>
+      
       <hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ccc;">
+      
       <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">Hari Libur</h4>
       <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd;">
         <input type="hidden" id="editHariLiburRowIndex" value="0">
@@ -708,52 +670,52 @@
           <tbody id="tableHariLiburBody"><tr><td colspan="4" style="text-align:center;">Memuat...</td></tr></tbody>
         </table>
       </div>
-    </div>
-<hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ccc;">
-  
-  <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">👥 Pengaturan Izin Absensi</h4>
-  <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
-    <p style="font-size:12px; color:#666; margin-bottom:10px;">
-      Centang untuk mengizinkan user melakukan absensi. Kosongkan untuk menolak.
-    </p>
-    <div style="display:flex; gap:10px; margin-bottom:10px;">
-      <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="syncAllowedUsers()">🔄 Sinkronisasi Data</button>
-      <button class="btn-primary" style="width:auto; padding:6px 16px; background:#28a745;" onclick="allowAllUsers()">✅ Izinkan Semua</button>
-      <button class="btn-primary" style="width:auto; padding:6px 16px; background:#dc3545;" onclick="denyAllUsers()">❌ Tolak Semua</button>
-    </div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-      <div class="form-group" style="flex:1; min-width:150px;">
-        <label style="font-size:11px;">Filter Role:</label>
-        <select id="filterAllowedRole" onchange="loadAllowedUsers()">
-          <option value="">-- Semua --</option>
-          <option value="guru">Guru</option>
-          <option value="siswa">Siswa</option>
-        </select>
+      
+      <hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ccc;">
+      
+      <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">👥 Pengaturan Izin Absensi</h4>
+      <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+        <p style="font-size:12px; color:#666; margin-bottom:10px;">
+          Centang untuk mengizinkan user melakukan absensi. Kosongkan untuk menolak.
+        </p>
+        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+          <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="syncAllowedUsers()">🔄 Sinkronisasi</button>
+          <button class="btn-primary" style="width:auto; padding:6px 16px; background:#28a745;" onclick="allowAllUsers()">✅ Izinkan Semua</button>
+          <button class="btn-primary" style="width:auto; padding:6px 16px; background:#dc3545;" onclick="denyAllUsers()">❌ Tolak Semua</button>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+          <div class="form-group" style="flex:1; min-width:150px; margin-bottom:0;">
+            <label style="font-size:11px;">Filter Role:</label>
+            <select id="filterAllowedRole" onchange="loadAllowedUsers()">
+              <option value="">-- Semua --</option>
+              <option value="guru">Guru</option>
+              <option value="siswa">Siswa</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:2; min-width:200px; margin-bottom:0;">
+            <label style="font-size:11px;">Cari:</label>
+            <input type="text" id="searchAllowedUser" placeholder="Cari nama atau ID..." oninput="loadAllowedUsers()">
+          </div>
+        </div>
       </div>
-      <div class="form-group" style="flex:2; min-width:200px;">
-        <label style="font-size:11px;">Cari:</label>
-        <input type="text" id="searchAllowedUser" placeholder="Cari nama atau ID..." oninput="loadAllowedUsers()">
+      
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px;">No</th>
+              <th>ID / NISN</th>
+              <th>Nama</th>
+              <th style="width:80px;">Role</th>
+              <th style="width:120px; text-align:center;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableAllowedUsersBody">
+            <tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
-  </div>
-  
-  <div class="table-responsive">
-    <table>
-      <thead>
-        <tr>
-          <th style="width:40px;">No</th>
-          <th>ID / NISN</th>
-          <th>Nama</th>
-          <th style="width:80px;">Role</th>
-          <th style="width:80px; text-align:center;">Status</th>
-        </tr>
-      </thead>
-      <tbody id="tableAllowedUsersBody">
-        <tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
 
     <!-- JADWAL MAPEL -->
     <div id="menu-jadwal-mapel" class="section">
@@ -839,7 +801,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyrbO2vCjeTobuGfOVGDN281nFNcf8-cQEt4VqyEk_PuTnTo51JiVxnvxqrYGyMzhdFQA/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz6DHSGiNWqEkFvAgu0GqNgvbza5Di_exeQjGaf9A-zR97NtntYAcZ9PMenxcrTl_M_cw/exec";
 
   // ================= VARIABEL GLOBAL ================= //
   let currentRole = 'siswa';
@@ -865,6 +827,7 @@
   startRealtimeDashboard();
   loadOpsiKelas();
   updateTopbarUserInfo();
+  loadAllowedUsers();
 
   // ================= FUNGSI DASAR ================= //
 
@@ -1139,7 +1102,7 @@
     }
   }
 
-  // ================= LOGIN SYSTEM ================= //
+  // ================= LOGIN ================= //
 
   function openLoginModal() {
     if (userRole !== 'tamu') {
@@ -1182,7 +1145,6 @@
             }
           });
           
-          // Cek status sidik jari untuk guru
           setTimeout(() => {
             checkFingerprintStatus();
           }, 500);
@@ -1192,17 +1154,12 @@
           switchMenu(pendingMenu.name, pendingMenu.el);
           pendingMenu = null;
         }
-        updateUIByRole();
         closeSidebar();
       } else {
         showScanPopup("danger", "Login Gagal", res.message);
         closeSidebar();
       }
     });
-  }
-
-  function updateUIByRole() {
-    // Tidak perlu update badge di topbar karena sudah pakai topbar-user
   }
 
   function applyRoleAccessUI() {
@@ -1325,6 +1282,7 @@
     if (menuName === 'pengaturan') {
       loadPengaturanDataFromServer();
       loadHariLiburData();
+      loadAllowedUsers();
     }
     if (menuName === 'input-nilai') loadFilterInputNilaiWithGuru();
     if (menuName === 'daftar-nilai') loadFilterDaftarNilaiWithGuru();
@@ -1641,6 +1599,144 @@
     });
   }
 
+  // ================= IZIN ABSENSI ================= //
+
+  function loadAllowedUsers() {
+    const filterRole = document.getElementById('filterAllowedRole').value;
+    const searchText = document.getElementById('searchAllowedUser').value.toLowerCase().trim();
+
+    sendRequest({ action: 'get_allowed_users' }, res => {
+      const tbody = document.getElementById('tableAllowedUsersBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (res.status === 'success' && res.data && res.data.length > 0) {
+        let filtered = res.data;
+        
+        if (filterRole) {
+          filtered = filtered.filter(u => u.role === filterRole);
+        }
+        
+        if (searchText) {
+          filtered = filtered.filter(u => 
+            u.id.toLowerCase().includes(searchText) || 
+            u.nama.toLowerCase().includes(searchText)
+          );
+        }
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada data.</td></tr>';
+          return;
+        }
+
+        filtered.forEach((item, idx) => {
+          const statusLabel = item.allowed ? 'Diizinkan' : 'Ditolak';
+          const statusClass = item.allowed ? 'allowed' : 'denied';
+          
+          tbody.innerHTML += `<tr>
+            <td>${idx + 1}</td>
+            <td><b>${item.id}</b></td>
+            <td>${item.nama}</td>
+            <td><span class="role-badge ${item.role}">${item.role}</span></td>
+            <td style="text-align:center;">
+              <label class="switch">
+                <input type="checkbox" ${item.allowed ? 'checked' : ''} 
+                       onchange="updateAllowedUser('${item.id}', this.checked)">
+                <span class="slider"></span>
+              </label>
+              <span class="switch-label ${statusClass}">${statusLabel}</span>
+            </td>
+          </tr>`;
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data. Klik "Sinkronisasi Data" untuk memuat.</td></tr>';
+      }
+    });
+  }
+
+  function updateAllowedUser(userId, allowed) {
+    sendRequest({
+      action: 'update_allowed_users',
+      userId: userId,
+      allowed: allowed
+    }, res => {
+      if (res.status === 'success') {
+        showScanPopup('success', 'Berhasil', res.message);
+        loadAllowedUsers();
+      } else {
+        showScanPopup('danger', 'Gagal', res.message);
+        loadAllowedUsers();
+      }
+    });
+  }
+
+  function syncAllowedUsers() {
+    sendRequest({ action: 'sync_allowed_users' }, res => {
+      if (res.status === 'success') {
+        showScanPopup('success', 'Sinkronisasi', res.message);
+        loadAllowedUsers();
+      } else {
+        showScanPopup('danger', 'Gagal', res.message);
+      }
+    });
+  }
+
+  function allowAllUsers() {
+    if (!confirm('Yakin ingin mengizinkan SEMUA user untuk absensi?')) return;
+    
+    sendRequest({ action: 'get_allowed_users' }, res => {
+      if (res.status === 'success' && res.data) {
+        let count = 0;
+        const total = res.data.filter(u => !u.allowed).length;
+        if (total === 0) {
+          showScanPopup('info', 'Info', 'Semua user sudah diizinkan.');
+          return;
+        }
+        res.data.forEach(user => {
+          if (!user.allowed) {
+            sendRequest({
+              action: 'update_allowed_users',
+              userId: user.id,
+              allowed: true
+            }, () => { count++; });
+          }
+        });
+        setTimeout(() => {
+          showScanPopup('success', 'Berhasil', `${count} user diizinkan absensi.`);
+          loadAllowedUsers();
+        }, 1500);
+      }
+    });
+  }
+
+  function denyAllUsers() {
+    if (!confirm('Yakin ingin menolak SEMUA user untuk absensi?')) return;
+    
+    sendRequest({ action: 'get_allowed_users' }, res => {
+      if (res.status === 'success' && res.data) {
+        let count = 0;
+        const total = res.data.filter(u => u.allowed).length;
+        if (total === 0) {
+          showScanPopup('info', 'Info', 'Semua user sudah ditolak.');
+          return;
+        }
+        res.data.forEach(user => {
+          if (user.allowed) {
+            sendRequest({
+              action: 'update_allowed_users',
+              userId: user.id,
+              allowed: false
+            }, () => { count++; });
+          }
+        });
+        setTimeout(() => {
+          showScanPopup('success', 'Berhasil', `${count} user ditolak absensi.`);
+          loadAllowedUsers();
+        }, 1500);
+      }
+    });
+  }
+
   // ================= JADWAL MAPEL ================= //
 
   function loadJadwalMapel() {
@@ -1651,10 +1747,6 @@
     document.getElementById('jadwalInfoDisplay').innerHTML = `Menampilkan jadwal hari ini, <b>${hariIni}</b>`;
     
     let payload = { action: 'get_jadwal_mapel', hari: hariIni };
-    if (userRole === 'guru' && userData && userData.nip) {
-      payload.nip = userData.nip;
-      payload.role = 'guru';
-    }
     
     sendRequest(payload, res => {
       const tbody = document.getElementById('tableJadwalBody');
@@ -1663,11 +1755,6 @@
       
       if (res.status === 'success' && res.data && res.data.length > 0) {
         let filteredData = res.data;
-        if (userRole === 'guru' && userData && userData.mapel) {
-          filteredData = res.data.filter(item => {
-            return userData.mapel.some(m => item.mapel.includes(m));
-          });
-        }
         
         if (filteredData.length === 0) {
           tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada jadwal.</td></tr>';
@@ -1936,8 +2023,6 @@
     });
   }
 
-  // ================= EXPORT DAFTAR NILAI ================= //
-
   function exportDaftarNilaiToExcel() {
     const table = document.getElementById('tableDaftarNilaiResult');
     const wb = XLSX.utils.table_to_book(table, { sheet: "Daftar Nilai" });
@@ -1950,7 +2035,7 @@
     showScanPopup("success", "Export PDF", "Silakan pilih 'Save as PDF' pada dialog print.");
   }
 
-  // ================= SIDIK JARI (WEBAUTHN) ================= //
+  // ================= SIDIK JARI GURU ================= //
 
   function isWebAuthnSupported() {
     return window.PublicKeyCredential !== undefined;
@@ -2190,279 +2275,144 @@
       }, 5000);
     }
   }
-// ================= ABSENSI SIDIK JARI SISWA ================= //
 
-let siswaFingerprintData = null;
+  // ================= ABSENSI SIDIK JARI SISWA ================= //
 
-async function absenSiswaWithFingerprint() {
-  const nisn = document.getElementById('siswaNISN').value.trim();
-  
-  if (!nisn) {
-    showSiswaFingerprintStatus('error', '❌ Silakan masukkan NISN terlebih dahulu!');
-    return;
-  }
+  async function absenSiswaWithFingerprint() {
+    const nisn = document.getElementById('siswaNISN').value.trim();
+    
+    if (!nisn) {
+      showSiswaFingerprintStatus('error', '❌ Silakan masukkan NISN terlebih dahulu!');
+      return;
+    }
 
-  if (!currentActiveSesiName) {
-    showSiswaFingerprintStatus('error', '❌ Tidak ada sesi absen aktif saat ini!');
-    return;
-  }
+    if (!currentActiveSesiName) {
+      showSiswaFingerprintStatus('error', '❌ Tidak ada sesi absen aktif saat ini!');
+      return;
+    }
 
-  if (!isWebAuthnSupported()) {
-    showSiswaFingerprintStatus('error', '❌ Browser tidak mendukung WebAuthn.');
-    return;
-  }
+    if (!isWebAuthnSupported()) {
+      showSiswaFingerprintStatus('error', '❌ Browser tidak mendukung WebAuthn.');
+      return;
+    }
 
-  try {
-    showSiswaFingerprintStatus('info', '⏳ Memverifikasi NISN...');
-    document.getElementById('btnAbsenSiswaFingerprint').disabled = true;
+    try {
+      showSiswaFingerprintStatus('info', '⏳ Memverifikasi NISN...');
+      document.getElementById('btnAbsenSiswaFingerprint').disabled = true;
 
-    // Login siswa dengan NISN
-    sendRequest({
-      action: 'login_siswa_fingerprint',
-      nisn: nisn
-    }, async res => {
-      if (res.status !== 'success') {
-        showSiswaFingerprintStatus('error', '❌ ' + res.message);
-        document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-        return;
-      }
+      sendRequest({
+        action: 'login_siswa_fingerprint',
+        nisn: nisn
+      }, async res => {
+        if (res.status !== 'success') {
+          showSiswaFingerprintStatus('error', '❌ ' + res.message);
+          document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
+          return;
+        }
 
-      siswaFingerprintData = res;
-      
-      try {
-        showSiswaFingerprintStatus('info', '⏳ Mohon tempelkan jari pada sensor...');
+        try {
+          showSiswaFingerprintStatus('info', '⏳ Mohon tempelkan jari pada sensor...');
 
-        // Cek apakah siswa sudah terdaftar sidik jarinya
-        sendRequest({
-          action: 'webauthn_check',
-          userId: nisn
-        }, async checkRes => {
-          if (checkRes.status !== 'success' || !checkRes.registered) {
-            showSiswaFingerprintStatus('error', '❌ Siswa belum mendaftarkan sidik jari. Silakan daftar terlebih dahulu.');
-            document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-            return;
-          }
-
-          // Ambil credential untuk login
           sendRequest({
-            action: 'webauthn_login',
+            action: 'webauthn_check',
             userId: nisn
-          }, async loginRes => {
-            if (loginRes.status !== 'success') {
-              showSiswaFingerprintStatus('error', '❌ ' + loginRes.message);
+          }, async checkRes => {
+            if (checkRes.status !== 'success' || !checkRes.registered) {
+              showSiswaFingerprintStatus('error', '❌ Siswa belum mendaftarkan sidik jari. Silakan daftar terlebih dahulu.');
               document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
               return;
             }
 
-            try {
-              const credentialId = Uint8Array.from(atob(loginRes.credentialId), c => c.charCodeAt(0));
-              const challenge = new Uint8Array(32);
-              crypto.getRandomValues(challenge);
-
-              const publicKeyCredentialRequestOptions = {
-                challenge: challenge,
-                allowCredentials: [{
-                  type: 'public-key',
-                  id: credentialId
-                }],
-                timeout: 60000,
-                userVerification: 'required',
-                rpId: window.location.hostname
-              };
-
-              const assertion = await navigator.credentials.get({
-                publicKey: publicKeyCredentialRequestOptions
-              });
-
-              if (!assertion) {
-                throw new Error('Verifikasi gagal atau dibatalkan.');
+            sendRequest({
+              action: 'webauthn_login',
+              userId: nisn
+            }, async loginRes => {
+              if (loginRes.status !== 'success') {
+                showSiswaFingerprintStatus('error', '❌ ' + loginRes.message);
+                document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
+                return;
               }
 
-              showSiswaFingerprintStatus('info', '✅ Sidik jari terverifikasi! Melakukan absensi...');
+              try {
+                const credentialId = Uint8Array.from(atob(loginRes.credentialId), c => c.charCodeAt(0));
+                const challenge = new Uint8Array(32);
+                crypto.getRandomValues(challenge);
 
-              // Lakukan absensi
-              sendRequest({
-                action: 'absen_qr',
-                role: 'siswa',
-                code: nisn,
-                sesi: currentActiveSesiName
-              }, absenRes => {
-                let popupType = absenRes.status === 'success' ? 'success' : 
-                               (absenRes.status === 'warning' ? 'warning' : 'danger');
-                showScanPopup(popupType, 'Absensi Siswa', absenRes.message);
-                
-                if (absenRes.status === 'success') {
-                  showSiswaFingerprintStatus('success', '✅ ' + absenRes.message);
-                  fetchDashboardData();
-                  document.getElementById('siswaNISN').value = '';
-                } else {
-                  showSiswaFingerprintStatus('error', '❌ ' + absenRes.message);
+                const publicKeyCredentialRequestOptions = {
+                  challenge: challenge,
+                  allowCredentials: [{
+                    type: 'public-key',
+                    id: credentialId
+                  }],
+                  timeout: 60000,
+                  userVerification: 'required',
+                  rpId: window.location.hostname
+                };
+
+                const assertion = await navigator.credentials.get({
+                  publicKey: publicKeyCredentialRequestOptions
+                });
+
+                if (!assertion) {
+                  throw new Error('Verifikasi gagal atau dibatalkan.');
                 }
+
+                showSiswaFingerprintStatus('info', '✅ Sidik jari terverifikasi! Melakukan absensi...');
+
+                sendRequest({
+                  action: 'absen_qr',
+                  role: 'siswa',
+                  code: nisn,
+                  sesi: currentActiveSesiName
+                }, absenRes => {
+                  let popupType = absenRes.status === 'success' ? 'success' : 
+                                 (absenRes.status === 'warning' ? 'warning' : 'danger');
+                  showScanPopup(popupType, 'Absensi Siswa', absenRes.message);
+                  
+                  if (absenRes.status === 'success') {
+                    showSiswaFingerprintStatus('success', '✅ ' + absenRes.message);
+                    fetchDashboardData();
+                    document.getElementById('siswaNISN').value = '';
+                  } else {
+                    showSiswaFingerprintStatus('error', '❌ ' + absenRes.message);
+                  }
+                  document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
+                });
+
+              } catch (error) {
+                console.error('Login error:', error);
+                showSiswaFingerprintStatus('error', '❌ Gagal verifikasi: ' + error.message);
                 document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-              });
-
-            } catch (error) {
-              console.error('Login error:', error);
-              showSiswaFingerprintStatus('error', '❌ Gagal verifikasi: ' + error.message);
-              document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-            }
+              }
+            });
           });
-        });
 
-      } catch (error) {
-        console.error('Absen error:', error);
-        showSiswaFingerprintStatus('error', '❌ Gagal: ' + error.message);
-        document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-      }
-    });
-
-  } catch (error) {
-    console.error('Error:', error);
-    showSiswaFingerprintStatus('error', '❌ Gagal: ' + error.message);
-    document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-  }
-}
-
-function showSiswaFingerprintStatus(type, message) {
-  const statusEl = document.getElementById('siswaFingerprintStatus');
-  statusEl.className = 'fingerprint-status show ' + type;
-  statusEl.innerHTML = message;
-  
-  if (type === 'success') {
-    setTimeout(() => {
-      statusEl.className = 'fingerprint-status';
-    }, 5000);
-  }
-}
-
-// ================= PENGATURAN IZIN ABSENSI ================= //
-
-function loadAllowedUsers() {
-  const filterRole = document.getElementById('filterAllowedRole').value;
-  const searchText = document.getElementById('searchAllowedUser').value.toLowerCase().trim();
-
-  sendRequest({ action: 'get_allowed_users' }, res => {
-    const tbody = document.getElementById('tableAllowedUsersBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    if (res.status === 'success' && res.data && res.data.length > 0) {
-      let filtered = res.data;
-      
-      if (filterRole) {
-        filtered = filtered.filter(u => u.role === filterRole);
-      }
-      
-      if (searchText) {
-        filtered = filtered.filter(u => 
-          u.id.toLowerCase().includes(searchText) || 
-          u.nama.toLowerCase().includes(searchText)
-        );
-      }
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada data.</td></tr>';
-        return;
-      }
-
-      filtered.forEach((item, idx) => {
-        const statusLabel = item.allowed ? 'Diizinkan' : 'Ditolak';
-        const statusClass = item.allowed ? 'allowed' : 'denied';
-        
-        tbody.innerHTML += `<tr>
-          <td>${idx + 1}</td>
-          <td><b>${item.id}</b></td>
-          <td>${item.nama}</td>
-          <td><span class="role-badge ${item.role}">${item.role}</span></td>
-          <td style="text-align:center;">
-            <label class="switch">
-              <input type="checkbox" ${item.allowed ? 'checked' : ''} 
-                     onchange="updateAllowedUser('${item.id}', this.checked)">
-              <span class="slider"></span>
-            </label>
-            <span class="switch-label ${statusClass}">${statusLabel}</span>
-          </td>
-        </tr>`;
-      });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data. Klik "Sinkronisasi Data" untuk memuat.</td></tr>';
-    }
-  });
-}
-
-function updateAllowedUser(userId, allowed) {
-  sendRequest({
-    action: 'update_allowed_users',
-    userId: userId,
-    allowed: allowed
-  }, res => {
-    if (res.status === 'success') {
-      showScanPopup('success', 'Berhasil', res.message);
-      loadAllowedUsers();
-    } else {
-      showScanPopup('danger', 'Gagal', res.message);
-      loadAllowedUsers();
-    }
-  });
-}
-
-function syncAllowedUsers() {
-  sendRequest({ action: 'sync_allowed_users' }, res => {
-    if (res.status === 'success') {
-      showScanPopup('success', 'Sinkronisasi', res.message);
-      loadAllowedUsers();
-    } else {
-      showScanPopup('danger', 'Gagal', res.message);
-    }
-  });
-}
-
-function allowAllUsers() {
-  if (!confirm('Yakin ingin mengizinkan SEMUA user untuk absensi?')) return;
-  
-  // Ambil semua user lalu set allowed = true
-  sendRequest({ action: 'get_allowed_users' }, res => {
-    if (res.status === 'success' && res.data) {
-      let count = 0;
-      res.data.forEach(user => {
-        if (!user.allowed) {
-          sendRequest({
-            action: 'update_allowed_users',
-            userId: user.id,
-            allowed: true
-          }, () => { count++; });
+        } catch (error) {
+          console.error('Absen error:', error);
+          showSiswaFingerprintStatus('error', '❌ Gagal: ' + error.message);
+          document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
         }
       });
-      setTimeout(() => {
-        showScanPopup('success', 'Berhasil', `Semua user diizinkan absensi.`);
-        loadAllowedUsers();
-      }, 1000);
-    }
-  });
-}
 
-function denyAllUsers() {
-  if (!confirm('Yakin ingin menolak SEMUA user untuk absensi?')) return;
-  
-  sendRequest({ action: 'get_allowed_users' }, res => {
-    if (res.status === 'success' && res.data) {
-      let count = 0;
-      res.data.forEach(user => {
-        if (user.allowed) {
-          sendRequest({
-            action: 'update_allowed_users',
-            userId: user.id,
-            allowed: false
-          }, () => { count++; });
-        }
-      });
-      setTimeout(() => {
-        showScanPopup('success', 'Berhasil', `Semua user ditolak absensi.`);
-        loadAllowedUsers();
-      }, 1000);
+    } catch (error) {
+      console.error('Error:', error);
+      showSiswaFingerprintStatus('error', '❌ Gagal: ' + error.message);
+      document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
     }
-  });
-}
+  }
+
+  function showSiswaFingerprintStatus(type, message) {
+    const statusEl = document.getElementById('siswaFingerprintStatus');
+    statusEl.className = 'fingerprint-status show ' + type;
+    statusEl.innerHTML = message;
+    
+    if (type === 'success') {
+      setTimeout(() => {
+        statusEl.className = 'fingerprint-status';
+      }, 5000);
+    }
+  }
+
 </script>
 </body>
 </html>
