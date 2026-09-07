@@ -290,6 +290,12 @@
       cursor: not-allowed;
       transform: none;
     }
+    .fingerprint-section .btn-fingerprint:disabled:hover {
+      transform: none;
+    }
+    .fingerprint-section .btn-fingerprint.hidden {
+      display: none;
+    }
     .fingerprint-status {
       margin-top: 10px;
       padding: 10px;
@@ -434,6 +440,7 @@
 
     <div class="nav-category">ORANG TUA / TAMU</div>
     <a class="nav-item" onclick="switchMenu('cari', this)">🔍 Cari Data Siswa</a>
+    <a class="nav-item" id="nav-siswa-fingerprint" onclick="switchMenu('siswa-fingerprint', this)">👆 Sidik Jari Siswa</a>
 
     <div class="nav-category">MENU UTAMA</div>
     <a class="nav-item" id="nav-login" onclick="openLoginModal()">🔑 Login Sistem</a>
@@ -517,7 +524,7 @@
       </div>
     </div>
 
-    <!-- CARI DATA + SIDIK JARI SISWA -->
+    <!-- CARI DATA -->
     <div id="menu-cari" class="section">
       <h3 style="color:#05285e; font-size:15px;">🔍 Pencarian Data Kehadiran</h3>
       <div class="form-group"><label>Kata Kunci:</label><input type="text" id="cariKeyword" placeholder="NISN atau Nama Siswa"></div>
@@ -532,27 +539,37 @@
           <tbody id="tableCariBody"><tr><td colspan="5" style="text-align:center;">Silakan lakukan pencarian.</td></tr></tbody>
         </table>
       </div>
+    </div>
 
-      <!-- ABSENSI SIDIK JARI SISWA -->
-      <div style="margin-top:20px; border-top:2px dashed #ddd; padding-top:15px;">
-        <h4 style="color:#05285e; font-size:14px;">👆 Absensi Sidik Jari Siswa</h4>
-        <div class="fingerprint-section" style="margin-top:5px; border-color:#05285e;">
-          <span class="icon-large" style="font-size:36px;">👨‍🎓</span>
-          <h5 style="margin:0 0 5px 0; color:#05285e;">Absensi Siswa dengan Sidik Jari HP</h5>
-          <p style="font-size:12px; color:#666; margin-bottom:10px;">
-            Masukkan NISN dan gunakan sensor sidik jari HP untuk absensi.
-          </p>
-          
-          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:400px; margin:0 auto;">
-            <div class="form-group" style="flex:2; min-width:150px; margin-bottom:0;">
-              <input type="text" id="siswaNISN" placeholder="Masukkan NISN Siswa" style="text-align:center; font-size:16px;">
-            </div>
-            <button id="btnAbsenSiswaFingerprint" class="btn-fingerprint" style="flex:1; min-width:120px;" onclick="absenSiswaWithFingerprint()">
-              👆 Absen
-            </button>
+    <!-- SIDIK JARI SISWA -->
+    <div id="menu-siswa-fingerprint" class="section">
+      <h3 style="color:#05285e; font-size:15px;">👆 Absensi Sidik Jari Siswa</h3>
+      
+      <div class="fingerprint-section" style="border-color:#05285e;">
+        <span class="icon-large">👨‍🎓</span>
+        <h4 style="margin:0 0 5px 0; color:#05285e;">Registrasi & Absensi Sidik Jari Siswa</h4>
+        <p style="font-size:12px; color:#666; margin-bottom:10px;">
+          Gunakan sensor sidik jari HP untuk absensi siswa dengan cepat dan aman.
+        </p>
+        
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:500px; margin:0 auto;">
+          <div class="form-group" style="flex:2; min-width:150px; margin-bottom:0;">
+            <input type="text" id="siswaNISN" placeholder="Masukkan NISN Siswa" style="text-align:center; font-size:16px;">
           </div>
-          
-          <div id="siswaFingerprintStatus" class="fingerprint-status"></div>
+          <button id="btnRegisterSiswaFingerprint" class="btn-fingerprint" style="flex:1; min-width:120px;" onclick="registerSiswaFingerprint()">
+            📝 Daftar
+          </button>
+          <button id="btnAbsenSiswaFingerprint" class="btn-fingerprint" style="flex:1; min-width:120px;" onclick="absenSiswaWithFingerprint()" disabled>
+            👆 Absen
+          </button>
+        </div>
+        
+        <div id="siswaFingerprintStatus" class="fingerprint-status"></div>
+        
+        <!-- Status Registrasi Siswa -->
+        <div id="siswaRegStatus" style="margin-top:10px; font-size:12px; color:#666; display:none;">
+          <span id="siswaRegStatusText"></span>
+          <span id="siswaRegBadge" class="fingerprint-badge inactive">Belum Terdaftar</span>
         </div>
       </div>
     </div>
@@ -801,7 +818,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz6DHSGiNWqEkFvAgu0GqNgvbza5Di_exeQjGaf9A-zR97NtntYAcZ9PMenxcrTl_M_cw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwLoKzmqCXE6puox4gNfXnx8JrshEdQW9t5IB3w0Ycha4Non6idIc2MnsUikR12KZklRA/exec";
 
   // ================= VARIABEL GLOBAL ================= //
   let currentRole = 'siswa';
@@ -818,6 +835,8 @@
   let popupTimeout = null;
   let currentInputNilaiList = [];
   let fingerprintRegistered = false;
+  let siswaFingerprintRegistered = false;
+  let currentSiswaNISN = '';
 
   // ================= INISIALISASI ================= //
   document.getElementById('izinTanggal').value = new Date().toISOString().split('T')[0];
@@ -1214,6 +1233,8 @@
     userRole = 'tamu';
     userData = null;
     fingerprintRegistered = false;
+    siswaFingerprintRegistered = false;
+    currentSiswaNISN = '';
     
     document.querySelectorAll('.sidebar .nav-item').forEach(b => {
       if (b.id === 'nav-login') {
@@ -1229,6 +1250,7 @@
     
     updateTopbarUserInfo();
     updateFingerprintUI();
+    updateSiswaFingerprintUI();
     switchMenu('dashboard', document.querySelector('.sidebar .nav-item'));
     showScanPopup("success", "Logout Berhasil", "Anda telah keluar.");
     closeSidebar();
@@ -1287,6 +1309,14 @@
     if (menuName === 'input-nilai') loadFilterInputNilaiWithGuru();
     if (menuName === 'daftar-nilai') loadFilterDaftarNilaiWithGuru();
     if (menuName === 'jadwal-mapel') loadJadwalMapel();
+    if (menuName === 'siswa-fingerprint') {
+      // Reset status siswa
+      document.getElementById('siswaNISN').value = '';
+      document.getElementById('siswaFingerprintStatus').className = 'fingerprint-status';
+      document.getElementById('siswaRegStatus').style.display = 'none';
+      siswaFingerprintRegistered = false;
+      updateSiswaFingerprintUI();
+    }
   }
 
   // ================= SCANNER ================= //
@@ -2059,6 +2089,10 @@
           document.getElementById('btnAbsenFingerprint').disabled = false;
           document.getElementById('fingerprintStatusBadge').className = 'fingerprint-badge active';
           document.getElementById('fingerprintStatusBadge').innerText = 'Terdaftar';
+          // Sembunyikan tombol daftar jika sudah terdaftar
+          document.getElementById('btnRegisterFingerprint').classList.add('hidden');
+        } else {
+          document.getElementById('btnRegisterFingerprint').classList.remove('hidden');
         }
       }
     });
@@ -2067,15 +2101,18 @@
   function updateFingerprintUI() {
     const statusBadge = document.getElementById('fingerprintStatusBadge');
     const btnAbsen = document.getElementById('btnAbsenFingerprint');
+    const btnRegister = document.getElementById('btnRegisterFingerprint');
     
     if (fingerprintRegistered) {
       statusBadge.className = 'fingerprint-badge active';
       statusBadge.innerText = 'Terdaftar';
       btnAbsen.disabled = false;
+      btnRegister.classList.add('hidden');
     } else {
       statusBadge.className = 'fingerprint-badge inactive';
       statusBadge.innerText = 'Belum Terdaftar';
       btnAbsen.disabled = true;
+      btnRegister.classList.remove('hidden');
     }
   }
 
@@ -2151,6 +2188,7 @@
           fingerprintRegistered = true;
           updateFingerprintUI();
           document.getElementById('btnAbsenFingerprint').disabled = false;
+          document.getElementById('btnRegisterFingerprint').classList.add('hidden');
           showFingerprintStatus('success', '✅ ' + res.message);
         } else {
           showFingerprintStatus('error', '❌ ' + res.message);
@@ -2276,7 +2314,166 @@
     }
   }
 
-  // ================= ABSENSI SIDIK JARI SISWA ================= //
+  // ================= SIDIK JARI SISWA ================= //
+
+  function checkSiswaFingerprintStatus(nisn) {
+    if (!nisn) return;
+    
+    sendRequest({ 
+      action: 'webauthn_check', 
+      userId: nisn 
+    }, res => {
+      if (res.status === 'success') {
+        siswaFingerprintRegistered = res.registered;
+        currentSiswaNISN = nisn;
+        updateSiswaFingerprintUI();
+        
+        if (siswaFingerprintRegistered) {
+          document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
+          document.getElementById('siswaRegBadge').className = 'fingerprint-badge active';
+          document.getElementById('siswaRegBadge').innerText = 'Terdaftar';
+          document.getElementById('siswaRegStatusText').innerHTML = `✅ Siswa <b>${nisn}</b> sudah terdaftar sidik jari.`;
+          document.getElementById('siswaRegStatus').style.display = 'block';
+          // Sembunyikan tombol daftar
+          document.getElementById('btnRegisterSiswaFingerprint').classList.add('hidden');
+        } else {
+          document.getElementById('btnAbsenSiswaFingerprint').disabled = true;
+          document.getElementById('siswaRegBadge').className = 'fingerprint-badge inactive';
+          document.getElementById('siswaRegBadge').innerText = 'Belum Terdaftar';
+          document.getElementById('siswaRegStatusText').innerHTML = `⚠️ Siswa <b>${nisn}</b> belum mendaftarkan sidik jari.`;
+          document.getElementById('siswaRegStatus').style.display = 'block';
+          // Tampilkan tombol daftar
+          document.getElementById('btnRegisterSiswaFingerprint').classList.remove('hidden');
+        }
+      }
+    });
+  }
+
+  function updateSiswaFingerprintUI() {
+    const btnAbsen = document.getElementById('btnAbsenSiswaFingerprint');
+    const btnRegister = document.getElementById('btnRegisterSiswaFingerprint');
+    const badge = document.getElementById('siswaRegBadge');
+    const statusText = document.getElementById('siswaRegStatusText');
+    const statusDiv = document.getElementById('siswaRegStatus');
+    
+    if (siswaFingerprintRegistered && currentSiswaNISN) {
+      btnAbsen.disabled = false;
+      btnRegister.classList.add('hidden');
+      badge.className = 'fingerprint-badge active';
+      badge.innerText = 'Terdaftar';
+      statusText.innerHTML = `✅ Siswa <b>${currentSiswaNISN}</b> sudah terdaftar sidik jari.`;
+      statusDiv.style.display = 'block';
+    } else if (currentSiswaNISN) {
+      btnAbsen.disabled = true;
+      btnRegister.classList.remove('hidden');
+      badge.className = 'fingerprint-badge inactive';
+      badge.innerText = 'Belum Terdaftar';
+      statusText.innerHTML = `⚠️ Siswa <b>${currentSiswaNISN}</b> belum mendaftarkan sidik jari.`;
+      statusDiv.style.display = 'block';
+    } else {
+      btnAbsen.disabled = true;
+      btnRegister.classList.remove('hidden');
+      statusDiv.style.display = 'none';
+    }
+  }
+
+  async function registerSiswaFingerprint() {
+    const nisn = document.getElementById('siswaNISN').value.trim();
+    
+    if (!nisn) {
+      showSiswaFingerprintStatus('error', '❌ Silakan masukkan NISN terlebih dahulu!');
+      return;
+    }
+
+    if (!isWebAuthnSupported()) {
+      showSiswaFingerprintStatus('error', '❌ Browser tidak mendukung WebAuthn.');
+      return;
+    }
+
+    // Verifikasi NISN terlebih dahulu
+    showSiswaFingerprintStatus('info', '⏳ Memverifikasi NISN...');
+    document.getElementById('btnRegisterSiswaFingerprint').disabled = true;
+
+    sendRequest({
+      action: 'login_siswa_fingerprint',
+      nisn: nisn
+    }, async res => {
+      if (res.status !== 'success') {
+        showSiswaFingerprintStatus('error', '❌ ' + res.message);
+        document.getElementById('btnRegisterSiswaFingerprint').disabled = false;
+        return;
+      }
+
+      const nama = res.nama || 'Siswa';
+
+      try {
+        showSiswaFingerprintStatus('info', '⏳ Menyiapkan registrasi sidik jari untuk ' + nama + '...');
+
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+
+        const publicKeyCredentialCreationOptions = {
+          challenge: challenge,
+          rp: {
+            name: 'SMP NEGERI 1 SOBANG',
+            id: window.location.hostname
+          },
+          user: {
+            id: new TextEncoder().encode(nisn),
+            name: nama,
+            displayName: nama
+          },
+          pubKeyCredParams: [
+            { type: 'public-key', alg: -7 },
+            { type: 'public-key', alg: -257 }
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            requireResidentKey: false,
+            userVerification: 'required'
+          },
+          timeout: 60000,
+          attestation: 'none'
+        };
+
+        const credential = await navigator.credentials.create({
+          publicKey: publicKeyCredentialCreationOptions
+        });
+
+        if (!credential) {
+          throw new Error('Registrasi gagal atau dibatalkan.');
+        }
+
+        const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+        const publicKey = btoa(String.fromCharCode(...new Uint8Array(credential.response.getPublicKey())));
+
+        sendRequest({
+          action: 'webauthn_register',
+          userId: nisn,
+          userName: nama,
+          credentialId: credentialId,
+          publicKey: publicKey
+        }, resReg => {
+          if (resReg.status === 'success') {
+            siswaFingerprintRegistered = true;
+            currentSiswaNISN = nisn;
+            updateSiswaFingerprintUI();
+            document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
+            document.getElementById('btnRegisterSiswaFingerprint').classList.add('hidden');
+            showSiswaFingerprintStatus('success', '✅ ' + resReg.message);
+          } else {
+            showSiswaFingerprintStatus('error', '❌ ' + resReg.message);
+          }
+          document.getElementById('btnRegisterSiswaFingerprint').disabled = false;
+        });
+
+      } catch (error) {
+        console.error('Register error:', error);
+        showSiswaFingerprintStatus('error', '❌ Gagal registrasi: ' + error.message);
+        document.getElementById('btnRegisterSiswaFingerprint').disabled = false;
+      }
+    });
+  }
 
   async function absenSiswaWithFingerprint() {
     const nisn = document.getElementById('siswaNISN').value.trim();
@@ -2373,6 +2570,9 @@
                     showSiswaFingerprintStatus('success', '✅ ' + absenRes.message);
                     fetchDashboardData();
                     document.getElementById('siswaNISN').value = '';
+                    currentSiswaNISN = '';
+                    document.getElementById('siswaRegStatus').style.display = 'none';
+                    document.getElementById('btnRegisterSiswaFingerprint').classList.remove('hidden');
                   } else {
                     showSiswaFingerprintStatus('error', '❌ ' + absenRes.message);
                   }
@@ -2412,6 +2612,27 @@
       }, 5000);
     }
   }
+
+  // Event listener untuk NISN input - cek status saat user mengetik
+  document.addEventListener('DOMContentLoaded', function() {
+    const nisnInput = document.getElementById('siswaNISN');
+    if (nisnInput) {
+      let timeoutId;
+      nisnInput.addEventListener('input', function() {
+        clearTimeout(timeoutId);
+        const nisn = this.value.trim();
+        if (nisn.length >= 4) {
+          timeoutId = setTimeout(() => {
+            checkSiswaFingerprintStatus(nisn);
+          }, 500);
+        } else {
+          document.getElementById('siswaRegStatus').style.display = 'none';
+          document.getElementById('btnRegisterSiswaFingerprint').classList.remove('hidden');
+          document.getElementById('btnAbsenSiswaFingerprint').disabled = true;
+        }
+      });
+    }
+  });
 
 </script>
 </body>
