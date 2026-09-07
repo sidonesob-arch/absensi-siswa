@@ -16,7 +16,6 @@
     * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
     body { background-color: #f4f6f9; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
     
-    /* ===== TOPBAR ===== */
     .topbar { 
       background: linear-gradient(135deg, #05285e 0%, #0a3a7a 100%);
       min-height: 65px;
@@ -130,7 +129,6 @@
     .avatar-bg-admin { background: #e74c3c; }
     .avatar-bg-super { background: #f1c40f; color: #2c3e50; }
     
-    /* ===== USER INFO DI TOPBAR BAWAH ===== */
     .topbar-user {
       display: flex;
       align-items: center;
@@ -163,7 +161,6 @@
     .topbar-user .user-role-display.admin { background: rgba(52, 152, 219, 0.25); color: #3498db; }
     .topbar-user .user-role-display.super { background: rgba(241, 196, 15, 0.25); color: #f1c40f; }
     
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 600px) {
       .topbar { padding: 4px 10px 4px 10px; min-height: 58px; }
       .topbar-left img { height: 28px; width: 28px; }
@@ -181,7 +178,6 @@
     }
 
     .main-wrapper { display: flex; margin-top: 65px; margin-bottom: 45px; flex: 1; position: relative; }
-
     .sidebar-overlay { display: none; position: fixed; top: 65px; left: 0; width: 100%; height: calc(100vh - 110px); background: rgba(0,0,0,0.3); z-index: 980; }
     .sidebar-overlay.active { display: block; }
 
@@ -199,7 +195,6 @@
 
     .footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 40px; background: #05285e; border-top: 1px solid #031c44; display: flex; justify-content: center; align-items: center; font-size: 11px; color: #d0dbe8; z-index: 999; font-weight: 500; }
 
-    /* ===== STYLE LAINNYA ===== */
     #scanPopup { position: fixed; top: 75px; right: 10px; z-index: 3000; width: 280px; padding: 10px 12px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); display: none; }
     .popup-success { background: #d4edda; color: #155724; border-left: 5px solid #28a745; }
     .popup-warning { background: #fff3cd; color: #856404; border-left: 5px solid #ffc107; }
@@ -232,6 +227,10 @@
     .btn-success { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
     .btn-success:hover { background: #218838; }
     .btn-sm { padding: 4px 10px; font-size: 11px; width: auto; }
+    .btn-add { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    .btn-add:hover { background: #218838; }
+    .btn-remove { background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+    .btn-remove:hover { background: #c0392b; }
     
     #reader { width: 100%; max-width: 400px; border-radius: 8px; overflow: hidden; margin-top: 10px; background: #111; }
     .table-responsive { overflow-x: auto; margin-top: 10px; background: #fff; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -254,7 +253,6 @@
     .export-section .btn-pdf { background: #d93025; color: white; border: none; cursor: pointer; font-weight: bold; }
     .export-section .btn-pdf:hover { background: #c0392b; }
 
-    /* ===== SIDIK JARI ===== */
     .fingerprint-section {
       background: #fff;
       padding: 20px;
@@ -381,6 +379,58 @@
     }
     .role-badge.guru { background: #d4edda; color: #155724; }
     .role-badge.siswa { background: #d1ecf1; color: #0c5460; }
+
+    /* ===== SESI CONFIG ===== */
+    .sesi-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .sesi-row .sesi-name {
+      font-weight: 600;
+      min-width: 70px;
+      font-size: 12px;
+      color: #05285e;
+    }
+    .sesi-row input, .sesi-row select {
+      padding: 5px 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 12px;
+    }
+    .sesi-row input[type="time"] {
+      width: 100px;
+    }
+    .sesi-row select {
+      width: 80px;
+    }
+    .sesi-row .btn-remove {
+      padding: 2px 8px;
+      font-size: 14px;
+      background: none;
+      border: none;
+      color: #dc3545;
+      cursor: pointer;
+    }
+    .sesi-row .btn-remove:hover {
+      color: #c0392b;
+    }
+    .sesi-row .sesi-number {
+      font-size: 12px;
+      color: #666;
+      min-width: 20px;
+    }
+    @media (max-width: 600px) {
+      .sesi-row {
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .sesi-row input[type="time"] {
+        width: 80px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -433,7 +483,6 @@
 <!-- MAIN WRAPPER -->
 <div class="main-wrapper">
   
-  <!-- SIDEBAR -->
   <div class="sidebar" id="appSidebar">
     <div class="nav-category">DASHBOARD</div>
     <a class="nav-item active" onclick="switchMenu('dashboard', this)">🏠 Dashboard Utama</a>
@@ -566,7 +615,6 @@
         
         <div id="siswaFingerprintStatus" class="fingerprint-status"></div>
         
-        <!-- Status Registrasi Siswa -->
         <div id="siswaRegStatus" style="margin-top:10px; font-size:12px; color:#666; display:none;">
           <span id="siswaRegStatusText"></span>
           <span id="siswaRegBadge" class="fingerprint-badge inactive">Belum Terdaftar</span>
@@ -653,20 +701,21 @@
     <div id="menu-pengaturan" class="section">
       <h3 style="color:#05285e; font-size:15px;">⚙️ Pengaturan</h3>
       
+      <!-- ===== PENGATURAN SESI (FLEKSIBEL) ===== -->
       <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">Sesi Absensi & PIN</h4>
-      <div style="display:flex; gap:12px; margin-bottom:10px; background:#fff; padding:8px 10px; border-radius:6px; border:1px solid #ddd; flex-wrap:wrap;">
-        <label style="font-weight:normal; cursor:pointer; font-size:12px;"><input type="checkbox" id="chkSesi1" checked onchange="renderPengaturanTable()"> Sesi 1</label>
-        <label style="font-weight:normal; cursor:pointer; font-size:12px;"><input type="checkbox" id="chkSesi2" checked onchange="renderPengaturanTable()"> Sesi 2</label>
-        <label style="font-weight:normal; cursor:pointer; font-size:12px;"><input type="checkbox" id="chkSesi3" checked onchange="renderPengaturanTable()"> Sesi 3</label>
-      </div>
-      <div class="table-responsive">
-        <table>
-          <thead><tr><th>Sesi / PIN</th><th>Mulai / PIN</th><th>Batas TW</th><th>Tutup</th><th>Status</th></tr></thead>
-          <tbody id="tablePengaturanBody"></tbody>
-        </table>
-      </div>
-      <button class="btn-primary" style="margin-top:8px;" onclick="savePengaturan()">Simpan</button>
       
+      <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+          <button class="btn-add" onclick="addSesiRow()">➕ Tambah Sesi</button>
+          <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="savePengaturan()">💾 Simpan Pengaturan</button>
+        </div>
+        
+        <div id="sesiConfigContainer">
+          <!-- Sesi rows akan di-render di sini -->
+        </div>
+      </div>
+      
+      <!-- ===== HARI LIBUR ===== -->
       <hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ccc;">
       
       <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">Hari Libur</h4>
@@ -688,12 +737,13 @@
         </table>
       </div>
       
+      <!-- ===== PENGATURAN IZIN SIDIK JARI ===== -->
       <hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ccc;">
       
-      <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">👥 Pengaturan Izin Absensi</h4>
+      <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">👥 Pengaturan Izin Sidik Jari</h4>
       <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
         <p style="font-size:12px; color:#666; margin-bottom:10px;">
-          Centang untuk mengizinkan user melakukan absensi. Kosongkan untuk menolak.
+          Centang untuk mengizinkan user melakukan absensi sidik jari. Kosongkan untuk menolak.
         </p>
         <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
           <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="syncAllowedUsers()">🔄 Sinkronisasi</button>
@@ -818,7 +868,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbysMzde2dF_0J2naoXBW5frY4auhZGXrb7KO6Kh73Tsl1TC4mfcq0YnZgEnXpMzew4_dw/exec";
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyik7CnrX8IQr1FNWM-cWr1rfKv1w1F18_uRnrg6-CRZwpNIvtO4n1dOt4n0491LecHug/exec';
 
   // ================= VARIABEL GLOBAL ================= //
   let currentRole = 'siswa';
@@ -1012,7 +1062,9 @@
     sendRequest({ action: 'get_pengaturan' }, res => {
       if (res.status === 'success') {
         cachedPinConfig = res.data;
+        globalPengaturanData = res.data;
         updateRealtimeSesi(res.data);
+        renderSesiConfig(res.data);
       }
     });
   }
@@ -1310,7 +1362,6 @@
     if (menuName === 'daftar-nilai') loadFilterDaftarNilaiWithGuru();
     if (menuName === 'jadwal-mapel') loadJadwalMapel();
     if (menuName === 'siswa-fingerprint') {
-      // Reset status siswa
       document.getElementById('siswaNISN').value = '';
       document.getElementById('siswaFingerprintStatus').className = 'fingerprint-status';
       document.getElementById('siswaRegStatus').style.display = 'none';
@@ -1484,72 +1535,194 @@
     XLSX.writeFile(wb, "Rekap_Kehadiran.xlsx");
   }
 
-  // ================= PENGATURAN ================= //
+  // ================= PENGATURAN SESI (FLEKSIBEL) ================= //
+
+  function renderSesiConfig(dataList) {
+    const container = document.getElementById('sesiConfigContainer');
+    if (!container) return;
+    
+    // Ambil data sesi (tanpa PIN)
+    let sesiList = [];
+    let pinData = [];
+    
+    if (dataList && dataList.length > 0) {
+      dataList.forEach(item => {
+        if (item.sesi && item.sesi.toLowerCase().startsWith('sesi')) {
+          sesiList.push(item);
+        } else if (item.sesi && item.sesi.startsWith('PIN_')) {
+          pinData.push(item);
+        }
+      });
+    }
+    
+    // Jika tidak ada sesi, buat default 2 sesi
+    if (sesiList.length === 0) {
+      sesiList = [
+        { sesi: 'Sesi 1', mulai: '07:00', batasTW: '07:15', tutup: '12:00', alpa: 'Alpa' },
+        { sesi: 'Sesi 2', mulai: '12:00', batasTW: '12:15', tutup: '15:00', alpa: 'Alpa' }
+      ];
+    }
+    
+    // Render sesi
+    let html = '';
+    sesiList.forEach((item, index) => {
+      html += `
+        <div class="sesi-row" data-index="${index}">
+          <span class="sesi-number">${index + 1}.</span>
+          <input type="text" class="sesi-name-input" value="${item.sesi}" placeholder="Nama Sesi" style="width:80px; font-weight:600;">
+          <input type="time" class="sesi-mulai" value="${item.mulai}" style="width:100px;">
+          <span style="font-size:11px; color:#666;">-</span>
+          <input type="time" class="sesi-batas" value="${item.batasTW}" style="width:100px;">
+          <span style="font-size:11px; color:#666;">|</span>
+          <input type="time" class="sesi-tutup" value="${item.tutup}" style="width:100px;">
+          <select class="sesi-alpa" style="width:80px;">
+            <option value="Alpa" ${item.alpa === 'Alpa' ? 'selected' : ''}>Alpa</option>
+            <option value="Bolos" ${item.alpa === 'Bolos' ? 'selected' : ''}>Bolos</option>
+          </select>
+          <button class="btn-remove" onclick="removeSesiRow(this)" title="Hapus Sesi">✕</button>
+        </div>
+      `;
+    });
+    
+    // PIN data (tampilkan di bawah)
+    let pinHtml = '';
+    if (pinData.length > 0) {
+      pinHtml = `<div style="margin-top:10px; padding-top:10px; border-top:1px solid #eee;">`;
+      pinData.forEach(item => {
+        pinHtml += `
+          <div class="sesi-row" style="border-bottom: none; padding:4px 0;">
+            <span class="sesi-name" style="min-width:100px;">${item.sesi}</span>
+            <input type="text" value="${item.mulai}" style="width:120px; font-weight:bold; text-align:center;" readonly>
+            <span style="font-size:11px; color:#999; margin-left:10px;">(PIN tidak dapat diubah di sini)</span>
+          </div>
+        `;
+      });
+      pinHtml += `</div>`;
+    }
+    
+    container.innerHTML = html + pinHtml;
+    
+    // Simpan referensi data
+    container.dataset.sesiCount = sesiList.length;
+  }
+
+  function addSesiRow() {
+    const container = document.getElementById('sesiConfigContainer');
+    const count = container.querySelectorAll('.sesi-row:not(:has(input[readonly]))').length + 1;
+    
+    const row = document.createElement('div');
+    row.className = 'sesi-row';
+    row.innerHTML = `
+      <span class="sesi-number">${count}.</span>
+      <input type="text" class="sesi-name-input" value="Sesi ${count}" placeholder="Nama Sesi" style="width:80px; font-weight:600;">
+      <input type="time" class="sesi-mulai" value="07:00" style="width:100px;">
+      <span style="font-size:11px; color:#666;">-</span>
+      <input type="time" class="sesi-batas" value="07:15" style="width:100px;">
+      <span style="font-size:11px; color:#666;">|</span>
+      <input type="time" class="sesi-tutup" value="12:00" style="width:100px;">
+      <select class="sesi-alpa" style="width:80px;">
+        <option value="Alpa">Alpa</option>
+        <option value="Bolos">Bolos</option>
+      </select>
+      <button class="btn-remove" onclick="removeSesiRow(this)" title="Hapus Sesi">✕</button>
+    `;
+    
+    // Insert before pin section (if exists)
+    const pinSection = container.querySelector('div:last-child');
+    if (pinSection && pinSection.innerHTML.includes('PIN_')) {
+      container.insertBefore(row, pinSection);
+    } else {
+      container.appendChild(row);
+    }
+    
+    updateSesiNumbers();
+    showScanPopup('success', 'Sesi Ditambahkan', `Sesi ${count} berhasil ditambahkan.`);
+  }
+
+  function removeSesiRow(btn) {
+    const row = btn.closest('.sesi-row');
+    const container = document.getElementById('sesiConfigContainer');
+    const rows = container.querySelectorAll('.sesi-row:not(:has(input[readonly]))');
+    
+    if (rows.length <= 1) {
+      showScanPopup('warning', 'Peringatan', 'Minimal harus ada 1 sesi!');
+      return;
+    }
+    
+    if (confirm('Hapus sesi ini?')) {
+      row.remove();
+      updateSesiNumbers();
+      showScanPopup('success', 'Sesi Dihapus', 'Sesi berhasil dihapus.');
+    }
+  }
+
+  function updateSesiNumbers() {
+    const container = document.getElementById('sesiConfigContainer');
+    const rows = container.querySelectorAll('.sesi-row:not(:has(input[readonly]))');
+    rows.forEach((row, index) => {
+      const numSpan = row.querySelector('.sesi-number');
+      if (numSpan) numSpan.textContent = (index + 1) + '.';
+      const nameInput = row.querySelector('.sesi-name-input');
+      if (nameInput && !nameInput.value.trim().startsWith('Sesi')) {
+        // Jika nama custom, biarkan saja
+      }
+    });
+  }
+
+  function getSesiConfigFromUI() {
+    const container = document.getElementById('sesiConfigContainer');
+    const rows = container.querySelectorAll('.sesi-row:not(:has(input[readonly]))');
+    let configList = [];
+    
+    rows.forEach(row => {
+      const nameInput = row.querySelector('.sesi-name-input');
+      const mulai = row.querySelector('.sesi-mulai');
+      const batas = row.querySelector('.sesi-batas');
+      const tutup = row.querySelector('.sesi-tutup');
+      const alpa = row.querySelector('.sesi-alpa');
+      
+      if (nameInput && mulai && batas && tutup && alpa) {
+        configList.push({
+          sesi: nameInput.value.trim() || 'Sesi',
+          mulai: mulai.value,
+          batasTW: batas.value,
+          tutup: tutup.value,
+          alpa: alpa.value
+        });
+      }
+    });
+    
+    // Tambahkan PIN data (baca dari existing)
+    const pinRows = container.querySelectorAll('.sesi-row:has(input[readonly])');
+    pinRows.forEach(row => {
+      const nameSpan = row.querySelector('.sesi-name');
+      const input = row.querySelector('input[readonly]');
+      if (nameSpan && input) {
+        configList.push({
+          sesi: nameSpan.textContent.trim(),
+          mulai: input.value,
+          batasTW: '-',
+          tutup: '-',
+          alpa: '-'
+        });
+      }
+    });
+    
+    return configList;
+  }
 
   function loadPengaturanDataFromServer() {
     sendRequest({ action: 'get_pengaturan' }, res => {
       if (res.status === 'success') {
         globalPengaturanData = res.data;
-        renderPengaturanTable();
+        renderSesiConfig(res.data);
       }
     });
   }
 
-  function renderPengaturanTable() {
-    const tbody = document.getElementById('tablePengaturanBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    const show1 = document.getElementById('chkSesi1').checked;
-    const show2 = document.getElementById('chkSesi2').checked;
-    const show3 = document.getElementById('chkSesi3').checked;
-
-    let defaults = [
-      { sesi: "Sesi 1", mulai: "07:00", batasTW: "07:15", tutup: "12:00", alpa: "Alpa" },
-      { sesi: "Sesi 2", mulai: "12:00", batasTW: "12:15", tutup: "15:00", alpa: "Alpa" },
-      { sesi: "Sesi 3", mulai: "15:00", batasTW: "15:15", tutup: "17:00", alpa: "Alpa" },
-      { sesi: "PIN_Admin", mulai: "123456", batasTW: "-", tutup: "-", alpa: "-" },
-      { sesi: "PIN_Pengaturan", mulai: "456789", batasTW: "-", tutup: "-", alpa: "-" }
-    ];
-
-    let currentList = globalPengaturanData.length ? globalPengaturanData : defaults;
-
-    currentList.forEach((item) => {
-      if (item.sesi === "Sesi 1" && !show1) return;
-      if (item.sesi === "Sesi 2" && !show2) return;
-      if (item.sesi === "Sesi 3" && !show3) return;
-
-      const isPin = item.sesi.startsWith("PIN_");
-      
-      let rowHtml = `<tr>
-        <td><b>${item.sesi}</b><input type="hidden" class="cfg-sesi" value="${item.sesi}"></td>
-        <td><input type="${isPin ? 'text' : 'time'}" class="cfg-mulai" value="${item.mulai}"></td>
-        <td>${isPin ? '-' : `<input type="time" class="cfg-batasTW" value="${item.batasTW}">`}</td>
-        <td>${isPin ? '-' : `<input type="time" class="cfg-tutup" value="${item.tutup}">`}</td>
-        <td>${isPin ? '-' : `
-          <select class="cfg-alpa">
-            <option value="Alpa" ${item.alpa === 'Alpa' ? 'selected' : ''}>Alpa</option>
-            <option value="Bolos" ${item.alpa === 'Bolos' ? 'selected' : ''}>Bolos</option>
-          </select>
-        `}</td>
-      </tr>`;
-      tbody.innerHTML += rowHtml;
-    });
-  }
-
   function savePengaturan() {
-    let configList = [];
-    const rows = document.querySelectorAll('#tablePengaturanBody tr');
-
-    rows.forEach(r => {
-      const sesi = r.querySelector('.cfg-sesi').value;
-      const mulai = r.querySelector('.cfg-mulai').value;
-      const batasTW = r.querySelector('.cfg-batasTW') ? r.querySelector('.cfg-batasTW').value : '';
-      const tutup = r.querySelector('.cfg-tutup') ? r.querySelector('.cfg-tutup').value : '';
-      const alpa = r.querySelector('.cfg-alpa') ? r.querySelector('.cfg-alpa').value : 'Alpa';
-      configList.push({ sesi, mulai, batasTW, tutup, alpa });
-    });
-
+    const configList = getSesiConfigFromUI();
+    
     sendRequest({ action: 'save_pengaturan', config: configList }, res => {
       showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
       if (res.status === 'success') {
@@ -1558,6 +1731,8 @@
       }
     });
   }
+
+  // ================= HARI LIBUR ================= //
 
   function loadHariLiburData() {
     sendRequest({ action: 'get_hari_libur' }, res => {
@@ -1629,7 +1804,7 @@
     });
   }
 
-  // ================= IZIN ABSENSI ================= //
+  // ================= IZIN ABSENSI (SIDIK JARI) ================= //
 
   function loadAllowedUsers() {
     const filterRole = document.getElementById('filterAllowedRole').value;
@@ -1662,6 +1837,7 @@
         filtered.forEach((item, idx) => {
           const statusLabel = item.allowed ? 'Diizinkan' : 'Ditolak';
           const statusClass = item.allowed ? 'allowed' : 'denied';
+          const isChecked = item.allowed ? 'checked' : '';
           
           tbody.innerHTML += `<tr>
             <td>${idx + 1}</td>
@@ -1670,8 +1846,8 @@
             <td><span class="role-badge ${item.role}">${item.role}</span></td>
             <td style="text-align:center;">
               <label class="switch">
-                <input type="checkbox" ${item.allowed ? 'checked' : ''} 
-                       onchange="updateAllowedUser('${item.id}', this.checked)">
+                <input type="checkbox" ${isChecked} 
+                       onchange="updateAllowedUser('${item.id}', this.checked, this)">
                 <span class="slider"></span>
               </label>
               <span class="switch-label ${statusClass}">${statusLabel}</span>
@@ -1684,17 +1860,29 @@
     });
   }
 
-  function updateAllowedUser(userId, allowed) {
+  function updateAllowedUser(userId, allowed, checkboxElement) {
+    // Tampilkan loading state
+    if (checkboxElement) {
+      checkboxElement.disabled = true;
+    }
+    
     sendRequest({
       action: 'update_allowed_users',
       userId: userId,
       allowed: allowed
     }, res => {
+      // Re-enable checkbox
+      if (checkboxElement) {
+        checkboxElement.disabled = false;
+      }
+      
       if (res.status === 'success') {
         showScanPopup('success', 'Berhasil', res.message);
+        // Reload data untuk memastikan konsistensi
         loadAllowedUsers();
       } else {
         showScanPopup('danger', 'Gagal', res.message);
+        // Reload untuk mengembalikan ke state sebelumnya
         loadAllowedUsers();
       }
     });
@@ -1712,7 +1900,7 @@
   }
 
   function allowAllUsers() {
-    if (!confirm('Yakin ingin mengizinkan SEMUA user untuk absensi?')) return;
+    if (!confirm('Yakin ingin mengizinkan SEMUA user untuk absensi sidik jari?')) return;
     
     sendRequest({ action: 'get_allowed_users' }, res => {
       if (res.status === 'success' && res.data) {
@@ -1732,7 +1920,7 @@
           }
         });
         setTimeout(() => {
-          showScanPopup('success', 'Berhasil', `${count} user diizinkan absensi.`);
+          showScanPopup('success', 'Berhasil', `${count} user diizinkan sidik jari.`);
           loadAllowedUsers();
         }, 1500);
       }
@@ -1740,7 +1928,7 @@
   }
 
   function denyAllUsers() {
-    if (!confirm('Yakin ingin menolak SEMUA user untuk absensi?')) return;
+    if (!confirm('Yakin ingin menolak SEMUA user untuk absensi sidik jari?')) return;
     
     sendRequest({ action: 'get_allowed_users' }, res => {
       if (res.status === 'success' && res.data) {
@@ -1760,7 +1948,7 @@
           }
         });
         setTimeout(() => {
-          showScanPopup('success', 'Berhasil', `${count} user ditolak absensi.`);
+          showScanPopup('success', 'Berhasil', `${count} user ditolak sidik jari.`);
           loadAllowedUsers();
         }, 1500);
       }
@@ -2089,7 +2277,6 @@
           document.getElementById('btnAbsenFingerprint').disabled = false;
           document.getElementById('fingerprintStatusBadge').className = 'fingerprint-badge active';
           document.getElementById('fingerprintStatusBadge').innerText = 'Terdaftar';
-          // Sembunyikan tombol daftar jika sudah terdaftar
           document.getElementById('btnRegisterFingerprint').classList.add('hidden');
         } else {
           document.getElementById('btnRegisterFingerprint').classList.remove('hidden');
@@ -2334,7 +2521,6 @@
           document.getElementById('siswaRegBadge').innerText = 'Terdaftar';
           document.getElementById('siswaRegStatusText').innerHTML = `✅ Siswa <b>${nisn}</b> sudah terdaftar sidik jari.`;
           document.getElementById('siswaRegStatus').style.display = 'block';
-          // Sembunyikan tombol daftar
           document.getElementById('btnRegisterSiswaFingerprint').classList.add('hidden');
         } else {
           document.getElementById('btnAbsenSiswaFingerprint').disabled = true;
@@ -2342,7 +2528,6 @@
           document.getElementById('siswaRegBadge').innerText = 'Belum Terdaftar';
           document.getElementById('siswaRegStatusText').innerHTML = `⚠️ Siswa <b>${nisn}</b> belum mendaftarkan sidik jari.`;
           document.getElementById('siswaRegStatus').style.display = 'block';
-          // Tampilkan tombol daftar
           document.getElementById('btnRegisterSiswaFingerprint').classList.remove('hidden');
         }
       }
@@ -2390,7 +2575,6 @@
       return;
     }
 
-    // Verifikasi NISN terlebih dahulu
     showSiswaFingerprintStatus('info', '⏳ Memverifikasi NISN...');
     document.getElementById('btnRegisterSiswaFingerprint').disabled = true;
 
@@ -2613,7 +2797,7 @@
     }
   }
 
-  // Event listener untuk NISN input - cek status saat user mengetik
+  // Event listener untuk NISN input
   document.addEventListener('DOMContentLoaded', function() {
     const nisnInput = document.getElementById('siswaNISN');
     if (nisnInput) {
