@@ -868,7 +868,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxeyKAJsKycIB8jxg1e1v1giwrL2eQZHbTjoTqgtgqPrQpG9kM7ri3I5tKYRiFaXwB_2g/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzCD3DubmkuXIcjQMKPVPW7Cieo09Cih5HyAlqwPCeCD22WyB0Mq4pDGvnsWNtWxoFnvw/exec";
 
   // ================= VARIABEL GLOBAL ================= //
   let currentRole = 'siswa';
@@ -1805,6 +1805,7 @@
   }
 
   // ================= IZIN ABSENSI (SIDIK JARI) ================= //
+// ================= IZIN ABSENSI (SIDIK JARI) - PERBAIKAN ================= //
 
 function loadAllowedUsers() {
   const filterRole = document.getElementById('filterAllowedRole').value;
@@ -1814,6 +1815,8 @@ function loadAllowedUsers() {
     const tbody = document.getElementById('tableAllowedUsersBody');
     if (!tbody) return;
     tbody.innerHTML = '';
+
+    console.log('Response from server:', res); // Debug
 
     if (res.status === 'success' && res.data && res.data.length > 0) {
       let filtered = res.data;
@@ -1835,11 +1838,13 @@ function loadAllowedUsers() {
       }
 
       filtered.forEach((item, idx) => {
-        // Gunakan data dari server untuk menentukan status
+        // PASTIKAN: allowed adalah boolean
         const isAllowed = item.allowed === true;
         const statusLabel = isAllowed ? 'Diizinkan' : 'Ditolak';
         const statusClass = isAllowed ? 'allowed' : 'denied';
         const isChecked = isAllowed ? 'checked' : '';
+        
+        console.log('User:', item.id, 'Allowed:', isAllowed); // Debug
         
         tbody.innerHTML += `<tr>
           <td>${idx + 1}</td>
@@ -1873,18 +1878,22 @@ function updateAllowedUser(userId, allowed, checkboxElement) {
   const row = checkboxElement.closest('tr');
   const labelSpan = row.querySelector('.switch-label');
   if (labelSpan) {
-    labelSpan.textContent = 'Menyimpan...';
+    labelSpan.textContent = '⏳...';
     labelSpan.className = 'switch-label';
   }
+  
+  console.log('Updating user:', userId, 'to:', allowed); // Debug
   
   sendRequest({
     action: 'update_allowed_users',
     userId: userId,
     allowed: allowed
   }, res => {
+    console.log('Update response:', res); // Debug
+    
     if (res.status === 'success') {
       showScanPopup('success', 'Berhasil', res.message);
-      // Refresh data dari server untuk memastikan konsistensi
+      // Refresh data dari server
       loadAllowedUsers();
     } else {
       showScanPopup('danger', 'Gagal', res.message);
@@ -1894,90 +1903,83 @@ function updateAllowedUser(userId, allowed, checkboxElement) {
   });
 }
 
-  function syncAllowedUsers() {
-    sendRequest({ action: 'sync_allowed_users' }, res => {
-      if (res.status === 'success') {
-        showScanPopup('success', 'Sinkronisasi', res.message);
-        loadAllowedUsers();
-      } else {
-        showScanPopup('danger', 'Gagal', res.message);
-      }
-    });
-  }
-
-  function allowAllUsers() {
-  if (!confirm('Yakin ingin mengizinkan SEMUA user untuk absensi sidik jari?')) return;
+function syncAllowedUsers() {
+  showScanPopup('info', 'Sinkronisasi', 'Sedang menyinkronkan data...');
   
-  sendRequest({ action: 'get_allowed_users' }, res => {
-    if (res.status === 'success' && res.data) {
-      let count = 0;
-      const total = res.data.filter(u => !u.allowed).length;
-      if (total === 0) {
-        showScanPopup('info', 'Info', 'Semua user sudah diizinkan.');
-        return;
-      }
-      
-      // Update satu per satu
-      res.data.forEach(user => {
-        if (!user.allowed) {
-          sendRequest({
-            action: 'update_allowed_users',
-            userId: user.id,
-            allowed: true
-          }, () => { 
-            count++; 
-            // Jika sudah selesai semua, refresh
-            if (count === total) {
-              setTimeout(() => {
-                showScanPopup('success', 'Berhasil', `${count} user diizinkan sidik jari.`);
-                loadAllowedUsers();
-              }, 500);
-            }
-          });
-        }
-      });
-      
-      // Jika tidak ada yang perlu diupdate
-      if (total === 0) {
-        loadAllowedUsers();
-      }
+  sendRequest({ action: 'sync_allowed_users' }, res => {
+    if (res.status === 'success') {
+      showScanPopup('success', 'Sinkronisasi', res.message);
+      loadAllowedUsers();
+    } else {
+      showScanPopup('danger', 'Gagal', res.message);
     }
   });
 }
 
-  function denyAllUsers() {
-  if (!confirm('Yakin ingin menolak SEMUA user untuk absensi sidik jari?')) return;
+function allowAllUsers() {
+  if (!confirm('Yakin ingin mengizinkan SEMUA user untuk absensi sidik jari?')) return;
+  
+  showScanPopup('info', 'Proses', 'Sedang mengizinkan semua user...');
   
   sendRequest({ action: 'get_allowed_users' }, res => {
     if (res.status === 'success' && res.data) {
       let count = 0;
-      const total = res.data.filter(u => u.allowed).length;
-      if (total === 0) {
+      const toUpdate = res.data.filter(u => !u.allowed);
+      
+      if (toUpdate.length === 0) {
+        showScanPopup('info', 'Info', 'Semua user sudah diizinkan.');
+        return;
+      }
+      
+      toUpdate.forEach((user, index) => {
+        sendRequest({
+          action: 'update_allowed_users',
+          userId: user.id,
+          allowed: true
+        }, () => { 
+          count++; 
+          if (count === toUpdate.length) {
+            setTimeout(() => {
+              showScanPopup('success', 'Berhasil', `${count} user diizinkan sidik jari.`);
+              loadAllowedUsers();
+            }, 500);
+          }
+        });
+      });
+    }
+  });
+}
+
+function denyAllUsers() {
+  if (!confirm('Yakin ingin menolak SEMUA user untuk absensi sidik jari?')) return;
+  
+  showScanPopup('info', 'Proses', 'Sedang menolak semua user...');
+  
+  sendRequest({ action: 'get_allowed_users' }, res => {
+    if (res.status === 'success' && res.data) {
+      let count = 0;
+      const toUpdate = res.data.filter(u => u.allowed);
+      
+      if (toUpdate.length === 0) {
         showScanPopup('info', 'Info', 'Semua user sudah ditolak.');
         return;
       }
       
-      res.data.forEach(user => {
-        if (user.allowed) {
-          sendRequest({
-            action: 'update_allowed_users',
-            userId: user.id,
-            allowed: false
-          }, () => { 
-            count++;
-            if (count === total) {
-              setTimeout(() => {
-                showScanPopup('success', 'Berhasil', `${count} user ditolak sidik jari.`);
-                loadAllowedUsers();
-              }, 500);
-            }
-          });
-        }
+      toUpdate.forEach((user, index) => {
+        sendRequest({
+          action: 'update_allowed_users',
+          userId: user.id,
+          allowed: false
+        }, () => { 
+          count++; 
+          if (count === toUpdate.length) {
+            setTimeout(() => {
+              showScanPopup('success', 'Berhasil', `${count} user ditolak sidik jari.`);
+              loadAllowedUsers();
+            }, 500);
+          }
+        });
       });
-      
-      if (total === 0) {
-        loadAllowedUsers();
-      }
     }
   });
 }
