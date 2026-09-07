@@ -267,6 +267,103 @@
     .export-section .btn-excel:hover { background: #155a34; }
     .export-section .btn-pdf { background: #d93025; color: white; border: none; cursor: pointer; font-weight: bold; }
     .export-section .btn-pdf:hover { background: #c0392b; }
+    
+    /* ===== SIDIK JARI ===== */
+.fingerprint-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e0e8f5;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.fingerprint-section .icon-large {
+  font-size: 48px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.fingerprint-section .btn-fingerprint {
+  background: #05285e;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin: 5px;
+}
+
+.fingerprint-section .btn-fingerprint:hover {
+  background: #0b3c85;
+  transform: scale(1.02);
+}
+
+.fingerprint-section .btn-fingerprint.success {
+  background: #28a745;
+}
+
+.fingerprint-section .btn-fingerprint.danger {
+  background: #dc3545;
+}
+
+.fingerprint-section .btn-fingerprint:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.fingerprint-status {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: none;
+}
+
+.fingerprint-status.show {
+  display: block;
+}
+
+.fingerprint-status.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.fingerprint-status.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.fingerprint-status.info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.fingerprint-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.fingerprint-badge.active {
+  background: #28a745;
+  color: white;
+}
+
+.fingerprint-badge.inactive {
+  background: #dc3545;
+  color: white;
+}
   </style>
 </head>
 <body>
@@ -440,6 +537,38 @@
       <div id="reader"></div>
     </div>
 
+<!-- Di dalam menu-scanner, tambahkan setelah tombol kamera -->
+<div id="menu-scanner" class="section">
+  <h3 style="color:#05285e; font-size:15px;">📷 Scanner QR Barcode</h3>
+  
+  <!-- ===== SIDIK JARI ===== -->
+  <div class="fingerprint-section">
+    <span class="icon-large">🔐</span>
+    <h4 style="margin:0 0 5px 0; color:#05285e;">Absensi dengan Sidik Jari HP</h4>
+    <p style="font-size:12px; color:#666; margin-bottom:10px;">
+      Gunakan sensor sidik jari HP Anda untuk absensi cepat dan aman.
+      <span id="fingerprintStatusBadge" class="fingerprint-badge inactive">Belum Terdaftar</span>
+    </p>
+    
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <button id="btnRegisterFingerprint" class="btn-fingerprint" onclick="registerFingerprint()">
+        📝 Daftar Sidik Jari
+      </button>
+      <button id="btnAbsenFingerprint" class="btn-fingerprint" onclick="absenWithFingerprint()" disabled>
+        👆 Absen dengan Sidik Jari
+      </button>
+    </div>
+    
+    <div id="fingerprintStatus" class="fingerprint-status"></div>
+  </div>
+  
+  <div id="scannerAdminSwitch" class="form-group" style="display:none;">
+    <!-- ... -->
+  </div>
+  <button id="btnCameraToggle" class="btn-toggle" onclick="toggleCamera()">Buka Kamera</button>
+  <div id="reader"></div>
+</div>
+    
     <div id="menu-izin" class="section">
       <h3 style="color:#05285e; font-size:15px;">📝 Input Izin / Sakit</h3>
       <div class="form-group">
@@ -596,7 +725,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz8Zlq2y05DIgbecx06eFm9pkLr1eS_3gngrMMhfPlYLZADY7N-5C2v0-Gzp6nN66ijxQ/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwX1_wZS9Wp2rFcmDhnjl6phVYFcpSxDo-9loHw_y3rvVoHMhfynl2F5rBo8Fvin-czqw/exec";
 
   // ================= VARIABEL GLOBAL ================= //
   let currentRole = 'siswa';
@@ -1154,6 +1283,311 @@
     });
   }
 
+  // ================= SIDIK JARI (WEBAUTHN) ================= //
+
+// Cek apakah browser mendukung WebAuthn
+function isWebAuthnSupported() {
+  return window.PublicKeyCredential !== undefined;
+}
+
+// Variabel untuk menyimpan data user saat ini
+let currentFingerprintUser = null;
+let fingerprintRegistered = false;
+
+// Cek status registrasi sidik jari untuk user yang login
+function checkFingerprintStatus() {
+  if (userRole !== 'guru' || !userData) return;
+  
+  const userId = userData.nip || userData.id;
+  if (!userId) return;
+  
+  sendRequest({ 
+    action: 'webauthn_check', 
+    userId: userId 
+  }, res => {
+    if (res.status === 'success') {
+      fingerprintRegistered = res.registered;
+      updateFingerprintUI();
+      
+      if (fingerprintRegistered) {
+        document.getElementById('btnAbsenFingerprint').disabled = false;
+        document.getElementById('fingerprintStatusBadge').className = 'fingerprint-badge active';
+        document.getElementById('fingerprintStatusBadge').innerText = 'Terdaftar';
+      }
+    }
+  });
+}
+
+function updateFingerprintUI() {
+  const statusBadge = document.getElementById('fingerprintStatusBadge');
+  const btnAbsen = document.getElementById('btnAbsenFingerprint');
+  
+  if (fingerprintRegistered) {
+    statusBadge.className = 'fingerprint-badge active';
+    statusBadge.innerText = 'Terdaftar';
+    btnAbsen.disabled = false;
+  } else {
+    statusBadge.className = 'fingerprint-badge inactive';
+    statusBadge.innerText = 'Belum Terdaftar';
+    btnAbsen.disabled = true;
+  }
+}
+
+// Registrasi Sidik Jari
+async function registerFingerprint() {
+  if (!isWebAuthnSupported()) {
+    showFingerprintStatus('error', '❌ Browser Anda tidak mendukung WebAuthn. Gunakan Chrome/Edge terbaru.');
+    return;
+  }
+
+  if (userRole !== 'guru' || !userData) {
+    showFingerprintStatus('error', '❌ Silakan login sebagai Guru terlebih dahulu.');
+    return;
+  }
+
+  const userId = userData.nip || userData.id;
+  const userName = userData.nama || 'Guru';
+
+  if (!userId) {
+    showFingerprintStatus('error', '❌ User ID tidak ditemukan.');
+    return;
+  }
+
+  try {
+    showFingerprintStatus('info', '⏳ Menyiapkan registrasi sidik jari...');
+    document.getElementById('btnRegisterFingerprint').disabled = true;
+
+    // Generate challenge
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+
+    // Buat credential
+    const publicKeyCredentialCreationOptions = {
+      challenge: challenge,
+      rp: {
+        name: 'SMP NEGERI 1 SOBANG',
+        id: window.location.hostname
+      },
+      user: {
+        id: new TextEncoder().encode(userId),
+        name: userName,
+        displayName: userName
+      },
+      pubKeyCredParams: [
+        { type: 'public-key', alg: -7 },  // ES256
+        { type: 'public-key', alg: -257 } // RS256
+      ],
+      authenticatorSelection: {
+        authenticatorAttachment: 'platform',
+        requireResidentKey: false,
+        userVerification: 'required'
+      },
+      timeout: 60000,
+      attestation: 'none'
+    };
+
+    const credential = await navigator.credentials.create({
+      publicKey: publicKeyCredentialCreationOptions
+    });
+
+    if (!credential) {
+      throw new Error('Registrasi gagal atau dibatalkan.');
+    }
+
+    // Ekstrak data
+    const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+    const publicKey = btoa(String.fromCharCode(...new Uint8Array(credential.response.getPublicKey())));
+
+    // Kirim ke server
+    sendRequest({
+      action: 'webauthn_register',
+      userId: userId,
+      userName: userName,
+      credentialId: credentialId,
+      publicKey: publicKey
+    }, res => {
+      if (res.status === 'success') {
+        fingerprintRegistered = true;
+        updateFingerprintUI();
+        document.getElementById('btnAbsenFingerprint').disabled = false;
+        showFingerprintStatus('success', '✅ ' + res.message);
+      } else {
+        showFingerprintStatus('error', '❌ ' + res.message);
+      }
+      document.getElementById('btnRegisterFingerprint').disabled = false;
+    });
+
+  } catch (error) {
+    console.error('Register error:', error);
+    showFingerprintStatus('error', '❌ Gagal registrasi: ' + error.message);
+    document.getElementById('btnRegisterFingerprint').disabled = false;
+  }
+}
+
+// Absensi dengan Sidik Jari
+async function absenWithFingerprint() {
+  if (!isWebAuthnSupported()) {
+    showFingerprintStatus('error', '❌ Browser tidak mendukung WebAuthn.');
+    return;
+  }
+
+  if (!fingerprintRegistered) {
+    showFingerprintStatus('error', '❌ Silakan daftarkan sidik jari terlebih dahulu.');
+    return;
+  }
+
+  if (!currentActiveSesiName) {
+    showFingerprintStatus('error', '❌ Tidak ada sesi absen aktif saat ini!');
+    return;
+  }
+
+  const userId = userData.nip || userData.id;
+  if (!userId) {
+    showFingerprintStatus('error', '❌ User ID tidak ditemukan.');
+    return;
+  }
+
+  try {
+    showFingerprintStatus('info', '⏳ Mohon tempelkan jari pada sensor...');
+    document.getElementById('btnAbsenFingerprint').disabled = true;
+
+    // Ambil data credential dari server
+    sendRequest({
+      action: 'webauthn_login',
+      userId: userId
+    }, async res => {
+      if (res.status !== 'success') {
+        showFingerprintStatus('error', '❌ ' + res.message);
+        document.getElementById('btnAbsenFingerprint').disabled = false;
+        return;
+      }
+
+      try {
+        // Build credential untuk login
+        const credentialId = Uint8Array.from(atob(res.credentialId), c => c.charCodeAt(0));
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+
+        const publicKeyCredentialRequestOptions = {
+          challenge: challenge,
+          allowCredentials: [{
+            type: 'public-key',
+            id: credentialId
+          }],
+          timeout: 60000,
+          userVerification: 'required',
+          rpId: window.location.hostname
+        };
+
+        const assertion = await navigator.credentials.get({
+          publicKey: publicKeyCredentialRequestOptions
+        });
+
+        if (!assertion) {
+          throw new Error('Verifikasi gagal atau dibatalkan.');
+        }
+
+        // Verifikasi berhasil, lakukan absensi
+        showFingerprintStatus('info', '✅ Sidik jari terverifikasi! Melakukan absensi...');
+
+        // Lakukan absensi seperti biasa
+        const role = 'guru';
+        const code = userId;
+        const sesi = currentActiveSesiName;
+
+        sendRequest({
+          action: 'absen_qr',
+          role: role,
+          code: code,
+          sesi: sesi
+        }, absenRes => {
+          let popupType = absenRes.status === 'success' ? 'success' : 
+                         (absenRes.status === 'warning' ? 'warning' : 'danger');
+          showScanPopup(popupType, 'Absensi Sidik Jari', absenRes.message);
+          
+          if (absenRes.status === 'success') {
+            showFingerprintStatus('success', '✅ ' + absenRes.message);
+            fetchDashboardData();
+          } else {
+            showFingerprintStatus('error', '❌ ' + absenRes.message);
+          }
+          document.getElementById('btnAbsenFingerprint').disabled = false;
+        });
+
+      } catch (error) {
+        console.error('Login error:', error);
+        showFingerprintStatus('error', '❌ Gagal verifikasi: ' + error.message);
+        document.getElementById('btnAbsenFingerprint').disabled = false;
+      }
+    });
+
+  } catch (error) {
+    console.error('Absen error:', error);
+    showFingerprintStatus('error', '❌ Gagal: ' + error.message);
+    document.getElementById('btnAbsenFingerprint').disabled = false;
+  }
+}
+
+// Tampilkan status di fingerprint section
+function showFingerprintStatus(type, message) {
+  const statusEl = document.getElementById('fingerprintStatus');
+  statusEl.className = 'fingerprint-status show ' + type;
+  statusEl.innerHTML = message;
+  
+  // Auto hide setelah 5 detik untuk success
+  if (type === 'success') {
+    setTimeout(() => {
+      statusEl.className = 'fingerprint-status';
+    }, 5000);
+  }
+}
+
+// ================= UPDATE DI SUBMIT LOGIN ================= //
+
+// Tambahkan ini di dalam fungsi submitLogin setelah user login
+function submitLogin() {
+  const pin = document.getElementById('inputPinModal').value.trim();
+  if (!pin) {
+    showScanPopup("warning", "Peringatan", "PIN tidak boleh kosong!");
+    return;
+  }
+
+  sendRequest({ action: 'login', pin: pin }, res => {
+    if (res.status === 'success') {
+      userRole = res.role;
+      userData = res;
+      closeLoginModal();
+      applyRoleAccessUI();
+      updateTopbarUserInfo();
+      showScanPopup("success", "Login Berhasil", res.message);
+      
+      if (userRole === 'guru' && userData) {
+        sendRequest({ action: 'get_guru_profile', pin: pin }, profileRes => {
+          if (profileRes.status === 'success') {
+            userData.fotoFile = profileRes.fotoFile;
+            updateTopbarUserInfo();
+          }
+        });
+        
+        // Cek status sidik jari untuk guru
+        setTimeout(() => {
+          checkFingerprintStatus();
+        }, 500);
+      }
+      
+      if (pendingMenu) {
+        switchMenu(pendingMenu.name, pendingMenu.el);
+        pendingMenu = null;
+      }
+      updateUIByRole();
+      closeSidebar();
+    } else {
+      showScanPopup("danger", "Login Gagal", res.message);
+      closeSidebar();
+    }
+  });
+}
+  
   // ================= IZIN ================= //
 
   function simpanIzin() {
