@@ -1,1221 +1,1712 @@
-const SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
-
-function doPost(e) {
-  try {
-    let data;
-    if (e.postData && (e.postData.type === "application/json" || e.postData.contents)) {
-      data = JSON.parse(e.postData.contents);
-    } else {
-      data = e.parameter;
-    }
-
-    const action = data.action || 'absen_qr';
-
-    if (action === 'login') return handleLogin(data);
-    if (action === 'absen_qr') return handleAbsenQR(data);
-    if (action === 'input_izin') return handleInputIzin(data);
-    if (action === 'cari_kehadiran') return handleCariKehadiran(data);
-    if (action === 'rekap_kehadiran') return handleRekapKehadiran(data);
-    if (action === 'get_kelas') return handleGetKelas();
-    if (action === 'get_pengaturan') return handleGetPengaturan();
-    if (action === 'save_pengaturan') return handleSavePengaturan(data);
-    if (action === 'get_dashboard_data') return handleGetDashboardData(data);
-    if (action === 'get_hari_libur') return handleGetHariLibur();
-    if (action === 'save_hari_libur') return handleSaveHariLibur(data);
-    if (action === 'delete_hari_libur') return handleDeleteHariLibur(data);
-    
-    // Fitur Nilai & Daftar Nilai
-    if (action === 'get_filter_nilai') return handleGetFilterNilai(data);
-    if (action === 'get_nilai') return handleGetNilai(data);
-    if (action === 'save_nilai') return handleSaveNilai(data);
-    if (action === 'get_daftar_nilai') return handleGetDaftarNilai(data);
-    
-    // Fitur Export Daftar Nilai
-    if (action === 'export_daftar_nilai') return handleExportDaftarNilai(data);
-    
-    // Fitur Jadwal Mapel
-    if (action === 'get_jadwal_mapel') return handleGetJadwalMapel(data);
-    
-    // Fitur Profile Guru
-    if (action === 'get_guru_profile') return handleGetGuruProfile(data);
-
-    return responseJSON({ status: "error", message: "Aksi tidak dikenal!" });
-
-  } catch (error) {
-    return responseJSON({ status: "error", message: "Error: " + error.toString() });
-  }
-}
-
-// ================= FUNGSI UTILITY ================= //
-
-function parseJamToMinutes(jamStr) {
-  if (!jamStr || !jamStr.includes(":")) return 0;
-  const parts = jamStr.split(":");
-  return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-}
-
-function responseJSON(data) {
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-// ================= LOGIN SYSTEM ================= //
-
-function handleLogin(data) {
-  const pin = String(data.pin || '').trim();
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Absensi Terpadu - SMP NEGERI 1 SOBANG</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
-  // Cek di Database_Guru untuk login guru
-  const dbGuru = ss.getSheetByName("Database_Guru");
-  if (dbGuru) {
-    const gData = dbGuru.getDataRange().getDisplayValues();
-    for (let i = 1; i < gData.length; i++) {
-      const pinGuru = String(gData[i][4] || '').trim();
-      if (pin === pinGuru) {
-        const nama = String(gData[i][1]).trim();
-        const nip = String(gData[i][0]).trim();
-        const mapel = String(gData[i][2] || '').trim();
-        const kelasRaw = String(gData[i][3] || '').trim();
-        
-        let mapelList = mapel.split(',').map(m => m.trim()).filter(m => m);
-        let kelasList = kelasRaw.split(',').map(k => k.trim()).filter(k => k);
-        
-        return responseJSON({
-          status: "success",
-          role: "guru",
-          nip: nip,
-          nama: nama,
-          mapel: mapelList,
-          kelas: kelasList,
-          message: "Login Guru Berhasil!"
-        });
-      }
-    }
-  }
+  <script>
+    const ASSETS_BASE_URL = './assets/';
+    const PROFILE_IMAGES_PATH = ASSETS_BASE_URL + 'images/profiles/';
+  </script>
   
-  // Cek di Pengaturan untuk PIN Admin dan Super Admin
-  const sheetPengaturan = ss.getSheetByName("Pengaturan");
-  if (sheetPengaturan) {
-    const pData = sheetPengaturan.getDataRange().getDisplayValues();
-    let pinAdmin = "123456";
-    let pinPengaturan = "456789";
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background-color: #f4f6f9; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
     
-    for (let i = 1; i < pData.length; i++) {
-      const key = String(pData[i][0]).trim();
-      const val = String(pData[i][1]).trim();
-      if (key === "PIN_Admin") pinAdmin = val;
-      if (key === "PIN_Pengaturan") pinPengaturan = val;
+    /* ===== TOPBAR ===== */
+    .topbar { 
+      background: linear-gradient(135deg, #05285e 0%, #0a3a7a 100%);
+      min-height: 65px;
+      border-bottom: 1px solid #031c44;
+      display: flex;
+      flex-direction: column;
+      padding: 5px 12px 5px 12px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
     
-    if (pin === pinPengaturan) {
-      return responseJSON({
-        status: "success",
-        role: "super_admin",
-        message: "Login Super Admin Berhasil!"
-      });
-    } else if (pin === pinAdmin) {
-      return responseJSON({
-        status: "success",
-        role: "admin",
-        message: "Login Admin Berhasil!"
-      });
+    .topbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
     }
-  }
-  
-  return responseJSON({ status: "error", message: "PIN tidak valid! Periksa kembali PIN Anda." });
-}
+    
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-left img { height: 32px; width: 32px; object-fit: contain; }
+    .sidebar-toggle-btn { 
+      background: none; 
+      border: none; 
+      font-size: 20px; 
+      cursor: pointer; 
+      color: #ffffff; 
+      padding: 4px;
+      line-height: 1;
+    }
+    
+    .topbar-center { 
+      text-align: center; 
+      flex: 1;
+      min-width: 0;
+    }
+    .topbar-title { 
+      font-size: 12px; 
+      font-weight: 700; 
+      color: #ffffff; 
+      letter-spacing: 0.5px; 
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .topbar-clock { 
+      font-size: 10px; 
+      color: #b2ccf3; 
+      font-weight: 500; 
+      margin-top: 1px;
+      letter-spacing: 0.3px;
+    }
+    
+    .topbar-right { 
+      display: flex; 
+      align-items: center; 
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    
+    .profile-avatar { 
+      height: 32px; 
+      width: 32px; 
+      border-radius: 50%; 
+      border: 2px solid rgba(255,255,255,0.3);
+      background: #0b3c85;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      color: #ffffff;
+      text-transform: uppercase;
+      overflow: hidden;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .profile-avatar:hover {
+      border-color: #ffffff;
+      transform: scale(1.05);
+    }
+    .profile-avatar img {
+      height: 100%;
+      width: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .profile-avatar .avatar-initials {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    
+    .avatar-bg-1 { background: #e74c3c; }
+    .avatar-bg-2 { background: #3498db; }
+    .avatar-bg-3 { background: #2ecc71; }
+    .avatar-bg-4 { background: #f39c12; }
+    .avatar-bg-5 { background: #9b59b6; }
+    .avatar-bg-6 { background: #1abc9c; }
+    .avatar-bg-7 { background: #e67e22; }
+    .avatar-bg-8 { background: #2c3e50; }
+    .avatar-bg-9 { background: #e84393; }
+    .avatar-bg-10 { background: #00b894; }
+    .avatar-bg-admin { background: #e74c3c; }
+    .avatar-bg-super { background: #f1c40f; color: #2c3e50; }
+    
+    /* ===== USER INFO DI TOPBAR BAWAH ===== */
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 2px 0 3px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      margin-top: 2px;
+      width: 100%;
+    }
+    .topbar-user .user-name-display {
+      font-size: 11px;
+      font-weight: 600;
+      color: #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+    .topbar-user .user-role-display {
+      font-size: 9px;
+      background: rgba(255,255,255,0.12);
+      padding: 1px 10px;
+      border-radius: 10px;
+      color: #b2ccf3;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .topbar-user .user-role-display.guru { background: rgba(46, 204, 113, 0.25); color: #2ecc71; }
+    .topbar-user .user-role-display.admin { background: rgba(52, 152, 219, 0.25); color: #3498db; }
+    .topbar-user .user-role-display.super { background: rgba(241, 196, 15, 0.25); color: #f1c40f; }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .topbar { padding: 4px 10px 4px 10px; min-height: 58px; }
+      .topbar-left img { height: 28px; width: 28px; }
+      .sidebar-toggle-btn { font-size: 18px; }
+      .topbar-title { font-size: 10px; }
+      .topbar-clock { font-size: 9px; }
+      .profile-avatar { height: 28px; width: 28px; font-size: 10px; }
+      .topbar-user .user-name-display { font-size: 10px; max-width: 120px; }
+      .topbar-user .user-role-display { font-size: 8px; padding: 1px 8px; }
+    }
+    
+    @media (max-width: 400px) {
+      .topbar-user .user-name-display { max-width: 80px; }
+      .topbar-user .user-role-display { display: none; }
+    }
 
-function handleGetGuruProfile(data) {
-  const pin = String(data.pin || '').trim();
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const dbGuru = ss.getSheetByName("Database_Guru");
-  
-  if (!dbGuru) return responseJSON({ status: "error", message: "Database_Guru tidak ditemukan!" });
+    .main-wrapper { display: flex; margin-top: 65px; margin-bottom: 45px; flex: 1; position: relative; }
 
-  const gData = dbGuru.getDataRange().getDisplayValues();
+    .sidebar-overlay { display: none; position: fixed; top: 65px; left: 0; width: 100%; height: calc(100vh - 110px); background: rgba(0,0,0,0.3); z-index: 980; }
+    .sidebar-overlay.active { display: block; }
+
+    .sidebar { width: 260px; background: #05285e; border-right: 1px solid #031c44; padding: 15px 10px; position: fixed; top: 65px; bottom: 45px; overflow-y: auto; transition: transform 0.3s ease; z-index: 990; transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .nav-category { font-size: 11px; font-weight: bold; color: #9bb3de; margin: 15px 10px 5px 10px; letter-spacing: 0.5px; }
+    .nav-item { padding: 10px 12px; display: block; color: #e2e8f0; text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 6px; margin-bottom: 3px; cursor: pointer; transition: background 0.2s, color 0.2s; }
+    .nav-item:hover, .nav-item.active { background: #0b3c85; color: #ffffff; }
+    .nav-item.locked { opacity: 0.4; color: #8fa0bd; cursor: not-allowed; }
+    .nav-item.locked:hover { background: transparent; color: #8fa0bd; }
+    
+    .content-container { margin-left: 0; padding: 15px; flex: 1; width: 100%; background: #f4f6f9; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 40px; background: #05285e; border-top: 1px solid #031c44; display: flex; justify-content: center; align-items: center; font-size: 11px; color: #d0dbe8; z-index: 999; font-weight: 500; }
+
+    /* ===== STYLE LAINNYA ===== */
+    #scanPopup { position: fixed; top: 75px; right: 10px; z-index: 3000; width: 280px; padding: 10px 12px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); display: none; }
+    .popup-success { background: #d4edda; color: #155724; border-left: 5px solid #28a745; }
+    .popup-warning { background: #fff3cd; color: #856404; border-left: 5px solid #ffc107; }
+    .popup-danger { background: #f8d7da; color: #721c24; border-left: 5px solid #dc3545; }
+
+    .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+    @media(max-width: 900px) { .stats-container { grid-template-columns: 1fr; } }
+    .stats-card { background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .stats-card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; }
+    .stats-card-header h4 { margin: 0; color: #05285e; font-size: 13px; }
+    .stats-badge-total { background: #05285e; color: #ffffff; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; }
+    .stats-grid-6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .stat-box { background: #f0f4f9; padding: 8px; border-radius: 6px; text-align: center; border: 1px solid #d0dbe8; }
+    .stat-box span { display: block; font-size: 10px; color: #05285e; font-weight: 700; text-transform: uppercase; }
+    .stat-box b { font-size: 13px; color: #05285e; word-break: break-all; }
+
+    .form-group { margin-bottom: 10px; }
+    label { display: block; font-weight: 600; margin-bottom: 4px; color: #444; font-size: 12px; }
+    input, select, button { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; }
+    .btn-primary { background: #05285e; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 4px; }
+    .btn-primary:hover { background: #0b3c85; }
+    .btn-excel { background: #1d6f42; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .btn-excel:hover { background: #155a34; }
+    .btn-pdf { background: #d93025; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .btn-pdf:hover { background: #c0392b; }
+    .btn-toggle { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .btn-toggle.off { background: #dc3545; }
+    .btn-danger { background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+    .btn-edit { background: #ffc107; color: #333; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 4px; }
+    .btn-success { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    .btn-success:hover { background: #218838; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; width: auto; }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .btn-group .btn-excel, .btn-group .btn-pdf { width: auto; padding: 8px 16px; }
+    
+    #reader { width: 100%; max-width: 400px; border-radius: 8px; overflow: hidden; margin-top: 10px; background: #111; }
+    .table-responsive { overflow-x: auto; margin-top: 10px; background: #fff; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+    th, td { padding: 6px 8px; border-bottom: 1px solid #ddd; }
+    th { background-color: #f0f4f9; color: #05285e; font-weight: bold; }
+
+    #loginModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
+    .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 350px; text-align: center; }
+
+    .input-nilai-sm { width: 70px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
+    .jadwal-header { background: #e8f0fe; padding: 12px 15px; border-radius: 8px; border-left: 4px solid #05285e; margin-bottom: 15px; }
+    .jadwal-header h4 { margin: 0; color: #05285e; font-size: 14px; }
+    .jadwal-header .sub { font-size: 11px; color: #666; margin-top: 3px; }
+    
+    /* Export buttons di daftar nilai */
+    .export-section { 
+      display: flex; 
+      gap: 10px; 
+      margin: 10px 0; 
+      flex-wrap: wrap; 
+      align-items: center;
+    }
+    .export-section .btn-excel, .export-section .btn-pdf {
+      width: auto;
+      padding: 8px 18px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+    .export-section .btn-excel { background: #1d6f42; color: white; border: none; cursor: pointer; font-weight: bold; }
+    .export-section .btn-excel:hover { background: #155a34; }
+    .export-section .btn-pdf { background: #d93025; color: white; border: none; cursor: pointer; font-weight: bold; }
+    .export-section .btn-pdf:hover { background: #c0392b; }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-row">
+    <div class="topbar-left">
+      <button class="sidebar-toggle-btn" onclick="toggleSidebar()">☰</button>
+      <img src="https://lh3.googleusercontent.com/d/1ja4Fpeq35ZDwgTrwFE2evToYfHKQsbiF" alt="Logo">
+    </div>
+    <div class="topbar-center">
+      <div class="topbar-title">SMP NEGERI 1 SOBANG</div>
+      <div class="topbar-clock" id="topbarClock">Memuat Waktu...</div>
+    </div>
+    <div class="topbar-right">
+      <div class="profile-avatar" id="topbarAvatar" onclick="toggleSidebar()" title="Buka Menu">
+        <span class="avatar-initials" id="avatarText">👤</span>
+      </div>
+    </div>
+  </div>
   
-  for (let i = 1; i < gData.length; i++) {
-    const pinGuru = String(gData[i][4] || '').trim();
-    if (pin === pinGuru) {
-      const nama = String(gData[i][1]).trim();
-      const nip = String(gData[i][0]).trim();
+  <div class="topbar-user" id="topbarUserInfo">
+    <span class="user-name-display" id="topbarUserName">Tamu</span>
+    <span class="user-role-display" id="topbarUserRole">Tamu</span>
+  </div>
+</div>
+
+<!-- SCAN POPUP -->
+<div id="scanPopup">
+  <b id="popupTitle" style="display:block; font-size:12px; margin-bottom:2px;">Notifikasi</b>
+  <span id="popupMessage" style="font-size:11px; display:block; line-height:1.3;">Pesan sistem...</span>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" style="display:none;">
+  <div class="modal-content">
+    <h3>Login Sistem</h3>
+    <p id="modalInfo" style="font-size:12px; color:#666;">Masukkan PIN Anda untuk login.</p>
+    <div class="form-group">
+      <input type="password" id="inputPinModal" placeholder="Masukkan PIN..." maxlength="8" style="text-align:center; font-size:18px; letter-spacing:3px;">
+    </div>
+    <button class="btn-primary" onclick="submitLogin()">Masuk</button>
+    <button style="background:#ccc; color:#333; border:none; margin-top:8px;" onclick="closeLoginModal()">Batal</button>
+  </div>
+</div>
+
+<!-- MAIN WRAPPER -->
+<div class="main-wrapper">
+  
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="appSidebar">
+    <div class="nav-category">DASHBOARD</div>
+    <a class="nav-item active" onclick="switchMenu('dashboard', this)">🏠 Dashboard Utama</a>
+
+    <div class="nav-category">ORANG TUA / TAMU</div>
+    <a class="nav-item" onclick="switchMenu('cari', this)">🔍 Cari Data Siswa</a>
+
+    <div class="nav-category">MENU UTAMA</div>
+    <a class="nav-item" id="nav-login" onclick="openLoginModal()">🔑 Login Sistem</a>
+    <a class="nav-item locked" id="nav-scanner" onclick="checkMenuAccess('scanner', this)">📷 Scanner Barcode</a>
+    <a class="nav-item locked" id="nav-izin" onclick="checkMenuAccess('izin', this)">📝 Input Izin / Sakit</a>
+    <a class="nav-item locked" id="nav-rekap" onclick="checkMenuAccess('rekap', this)">📊 Rekap Data</a>
+    <a class="nav-item locked" id="nav-pengaturan" onclick="checkMenuAccess('pengaturan', this)">⚙️ Pengaturan Sesi & Libur</a>
+
+    <div class="nav-category">PEMBELAJARAN</div>
+    <a class="nav-item locked" id="nav-jadwal-mapel" onclick="checkMenuAccess('jadwal-mapel', this)">📅 Jadwal Mapel</a>
+    <a class="nav-item locked" id="nav-input-nilai" onclick="checkMenuAccess('input-nilai', this)">📈 Input Nilai</a>
+    <a class="nav-item locked" id="nav-daftar-nilai" onclick="checkMenuAccess('daftar-nilai', this)">📋 Daftar Nilai</a>
+    <a class="nav-item locked" id="nav-kelulusan" onclick="checkMenuAccess('kelulusan', this)">🎓 Kelulusan</a>
+
+    <a class="nav-item" id="nav-logout" style="display:none; color:#ff8a8a; margin-top: 15px;" onclick="logoutSession()">🚪 Keluar / Logout</a>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content-container" id="appContent">
+
+    <!-- DASHBOARD -->
+    <div id="menu-dashboard" class="section active">
+      <h3 style="margin-top:0; color:#05285e; font-size:16px;">📊 Dashboard Real-Absensi Digital</h3>
       
-      return responseJSON({
-        status: "success",
-        nama: nama,
-        nip: nip,
-        fotoFile: `${nip}.jpg`
-      });
-    }
-  }
+      <div class="stats-container">
+        <div class="stats-card">
+          <div class="stats-card-header">
+            <h4>Statistik Guru</h4>
+            <div class="stats-badge-total">Total: <span id="totalGuruCount">0</span></div>
+          </div>
+          <div class="stats-grid-6">
+            <div class="stat-box"><span>TW</span><b id="g-tw">0</b></div>
+            <div class="stat-box"><span>TL</span><b id="g-tl">0</b></div>
+            <div class="stat-box"><span>Sakit</span><b id="g-sakit">0</b></div>
+            <div class="stat-box"><span>Izin</span><b id="g-izin">0</b></div>
+            <div class="stat-box"><span>Alpa</span><b id="g-alpa">0</b></div>
+            <div class="stat-box"><span>Bolos</span><b id="g-bolos">0</b></div>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-header">
+            <h4>Statistik Siswa</h4>
+            <div class="stats-badge-total">Total: <span id="totalSiswaCount">0</span></div>
+          </div>
+          <div class="stats-grid-6">
+            <div class="stat-box"><span>TW</span><b id="s-tw">0</b></div>
+            <div class="stat-box"><span>TL</span><b id="s-tl">0</b></div>
+            <div class="stat-box"><span>Sakit</span><b id="s-sakit">0</b></div>
+            <div class="stat-box"><span>Izin</span><b id="s-izin">0</b></div>
+            <div class="stat-box"><span>Alpa</span><b id="s-alpa">0</b></div>
+            <div class="stat-box"><span>Bolos</span><b id="s-bolos">0</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#e0e8f5; padding:10px 12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #05285e;">
+        <span style="font-size:11px; color:#05285e; font-weight:700;">Status & Sesi Absensi:</span>
+        <h4 id="realtimeActiveSesi" style="margin:3px 0 0 0; color:#05285e; font-size:14px;">Memuat Waktu...</h4>
+      </div>
+
+      <div id="containerTabelHariIni">
+        <h4 style="margin-bottom:4px; color:#05285e; font-size:13px;">Rekap Kehadiran Guru Hari Ini</h4>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>No</th><th>Nama</th><th>Mapel</th><th>Jam Scan</th><th>Sesi</th><th>Status</th></tr></thead>
+            <tbody id="tableDashGuru"><tr><td colspan="6" style="text-align:center;">Memuat data...</td></tr></tbody>
+          </table>
+        </div>
+
+        <h4 style="margin-top:15px; margin-bottom:4px; color:#05285e; font-size:13px;">Rekap Kehadiran Siswa Hari Ini</h4>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>No</th><th>Nama</th><th>Kelas</th><th>Jam Scan</th><th>Sesi</th><th>Status</th></tr></thead>
+            <tbody id="tableDashSiswa"><tr><td colspan="6" style="text-align:center;">Memuat data...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="pesanTabelNonAktif" style="display:none; background:#fff; padding:20px; border-radius:8px; text-align:center; border:1px solid #ddd; margin-top:10px;">
+        <h4 id="teksPesanNonAktif" style="color:#05285e; margin:0; font-size:14px;">-</h4>
+      </div>
+    </div>
+
+    <!-- MENU LAINNYA -->
+    <div id="menu-cari" class="section">
+      <h3 style="color:#05285e; font-size:15px;">🔍 Pencarian Data Kehadiran</h3>
+      <div class="form-group"><label>Kata Kunci:</label><input type="text" id="cariKeyword" placeholder="NISN atau Nama Siswa"></div>
+      <div style="display:flex; gap:10px;">
+        <div class="form-group" style="flex:1;"><label>Dari:</label><input type="date" id="cariTglMulai"></div>
+        <div class="form-group" style="flex:1;"><label>Sampai:</label><input type="date" id="cariTglSelesai"></div>
+      </div>
+      <button class="btn-primary" onclick="cariKehadiran()">Cari Data</button>
+      <div class="table-responsive">
+        <table id="tableCariResult">
+          <thead id="tableCariHead"><tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status</th></tr></thead>
+          <tbody id="tableCariBody"><tr><td colspan="5" style="text-align:center;">Silakan lakukan pencarian.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="menu-scanner" class="section">
+      <h3 style="color:#05285e; font-size:15px;">📷 Scanner QR Barcode</h3>
+      <div id="scannerAdminSwitch" class="form-group" style="display:none;">
+        <label>Peran:</label>
+        <div style="display:flex; gap:10px;">
+          <button type="button" id="btnSiswaAdmin" class="btn-primary" onclick="setRole('siswa')">Siswa</button>
+          <button type="button" id="btnGuruAdmin" style="background:#6c757d; color:white; border:none;" onclick="setRole('guru')">Guru</button>
+        </div>
+      </div>
+      <button id="btnCameraToggle" class="btn-toggle" onclick="toggleCamera()">Buka Kamera</button>
+      <div id="reader"></div>
+    </div>
+
+    <div id="menu-izin" class="section">
+      <h3 style="color:#05285e; font-size:15px;">📝 Input Izin / Sakit</h3>
+      <div class="form-group">
+        <label>Peran:</label>
+        <select id="izinRole">
+          <option value="siswa">Siswa</option>
+          <option id="optIzinGuru" value="guru" style="display:none;">Guru</option>
+        </select>
+      </div>
+      <div class="form-group"><label>ID:</label><input type="text" id="izinId" placeholder="NISN / NIP"></div>
+      <div class="form-group"><label>Tanggal:</label><input type="date" id="izinTanggal"></div>
+      <div class="form-group"><label>Status:</label><select id="izinStatus"><option value="Izin">Izin</option><option value="Sakit">Sakit</option><option value="Alpa">Alpa</option></select></div>
+      <div class="form-group"><label>Keterangan:</label><input type="text" id="izinKet" placeholder="Alasan"></div>
+      <button class="btn-primary" onclick="simpanIzin()">Simpan</button>
+    </div>
+
+    <div id="menu-rekap" class="section">
+      <h3 style="color:#05285e; font-size:15px;">📊 Rekap Kehadiran</h3>
+      <div class="form-group"><label>Tipe:</label><select id="rekapRole" onchange="toggleRekapFilter()"><option value="siswa">Siswa</option><option value="guru">Guru</option></select></div>
+      <div class="form-group" id="rekapKelasContainer"><label>Kelas:</label><select id="rekapKelas"><option value="">-- Semua --</option></select></div>
+      <div style="display:flex; gap:10px;">
+        <div class="form-group" style="flex:1;"><label>Dari:</label><input type="date" id="rekapTglMulai"></div>
+        <div class="form-group" style="flex:1;"><label>Sampai:</label><input type="date" id="rekapTglSelesai"></div>
+      </div>
+      <button class="btn-primary" onclick="loadRekap()">Tampilkan</button>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button class="btn-excel" onclick="exportRekapToExcel()">📊 Excel</button>
+        <button class="btn-pdf" onclick="window.print()">🖨️ PDF</button>
+      </div>
+      <div class="table-responsive">
+        <p id="labelTotalHari" style="font-weight:bold; color:#05285e; font-size:12px;"></p>
+        <table id="tableRekap">
+          <thead><tr><th>ID</th><th>Nama</th><th>Unit</th><th>TW</th><th>TL</th><th>Izin</th><th>Sakit</th><th>Alpa</th><th>Hadir</th><th>%</th></tr></thead>
+          <tbody id="tableRekapBody"><tr><td colspan="10" style="text-align:center;">Pilih filter dan klik Tampilkan.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="menu-pengaturan" class="section">
+      <h3 style="color:#05285e; font-size:15px;">⚙️ Pengaturan</h3>
+      <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">Sesi Absensi & PIN</h4>
+      <div style="display:flex; gap:12px; margin-bottom:10px; background:#fff; padding:8px 10px; border-radius:6px; border:1px solid #ddd; flex-wrap:wrap;">
+        <label style="font-weight:normal; cursor:pointer; font-size:12px;"><input type="checkbox" id="chkSesi1" checked onchange="renderPengaturanTable()"> Sesi 1</label>
+        <label style="font-weight:normal; cursor:pointer; font-size:12px;"><input type="checkbox" id="chkSesi2" checked onchange="renderPengaturanTable()"> Sesi 2</label>
+        <label style="font-weight:normal; cursor:pointer; font-size:12px;"><input type="checkbox" id="chkSesi3" checked onchange="renderPengaturanTable()"> Sesi 3</label>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead><tr><th>Sesi / PIN</th><th>Mulai / PIN</th><th>Batas TW</th><th>Tutup</th><th>Status</th></tr></thead>
+          <tbody id="tablePengaturanBody"></tbody>
+        </table>
+      </div>
+      <button class="btn-primary" style="margin-top:8px;" onclick="savePengaturan()">Simpan</button>
+      <hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ccc;">
+      <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">Hari Libur</h4>
+      <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd;">
+        <input type="hidden" id="editHariLiburRowIndex" value="0">
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; min-width:180px;"><label>Tanggal:</label><input type="date" id="inputTglLibur"></div>
+          <div class="form-group" style="flex:2; min-width:200px;"><label>Keterangan:</label><input type="text" id="inputKetLibur" placeholder="Keterangan"></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="simpanHariLibur()">Simpan</button>
+          <button id="btnBatalEditLibur" style="display:none; width:auto; padding:6px 16px; background:#6c757d; color:#fff; border:none; border-radius:6px;" onclick="resetFormHariLibur()">Batal</button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th style="width:100px;">Aksi</th></tr></thead>
+          <tbody id="tableHariLiburBody"><tr><td colspan="4" style="text-align:center;">Memuat...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="menu-jadwal-mapel" class="section">
+      <h3 style="color:#05285e; font-size:15px;">📅 Jadwal Mapel</h3>
+      <div class="jadwal-header">
+        <h4>Hari: <span id="jadwalHariText">-</span></h4>
+        <div class="sub" id="jadwalInfoDisplay">Menampilkan jadwal hari ini</div>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead><tr><th>No</th><th>Waktu</th><th>Mapel</th><th>Kelas</th></tr></thead>
+          <tbody id="tableJadwalBody"><tr><td colspan="4" style="text-align:center;">Memuat...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="menu-input-nilai" class="section">
+      <h3 style="color:#05285e; font-size:15px;">📈 Input Nilai</h3>
+      <div style="background:#e8f0fe; padding:10px 12px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div><span style="font-weight:600; color:#05285e; font-size:12px;">👤 Guru:</span> <span id="guruNamaDisplay" style="color:#05285e; font-weight:bold; font-size:13px;">-</span></div>
+        <button class="btn-success btn-sm" onclick="switchMenu('daftar-nilai', document.getElementById('nav-daftar-nilai'))">📋 Daftar Nilai</button>
+      </div>
+      <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:12px;">
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; min-width:180px;"><label>Mapel:</label><select id="filterInputNilaiMapel"><option value="">-- Pilih --</option></select></div>
+          <div class="form-group" style="flex:1; min-width:160px;"><label>Kelas:</label><select id="filterInputNilaiKelas"><option value="">-- Semua --</option></select></div>
+        </div>
+        <button class="btn-primary" onclick="loadInputNilaiData()">Muat</button>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead><tr><th>No</th><th>Nama</th><th>Kelas</th><th>Nilai</th></tr></thead>
+          <tbody id="tableInputNilaiBody"><tr><td colspan="4" style="text-align:center;">Pilih Mapel dan Kelas.</td></tr></tbody>
+        </table>
+      </div>
+      <button class="btn-primary" style="margin-top:12px;" onclick="simpanDataNilai()">Simpan</button>
+    </div>
+
+    <!-- DAFTAR NILAI -->
+    <div id="menu-daftar-nilai" class="section">
+      <h3 style="color:#05285e; font-size:15px;">📋 Daftar Nilai</h3>
+      
+      <div style="background:#e8f0fe; padding:10px 12px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div><span style="font-weight:600; color:#05285e; font-size:12px;">👤 Guru:</span> <span id="guruNamaDisplayDaftar" style="color:#05285e; font-weight:bold; font-size:13px;">-</span></div>
+        <button class="btn-primary btn-sm" onclick="switchMenu('input-nilai', document.getElementById('nav-input-nilai'))">📝 Kembali</button>
+      </div>
+      
+      <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:12px;">
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; min-width:180px;"><label>Mapel:</label><select id="filterDaftarNilaiMapel"><option value="">-- Semua --</option></select></div>
+          <div class="form-group" style="flex:1; min-width:160px;"><label>Kelas:</label><select id="filterDaftarNilaiKelas"><option value="">-- Semua --</option></select></div>
+        </div>
+        <button class="btn-primary" onclick="loadDaftarNilaiData()">Tampilkan</button>
+      </div>
+
+      <!-- Tombol Export Excel & PDF -->
+      <div class="export-section">
+        <button class="btn-excel" onclick="exportDaftarNilaiToExcel()">📊 Export Excel</button>
+        <button class="btn-pdf" onclick="exportDaftarNilaiToPDF()">📄 Export PDF</button>
+      </div>
+
+      <div class="table-responsive">
+        <table id="tableDaftarNilaiResult">
+          <thead id="tableDaftarNilaiHead"><tr><th>No</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Guru</th><th>Mapel</th></tr></thead>
+          <tbody id="tableDaftarNilaiBody"><tr><td colspan="6" style="text-align:center;">Pilih filter dan klik Tampilkan.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="menu-kelulusan" class="section">
+      <h3 style="color:#05285e; font-size:15px;">🎓 Pengumuman Kelulusan</h3>
+      <div style="background:#e0e8f5; padding:20px; border-radius:8px; border-left:5px solid #05285e; text-align:center;">
+        <h4 style="color:#05285e; margin:0; font-size:15px; font-weight:700;">PENGUMUMAN KELULUSAN 7 JULI 2027</h4>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  &copy; 2026 SMP NEGERI 1 SOBANG &bull; By M TAUPIK
+</div>
+
+<script>
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyz23kcO2MpBwCSa2DtlOK7aGd6iI_pPWf_E3g5wUcrIQTzeJ8Nbwv1XMCYNs_PmHWsNQ/exec";
+
+  // ================= VARIABEL GLOBAL ================= //
+  let currentRole = 'siswa';
+  let html5QrcodeScanner = null;
+  let isCameraOn = false;
+  let isProcessing = false;
+  let userRole = 'tamu';
+  let userData = null;
+  let pendingMenu = null;
+  let globalPengaturanData = [];
+  let currentActiveSesiName = "";
+  let cachedPinConfig = null;
+  let dashboardTimer = null;
+  let popupTimeout = null;
+  let currentInputNilaiList = [];
+
+  // ================= INISIALISASI ================= //
+  document.getElementById('izinTanggal').value = new Date().toISOString().split('T')[0];
   
-  return responseJSON({ status: "error", message: "Data guru tidak ditemukan!" });
-}
+  startRealtimeClock();
+  preloadPinConfig();
+  startRealtimeDashboard();
+  loadOpsiKelas();
+  updateTopbarUserInfo();
 
-// ================= ABSENSI ================= //
+  // ================= FUNGSI DASAR ================= //
 
-function handleAbsenQR(data) {
-  const role = String(data.role || '').toLowerCase().trim();
-  const code = String(data.code || '').trim();
-  const sesiKey = String(data.sesi || '').trim();
-
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheetKehadiran = ss.getSheetByName("Kehadiran");
-  const dbSheetName = (role === 'siswa') ? "Database_Siswa" : "Database_Guru";
-  const dbSheet = ss.getSheetByName(dbSheetName);
-  const sheetPengaturan = ss.getSheetByName("Pengaturan");
-  const sheetLibur = ss.getSheetByName("Hari_Libur");
-
-  if (!dbSheet) return responseJSON({ status: "error", message: `Sheet ${dbSheetName} tidak ditemukan!` });
-
-  const now = new Date();
-  const todayStr = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM-dd");
-
-  if (sheetLibur) {
-    const liburData = sheetLibur.getDataRange().getDisplayValues();
-    for (let i = 1; i < liburData.length; i++) {
-      let tglLiburStr = String(liburData[i][0]).trim().substring(0, 10);
-      if (tglLiburStr === todayStr) {
-        return responseJSON({ status: "danger", message: `Absensi Ditolak! Hari ini libur: ${liburData[i][1] || 'Tanggal Merah'}` });
-      }
-    }
-  }
-
-  const pData = sheetPengaturan.getDataRange().getDisplayValues();
-  let sesiConfigList = [];
-  let configSesi = null;
-  
-  for (let i = 1; i < pData.length; i++) {
-    let sName = String(pData[i][0]).trim();
-    if (sName.toLowerCase().startsWith("sesi")) {
-      let sObj = {
-        sesi: sName,
-        mulai: parseJamToMinutes(pData[i][1]),
-        batasTW: parseJamToMinutes(pData[i][2]),
-        tutup: parseJamToMinutes(pData[i][3]),
-        alpaSetting: pData[i][4] || "Alpa"
-      };
-      sesiConfigList.push(sObj);
-      if (sName === sesiKey) {
-        configSesi = sObj;
-      }
-    }
-  }
-
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-  if (configSesi) {
-    if (currentMinutes < configSesi.mulai) {
-      return responseJSON({ status: "warning", message: `Belum waktunya absensi ${sesiKey}.` });
-    }
-    if (currentMinutes > configSesi.tutup) {
-      return responseJSON({ status: "danger", message: `Sesi Absensi ${sesiKey} Hari Ini Telah Selesai` });
-    }
-  }
-
-  let statusAbsen = "TW (Tepat Waktu)";
-  if (configSesi && currentMinutes > configSesi.batasTW) {
-    statusAbsen = "TL (Terlambat)";
-  }
-
-  const dbData = dbSheet.getDataRange().getDisplayValues();
-  let nama = "";
-  for (let i = 1; i < dbData.length; i++) {
-    if (String(dbData[i][0]).trim() === code) {
-      nama = dbData[i][1];
-      break;
-    }
-  }
-
-  if (!nama) return responseJSON({ status: "error", message: `${role.toUpperCase()} dengan ID ${code} tidak terdaftar!` });
-
-  let userRecordsToday = [];
-  const lastRow = sheetKehadiran.getLastRow();
-  if (lastRow > 1) {
-    const presenceDisplay = sheetKehadiran.getRange(2, 1, lastRow - 1, 6).getDisplayValues();
-    for (let i = 0; i < presenceDisplay.length; i++) {
-      const rowID = String(presenceDisplay[i][2]).replace(/'/g, '').trim();
-      const rowSesiFull = String(presenceDisplay[i][4]).trim();
-      const rowTanggalStr = String(presenceDisplay[i][5]).trim().substring(0, 10);
-
-      if (rowID === code && rowTanggalStr === todayStr) {
-        let sNameOnly = rowSesiFull.split(" - ")[0].trim();
-        userRecordsToday.push({ sesi: sNameOnly, statusFull: rowSesiFull });
-        
-        if (sNameOnly === sesiKey) {
-          return responseJSON({ status: "warning", message: `DITOLAK! ${nama} sudah absen pada ${sesiKey} hari ini.` });
-        }
-      }
-    }
-  }
-
-  if (sesiConfigList.length > 0) {
-    let currentSesiIndex = sesiConfigList.findIndex(s => s.sesi === sesiKey);
-    if (currentSesiIndex > 0) {
-      for (let idx = 0; idx < currentSesiIndex; idx++) {
-        let prevSesiName = sesiConfigList[idx].sesi;
-        let foundPrevRec = userRecordsToday.find(r => r.sesi === prevSesiName);
-        
-        let prevStatusDetermined = "";
-        if (foundPrevRec) {
-          if (foundPrevRec.statusFull.includes("Alpa") || foundPrevRec.statusFull.startsWith("A")) prevStatusDetermined = "Alpa";
-          else if (foundPrevRec.statusFull.includes("Bolos") || foundPrevRec.statusFull.startsWith("B")) prevStatusDetermined = "Bolos";
-        } else {
-          let prevSesiObj = sesiConfigList[idx];
-          if (currentMinutes > prevSesiObj.tutup) {
-            prevStatusDetermined = (prevSesiObj.alpaSetting === "Bolos") ? "Bolos" : "Alpa";
-          }
-        }
-
-        if (prevStatusDetermined === "Alpa" || prevStatusDetermined === "Bolos") {
-          return responseJSON({ status: "danger", message: `Ditolak, ${prevStatusDetermined} sesi sebelumnya (${prevSesiName})!` });
-        }
-      }
-    }
-  }
-
-  const timestampStr = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM-dd HH:mm:ss");
-  const labelSesiLengkap = `${sesiKey} - ${statusAbsen}`;
-  sheetKehadiran.appendRow([timestampStr, role.toUpperCase(), `'${code}`, nama, labelSesiLengkap, todayStr]);
-
-  return responseJSON({ status: "success", message: `Absen Berhasil! ${nama} [${statusAbsen}]` });
-}
-
-function handleInputIzin(data) {
-  const role = String(data.role || 'siswa').toLowerCase();
-  const id = String(data.id || '').trim();
-  const status = String(data.status || '').trim();
-  const keterangan = String(data.keterangan || '').trim();
-  const tanggal = String(data.tanggal || '').trim();
-
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const dbSheetName = (role === 'siswa') ? "Database_Siswa" : "Database_Guru";
-  const dbSheet = ss.getSheetByName(dbSheetName);
-  const sheetKehadiran = ss.getSheetByName("Kehadiran");
-
-  const dbData = dbSheet.getDataRange().getDisplayValues();
-  let nama = "";
-  for (let i = 1; i < dbData.length; i++) {
-    if (String(dbData[i][0]).trim() === id) {
-      nama = dbData[i][1];
-      break;
-    }
-  }
-
-  if (!nama) return responseJSON({ status: "error", message: `ID ${id} tidak ditemukan di ${dbSheetName}!` });
-
-  const timestampStr = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd HH:mm:ss");
-  const labelSesi = `${status} (${keterangan})`;
-  
-  sheetKehadiran.appendRow([timestampStr, role.toUpperCase(), `'${id}`, nama, labelSesi, tanggal]);
-
-  return responseJSON({ status: "success", message: `Berhasil mencatat ${status} untuk ${nama}` });
-}
-
-// ================= PENGATURAN ================= //
-
-function handleGetPengaturan() {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheet = ss.getSheetByName("Pengaturan");
-  if (!sheet) return responseJSON({ status: "success", data: [] });
-  
-  const data = sheet.getDataRange().getDisplayValues();
-  let list = [];
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0]) {
-      list.push({
-        sesi: data[i][0],
-        mulai: data[i][1],
-        batasTW: data[i][2],
-        tutup: data[i][3],
-        alpa: data[i][4] || 'Alpa'
-      });
-    }
-  }
-  return responseJSON({ status: "success", data: list });
-}
-
-function handleSavePengaturan(data) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheet = ss.getSheetByName("Pengaturan");
-  if (!sheet) {
-    sheet = ss.insertSheet("Pengaturan");
-  }
-  
-  sheet.clearContents();
-  sheet.appendRow(["Sesi", "Mulai (TW)", "Batas Tepat Waktu (TL)", "Tutup Sesi", "Status Jika Absen"]);
-
-  const configList = data.config || [];
-  configList.forEach(c => {
-    sheet.appendRow([c.sesi, c.mulai, c.batasTW, c.tutup, c.alpa]);
-  });
-
-  return responseJSON({ status: "success", message: "Pengaturan Sesi Berhasil Disimpan!" });
-}
-
-function handleGetHariLibur() {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheet = ss.getSheetByName("Hari_Libur");
-  if (!sheet) {
-    sheet = ss.insertSheet("Hari_Libur");
-    sheet.appendRow(["Tanggal", "Keterangan"]);
-  }
-  const data = sheet.getDataRange().getDisplayValues();
-  let list = [];
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0]) {
-      list.push({
-        rowIndex: i + 1,
-        tanggal: data[i][0],
-        keterangan: data[i][1]
-      });
-    }
-  }
-  return responseJSON({ status: "success", data: list });
-}
-
-function handleSaveHariLibur(data) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheet = ss.getSheetByName("Hari_Libur");
-  if (!sheet) {
-    sheet = ss.insertSheet("Hari_Libur");
-    sheet.appendRow(["Tanggal", "Keterangan"]);
-  }
-
-  const tanggal = String(data.tanggal || '').trim();
-  const keterangan = String(data.keterangan || '').trim();
-  const rowIndex = parseInt(data.rowIndex || 0, 10);
-
-  if (!tanggal) return responseJSON({ status: "error", message: "Tanggal libur wajib diisi!" });
-
-  if (rowIndex > 1) {
-    sheet.getRange(rowIndex, 1, 1, 2).setValues([[tanggal, keterangan]]);
-    return responseJSON({ status: "success", message: "Hari libur berhasil diperbarui!" });
-  } else {
-    sheet.appendRow([tanggal, keterangan]);
-    return responseJSON({ status: "success", message: "Hari libur berhasil ditambahkan!" });
-  }
-}
-
-function handleDeleteHariLibur(data) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheet = ss.getSheetByName("Hari_Libur");
-  const rowIndex = parseInt(data.rowIndex || 0, 10);
-
-  if (sheet && rowIndex > 1) {
-    sheet.deleteRow(rowIndex);
-    return responseJSON({ status: "success", message: "Hari libur berhasil dihapus!" });
-  }
-  return responseJSON({ status: "error", message: "Gagal menghapus data hari libur." });
-}
-
-// ================= DASHBOARD ================= //
-
-function handleGetDashboardData(data) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheetKehadiran = ss.getSheetByName("Kehadiran");
-  const dbGuruSheet = ss.getSheetByName("Database_Guru");
-  const dbSiswaSheet = ss.getSheetByName("Database_Siswa");
-  const sheetPengaturan = ss.getSheetByName("Pengaturan");
-  const sheetLibur = ss.getSheetByName("Hari_Libur");
-
-  const now = new Date();
-  const todayStr = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM-dd");
-  const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][now.getDay()];
-
-  let isHariLibur = false;
-  let ketLiburMessage = "";
-  if (sheetLibur) {
-    const liburRows = sheetLibur.getDataRange().getDisplayValues();
-    for (let i = 1; i < liburRows.length; i++) {
-      let tglL = String(liburRows[i][0]).trim().substring(0, 10);
-      if (tglL === todayStr) {
-        isHariLibur = true;
-        let ket = liburRows[i][1] ? liburRows[i][1] : "Libur Hari Ini";
-        ketLiburMessage = `${namaHari} : ${ket} , Tidak Ada Kegiatan Absensi`;
-        break;
-      }
-    }
-  }
-
-  if (isHariLibur) {
-    return responseJSON({
-      status: "success",
-      isHariLibur: true,
-      infoPesanSistem: ketLiburMessage,
-      totalGuru: dbGuruSheet ? Math.max(0, dbGuruSheet.getLastRow() - 1) : 0,
-      totalSiswa: dbSiswaSheet ? Math.max(0, dbSiswaSheet.getLastRow() - 1) : 0,
-      stats: {
-        guru: { tw: "0", tl: "0", sakit: "0", izin: "0", alpa: "0", bolos: "0" },
-        siswa: { tw: "0", tl: "0", sakit: "0", izin: "0", alpa: "0", bolos: "0" }
-      },
-      guruList: [],
-      siswaList: []
+  function sendRequest(payload, callback) {
+    fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(res => callback(res))
+    .catch(err => {
+      showScanPopup("danger", "Koneksi Error", "Gagal menghubungkan ke server!");
     });
   }
 
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  function startRealtimeClock() {
+    updateClock();
+    setInterval(updateClock, 1000);
+  }
 
-  let sesiConfigList = [];
-  if (sheetPengaturan) {
-    const pData = sheetPengaturan.getDataRange().getDisplayValues();
-    for (let i = 1; i < pData.length; i++) {
-      if (pData[i][0] && pData[i][0].toLowerCase().startsWith("sesi")) {
-        sesiConfigList.push({
-          sesi: pData[i][0],
-          mulaiStr: pData[i][1],
-          tutupStr: pData[i][3],
-          mulai: parseJamToMinutes(pData[i][1]),
-          tutup: parseJamToMinutes(pData[i][3]),
-          alpaSetting: pData[i][4] || "Alpa" 
-        });
+  function updateClock() {
+    const now = new Date();
+    const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][now.getDay()];
+    const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agus', 'Sep', 'Okt', 'Nov', 'Des'][now.getMonth()];
+    const tgl = String(now.getDate()).padStart(2, '0');
+    const thn = now.getFullYear();
+    const jam = String(now.getHours()).padStart(2, '0');
+    const menit = String(now.getMinutes()).padStart(2, '0');
+    const detik = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('topbarClock').innerText = `${hari}, ${tgl} ${bulan} ${thn} | ${jam}:${menit}:${detik} WIB`;
+  }
+
+  function toggleSidebar() {
+    document.getElementById('appSidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('active');
+  }
+
+  function closeSidebar() {
+    document.getElementById('appSidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('active');
+  }
+
+  function showScanPopup(type, title, message) {
+    const popup = document.getElementById('scanPopup');
+    if (popupTimeout) clearTimeout(popupTimeout);
+    popup.className = `popup-${type}`;
+    document.getElementById('popupTitle').innerText = title;
+    document.getElementById('popupMessage').innerText = message;
+    popup.style.display = 'block';
+    popupTimeout = setTimeout(() => { popup.style.display = 'none'; }, 2800);
+    
+    // Tutup sidebar setelah popup muncul (untuk login)
+    closeSidebar();
+  }
+
+  // ================= AVATAR ================= //
+
+  function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  function getAvatarColor(name) {
+    if (!name) return 'avatar-bg-1';
+    const colors = ['avatar-bg-1', 'avatar-bg-2', 'avatar-bg-3', 'avatar-bg-4', 'avatar-bg-5', 
+                    'avatar-bg-6', 'avatar-bg-7', 'avatar-bg-8', 'avatar-bg-9', 'avatar-bg-10'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  function updateProfileAvatar(name, nip, role) {
+    const avatarContainer = document.getElementById('topbarAvatar');
+    const avatarText = document.getElementById('avatarText');
+
+    const setAvatar = (container, textEl) => {
+      if (!name || role === 'tamu') {
+        container.innerHTML = '<span class="avatar-initials" id="avatarText">👤</span>';
+        container.className = 'profile-avatar';
+        return;
       }
-    }
-  }
-  if (sesiConfigList.length === 0) {
-    sesiConfigList.push({ sesi: "Sesi 1", mulaiStr: "07:00", tutupStr: "12:00", mulai: 420, tutup: 720, alpaSetting: "Alpa" });
-  }
-
-  let countSesiAktif = sesiConfigList.length;
-  let firstSesi = sesiConfigList[0];
-  let lastSesi = sesiConfigList[sesiConfigList.length - 1];
-
-  let infoPesanSistem = "";
-  let isSelesaiHariIni = false;
-  let isBelumMulai = false;
-
-  if (currentMinutes < firstSesi.mulai) {
-    isBelumMulai = true;
-    infoPesanSistem = `Sesi Scan Masuk Belum Tiba, dimulai Jam ${firstSesi.mulaiStr} - ${lastSesi.tutupStr}`;
-  } else if (currentMinutes > lastSesi.tutup) {
-    isSelesaiHariIni = true;
-    infoPesanSistem = `Sesi Scan Hari Ini Sudah Berakhir, Tidak Ada Kegiatan Absensi Lagi (Berakhir jam ${lastSesi.tutupStr})`;
-  } else {
-    let activeSesi = sesiConfigList.find(s => currentMinutes >= s.mulai && currentMinutes <= s.tutup);
-    if (activeSesi) {
-      infoPesanSistem = `Sesi Aktif Berlangsung: ${activeSesi.sesi} (${activeSesi.mulaiStr} - ${activeSesi.tutupStr})`;
-    } else {
-      infoPesanSistem = `Sesi Sedang Berlangsung (${firstSesi.mulaiStr} - ${lastSesi.tutupStr})`;
-    }
-  }
-
-  let scanTodayMap = {};
-  if (sheetKehadiran) {
-    const rows = sheetKehadiran.getDataRange().getDisplayValues();
-    for (let i = 1; i < rows.length; i++) {
-      const timestamp = rows[i][0];
-      const peran = String(rows[i][1]).toUpperCase().trim();
-      const id = String(rows[i][2]).replace(/'/g, '').trim();
-      const sesiStatus = rows[i][4];
-      let tglRow = String(rows[i][5]).substring(0, 10);
-
-      if (tglRow === todayStr) {
-        let jamScan = timestamp.length > 10 ? timestamp.substring(11, 19) : timestamp;
-        let mapKey = `${id}_${peran}`;
-
-        if (!scanTodayMap[mapKey]) scanTodayMap[mapKey] = [];
-        scanTodayMap[mapKey].push({
-          jamScan: jamScan,
-          sesiStatus: sesiStatus
-        });
+      if (role === 'admin') {
+        container.innerHTML = '<span class="avatar-initials" id="avatarText">AD</span>';
+        container.className = 'profile-avatar avatar-bg-admin';
+        return;
       }
-    }
-  }
-
-  function buildStatusArray(records, currentMin, sesiList) {
-    let statusArr = [];
-    let propagatedStatus = "";
-
-    for (let s = 0; s < sesiList.length; s++) {
-      let sInfo = sesiList[s];
-      let foundRec = records.find(r => r.sesiStatus.startsWith(sInfo.sesi));
-
-      if (propagatedStatus !== "") {
-        statusArr.push(propagatedStatus);
-      } else if (foundRec) {
-        let st = foundRec.sesiStatus;
-        if (st.includes("TW")) { 
-          statusArr.push("TW"); 
-        } else if (st.includes("TL")) { 
-          statusArr.push("TL"); 
-        } else if (st.startsWith("Sakit")) { 
-          statusArr.push("Sakit"); 
-          propagatedStatus = "Sakit"; 
-        } else if (st.startsWith("Izin")) { 
-          statusArr.push("Izin"); 
-          propagatedStatus = "Izin"; 
-        } else if (st.startsWith("Alpa")) { 
-          statusArr.push("A"); 
-          propagatedStatus = "A"; 
-        } else if (st.startsWith("Bolos")) { 
-          statusArr.push("B"); 
-          propagatedStatus = "B"; 
-        } else { 
-          statusArr.push("TW"); 
-        }
+      if (role === 'super_admin') {
+        container.innerHTML = '<span class="avatar-initials" id="avatarText">SA</span>';
+        container.className = 'profile-avatar avatar-bg-super';
+        return;
+      }
+      if (role === 'guru' && nip) {
+        const fotoUrl = `./assets/images/profiles/${nip}.jpg`;
+        const img = new Image();
+        img.onload = function() {
+          container.innerHTML = `<img src="${fotoUrl}" alt="${name}">`;
+          container.className = 'profile-avatar';
+        };
+        img.onerror = function() {
+          const initials = getInitials(name);
+          const colorClass = getAvatarColor(name);
+          container.className = `profile-avatar ${colorClass}`;
+          container.innerHTML = `<span class="avatar-initials" style="font-size:12px;">${initials}</span>`;
+        };
+        img.src = fotoUrl;
+        setTimeout(() => {
+          if (!container.querySelector('img')) {
+            const initials = getInitials(name);
+            const colorClass = getAvatarColor(name);
+            container.className = `profile-avatar ${colorClass}`;
+            container.innerHTML = `<span class="avatar-initials" style="font-size:12px;">${initials}</span>`;
+          }
+        }, 3000);
       } else {
-        if (currentMin > sInfo.tutup) {
-          let codeDefault = (sInfo.alpaSetting === "Bolos") ? "B" : "A";
-          statusArr.push(codeDefault);
-          propagatedStatus = codeDefault;
-        } else {
-          statusArr.push("Belum Scan");
+        const initials = getInitials(name);
+        const colorClass = getAvatarColor(name);
+        container.className = `profile-avatar ${colorClass}`;
+        container.innerHTML = `<span class="avatar-initials" style="font-size:12px;">${initials}</span>`;
+      }
+    };
+
+    setAvatar(avatarContainer, avatarText);
+  }
+
+  // ================= UPDATE TOPBAR USER INFO ================= //
+
+  function updateTopbarUserInfo() {
+    const nameEl = document.getElementById('topbarUserName');
+    const roleEl = document.getElementById('topbarUserRole');
+
+    if (userRole === 'tamu' || !userRole) {
+      nameEl.innerText = 'Tamu';
+      roleEl.innerText = 'Tamu';
+      roleEl.className = 'user-role-display';
+      updateProfileAvatar(null, null, 'tamu');
+      return;
+    }
+
+    if (userRole === 'guru' && userData) {
+      nameEl.innerText = userData.nama || 'Guru';
+      roleEl.innerText = 'Guru';
+      roleEl.className = 'user-role-display guru';
+      updateProfileAvatar(userData.nama, userData.nip, 'guru');
+    } else if (userRole === 'admin') {
+      nameEl.innerText = 'Administrator';
+      roleEl.innerText = 'Admin';
+      roleEl.className = 'user-role-display admin';
+      updateProfileAvatar('Admin', null, 'admin');
+    } else if (userRole === 'super_admin') {
+      nameEl.innerText = 'Super Admin';
+      roleEl.innerText = 'Super Admin';
+      roleEl.className = 'user-role-display super';
+      updateProfileAvatar('Super Admin', null, 'super_admin');
+    }
+  }
+
+  // ================= PRELOAD & DASHBOARD ================= //
+
+  function preloadPinConfig() {
+    sendRequest({ action: 'get_pengaturan' }, res => {
+      if (res.status === 'success') {
+        cachedPinConfig = res.data;
+        updateRealtimeSesi(res.data);
+      }
+    });
+  }
+
+  function updateRealtimeSesi(dataList) {
+    const list = dataList || cachedPinConfig;
+    if (!list) return;
+    const now = new Date();
+    const currentMin = now.getHours() * 60 + now.getMinutes();
+    currentActiveSesiName = "";
+    list.forEach(p => {
+      if (p.sesi && p.sesi.toLowerCase().startsWith('sesi')) {
+        const mulai = parseJamToMin(p.mulai);
+        const tutup = parseJamToMin(p.tutup);
+        if (currentMin >= mulai && currentMin <= tutup) {
+          currentActiveSesiName = p.sesi;
         }
       }
-    }
-    return statusArr;
+    });
   }
 
-  function calculateDetailedStatsForRole(dbRows, peranKey, sesiList, currentMin) {
-    let numSesi = sesiList.length;
-    let statsObj = {
-      tw: new Array(numSesi).fill(0),
-      tl: new Array(numSesi).fill(0),
-      sakit: new Array(numSesi).fill(0),
-      izin: new Array(numSesi).fill(0),
-      alpa: new Array(numSesi).fill(0),
-      bolos: new Array(numSesi).fill(0)
-    };
+  function parseJamToMin(jamStr) {
+    if (!jamStr || !jamStr.includes(":")) return 0;
+    const p = jamStr.split(":");
+    return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+  }
 
-    for (let i = 1; i < dbRows.length; i++) {
-      let id = String(dbRows[i][0]).trim();
-      let key = `${id}_${peranKey}`;
-      let records = scanTodayMap[key] || [];
-      let statusArr = isSelesaiHariIni && records.length === 0 
-        ? sesiList.map(s => s.alpaSetting === "Bolos" ? "B" : "A") 
-        : buildStatusArray(records, currentMin, sesiList);
+  function startRealtimeDashboard() {
+    fetchDashboardData();
+    if (dashboardTimer) clearInterval(dashboardTimer);
+    dashboardTimer = setInterval(fetchDashboardData, 8000);
+  }
 
-      statusArr.forEach((st, sIdx) => {
-        if (st === "TW") statsObj.tw[sIdx]++;
-        else if (st === "TL") statsObj.tl[sIdx]++;
-        else if (st === "Sakit") statsObj.sakit[sIdx]++;
-        else if (st === "Izin") statsObj.izin[sIdx]++;
-        else if (st === "A") statsObj.alpa[sIdx]++;
-        else if (st === "B") statsObj.bolos[sIdx]++;
+  function fetchDashboardData() {
+    sendRequest({ action: 'get_dashboard_data' }, res => {
+      if (res.status === 'success') {
+        if (res.totalGuru !== undefined) document.getElementById('totalGuruCount').innerText = res.totalGuru;
+        if (res.totalSiswa !== undefined) document.getElementById('totalSiswaCount').innerText = res.totalSiswa;
+        
+        const sesiEl = document.getElementById('realtimeActiveSesi');
+        const containerTabel = document.getElementById('containerTabelHariIni');
+        const pesanNonAktif = document.getElementById('pesanTabelNonAktif');
+        const teksPesanNonAktif = document.getElementById('teksPesanNonAktif');
+
+        if (res.isHariLibur) {
+          containerTabel.style.display = 'none';
+          pesanNonAktif.style.display = 'block';
+          teksPesanNonAktif.innerText = res.infoPesanSistem;
+          if (sesiEl) sesiEl.innerText = "HARI LIBUR";
+          updateStatsUI(res.stats);
+          return;
+        }
+
+        if (sesiEl) sesiEl.innerText = res.infoPesanSistem || 'Sesi Aktif';
+
+        if (res.isBelumMulai || res.isSelesai) {
+          containerTabel.style.display = 'none';
+          pesanNonAktif.style.display = 'block';
+          teksPesanNonAktif.innerText = res.infoPesanSistem;
+        } else {
+          containerTabel.style.display = 'block';
+          pesanNonAktif.style.display = 'none';
+          updateDashboardTables(res.guruList, res.siswaList);
+        }
+        updateStatsUI(res.stats);
+      }
+    });
+  }
+
+  function updateStatsUI(stats) {
+    if (!stats) return;
+    document.getElementById('g-tw').innerText = stats.guru.tw || '0';
+    document.getElementById('g-tl').innerText = stats.guru.tl || '0';
+    document.getElementById('g-sakit').innerText = stats.guru.sakit || '0';
+    document.getElementById('g-izin').innerText = stats.guru.izin || '0';
+    document.getElementById('g-alpa').innerText = stats.guru.alpa || '0';
+    document.getElementById('g-bolos').innerText = stats.guru.bolos || '0';
+    document.getElementById('s-tw').innerText = stats.siswa.tw || '0';
+    document.getElementById('s-tl').innerText = stats.siswa.tl || '0';
+    document.getElementById('s-sakit').innerText = stats.siswa.sakit || '0';
+    document.getElementById('s-izin').innerText = stats.siswa.izin || '0';
+    document.getElementById('s-alpa').innerText = stats.siswa.alpa || '0';
+    document.getElementById('s-bolos').innerText = stats.siswa.bolos || '0';
+  }
+
+  function updateDashboardTables(guruList, siswaList) {
+    const tbodyGuru = document.getElementById('tableDashGuru');
+    const tbodySiswa = document.getElementById('tableDashSiswa');
+    tbodyGuru.innerHTML = '';
+    tbodySiswa.innerHTML = '';
+
+    if (!guruList || !guruList.length) {
+      tbodyGuru.innerHTML = '<tr><td colspan="6" style="text-align:center;">Tidak ada data.</td></tr>';
+    } else {
+      guruList.forEach((g, idx) => {
+        tbodyGuru.innerHTML += `<tr><td>${idx+1}</td><td>${g.nama}</td><td>${g.mapel}</td><td>${g.jamScan}</td><td>${g.sesi}</td><td><b>${g.status}</b></td></tr>`;
       });
     }
-    return statsObj;
+
+    if (!siswaList || !siswaList.length) {
+      tbodySiswa.innerHTML = '<tr><td colspan="6" style="text-align:center;">Tidak ada data.</td></tr>';
+    } else {
+      siswaList.forEach((s, idx) => {
+        tbodySiswa.innerHTML += `<tr><td>${idx+1}</td><td>${s.nama}</td><td>${s.kelas}</td><td>${s.jamScan}</td><td>${s.sesi}</td><td><b>${s.status}</b></td></tr>`;
+      });
+    }
   }
 
-  let stats = {
-    guru: { tw: "0", tl: "0", sakit: "0", izin: "0", alpa: "0", bolos: "0" },
-    siswa: { tw: "0", tl: "0", sakit: "0", izin: "0", alpa: "0", bolos: "0" }
-  };
+  // ================= LOGIN SYSTEM ================= //
 
-  let totalGuru = 0;
-  let guruList = [];
-  if (dbGuruSheet) {
-    const gRows = dbGuruSheet.getDataRange().getDisplayValues();
-    totalGuru = Math.max(0, gRows.length - 1);
-    let rawGStats = calculateDetailedStatsForRole(gRows, "GURU", sesiConfigList, currentMinutes);
-    stats.guru = {
-      tw: rawGStats.tw.join(" / "),
-      tl: rawGStats.tl.join(" / "),
-      sakit: rawGStats.sakit.join(" / "),
-      izin: rawGStats.izin.join(" / "),
-      alpa: rawGStats.alpa.join(" / "),
-      bolos: rawGStats.bolos.join(" / ")
-    };
+  function openLoginModal() {
+    if (userRole !== 'tamu') {
+      showScanPopup("warning", "Info", "Anda sudah login.");
+      return;
+    }
+    // Tutup sidebar saat membuka modal login
+    closeSidebar();
+    document.getElementById('inputPinModal').value = '';
+    document.getElementById('modalInfo').innerText = "Masukkan PIN Anda.";
+    document.getElementById('loginModal').style.display = 'flex';
+  }
 
-    for (let i = 1; i < gRows.length; i++) {
-      const id = String(gRows[i][0]).trim();
-      const nama = gRows[i][1];
-      const mapel = gRows[i][2] || "-";
-      let key = `${id}_GURU`;
-      let records = scanTodayMap[key] || [];
+  function closeLoginModal() {
+    document.getElementById('loginModal').style.display = 'none';
+    pendingMenu = null;
+    // Tutup sidebar setelah modal ditutup
+    closeSidebar();
+  }
 
-      let jamScanStr = records.length > 0 ? records.map(r => r.jamScan).join(" | ") : "-";
-      let sesiStr = records.length > 0 ? records.map(r => r.sesiStatus.split(" - ")[0]).join(" | ") : "-";
+  function submitLogin() {
+    const pin = document.getElementById('inputPinModal').value.trim();
+    if (!pin) {
+      showScanPopup("warning", "Peringatan", "PIN tidak boleh kosong!");
+      return;
+    }
+
+    sendRequest({ action: 'login', pin: pin }, res => {
+      if (res.status === 'success') {
+        userRole = res.role;
+        userData = res;
+        closeLoginModal();
+        applyRoleAccessUI();
+        updateTopbarUserInfo();
+        showScanPopup("success", "Login Berhasil", res.message);
+        
+        if (userRole === 'guru' && userData) {
+          sendRequest({ action: 'get_guru_profile', pin: pin }, profileRes => {
+            if (profileRes.status === 'success') {
+              userData.fotoFile = profileRes.fotoFile;
+              updateTopbarUserInfo();
+            }
+          });
+        }
+        
+        if (pendingMenu) {
+          switchMenu(pendingMenu.name, pendingMenu.el);
+          pendingMenu = null;
+        }
+        updateUIByRole();
+        
+        // Tutup sidebar setelah login berhasil
+        closeSidebar();
+      } else {
+        showScanPopup("danger", "Login Gagal", res.message);
+        // Tutup sidebar setelah login gagal
+        closeSidebar();
+      }
+    });
+  }
+
+  function updateUIByRole() {
+    // Tidak perlu update badge di topbar karena sudah pakai topbar-user
+  }
+
+  function applyRoleAccessUI() {
+    document.getElementById('nav-logout').style.display = 'block';
+    document.getElementById('nav-login').style.display = 'none';
+    
+    const optGuru = document.getElementById('optIzinGuru');
+    const isAdmin = (userRole === 'admin' || userRole === 'super_admin');
+    const isSuperAdmin = (userRole === 'super_admin');
+    
+    ['nav-scanner', 'nav-izin', 'nav-rekap'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('locked');
+    });
+    
+    if (isSuperAdmin) {
+      const el = document.getElementById('nav-pengaturan');
+      if (el) el.classList.remove('locked');
+    } else {
+      const el = document.getElementById('nav-pengaturan');
+      if (el) el.classList.add('locked');
+    }
+    
+    if (isSuperAdmin || isAdmin || userRole === 'guru') {
+      ['nav-jadwal-mapel', 'nav-input-nilai', 'nav-daftar-nilai', 'nav-kelulusan'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('locked');
+      });
+    }
+    
+    if (optGuru) {
+      optGuru.style.display = (isAdmin || isSuperAdmin) ? 'block' : 'none';
+    }
+    
+    if (userRole === 'guru' && userData) {
+      document.getElementById('guruNamaDisplay').innerText = userData.nama || '-';
+      document.getElementById('guruNamaDisplayDaftar').innerText = userData.nama || '-';
+      setTimeout(() => {
+        loadFilterInputNilaiWithGuru();
+        loadJadwalMapelForGuru();
+      }, 500);
+    } else if (isSuperAdmin || isAdmin) {
+      document.getElementById('guruNamaDisplay').innerText = 'Admin';
+      document.getElementById('guruNamaDisplayDaftar').innerText = 'Admin';
+    }
+  }
+
+  function logoutSession() {
+    closeSidebar();
+    if (isCameraOn) stopCamera();
+    
+    userRole = 'tamu';
+    userData = null;
+    
+    document.querySelectorAll('.sidebar .nav-item').forEach(b => {
+      if (b.id === 'nav-login') {
+        b.style.display = 'block';
+      } else if (b.id !== 'nav-logout') {
+        b.classList.add('locked');
+      }
+    });
+    
+    document.getElementById('nav-logout').style.display = 'none';
+    document.getElementById('guruNamaDisplay').innerText = '-';
+    document.getElementById('guruNamaDisplayDaftar').innerText = '-';
+    
+    updateTopbarUserInfo();
+    switchMenu('dashboard', document.querySelector('.sidebar .nav-item'));
+    showScanPopup("success", "Logout Berhasil", "Anda telah keluar.");
+    closeSidebar();
+  }
+
+  function checkMenuAccess(menuName, el) {
+    closeSidebar();
+    
+    if (userRole === 'tamu') {
+      pendingMenu = { name: menuName, el: el };
+      openLoginModal();
+      return;
+    }
+    
+    const isAdmin = (userRole === 'admin' || userRole === 'super_admin');
+    const isSuperAdmin = (userRole === 'super_admin');
+    
+    if (menuName === 'pengaturan' && !isSuperAdmin) {
+      showScanPopup("warning", "Akses Ditolak", "Hanya Super Admin!");
+      return;
+    }
+    
+    const pembelajaranMenus = ['jadwal-mapel', 'input-nilai', 'daftar-nilai', 'kelulusan'];
+    if (pembelajaranMenus.includes(menuName)) {
+      if (userRole === 'guru' || isAdmin || isSuperAdmin) {
+        switchMenu(menuName, el);
+        if (userRole === 'guru' && menuName === 'jadwal-mapel') {
+          loadJadwalMapelForGuru();
+        }
+        return;
+      }
+    }
+    
+    switchMenu(menuName, el);
+  }
+
+  // ================= SWITCH MENU ================= //
+
+  function switchMenu(menuName, el) {
+    closeSidebar();
+    if (isCameraOn) stopCamera();
+    document.querySelectorAll('.sidebar .nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    
+    if (el) el.classList.add('active');
+    const targetSection = document.getElementById(`menu-${menuName}`);
+    if (targetSection) targetSection.classList.add('active');
+
+    if (menuName === 'scanner') setupScannerView();
+    if (menuName === 'rekap') loadOpsiKelas();
+    if (menuName === 'pengaturan') {
+      loadPengaturanDataFromServer();
+      loadHariLiburData();
+    }
+    if (menuName === 'input-nilai') loadFilterInputNilaiWithGuru();
+    if (menuName === 'daftar-nilai') loadFilterDaftarNilaiWithGuru();
+    if (menuName === 'jadwal-mapel') loadJadwalMapel();
+  }
+
+  // ================= SCANNER ================= //
+
+  function setupScannerView() {
+    const adminSwitch = document.getElementById('scannerAdminSwitch');
+    if (userRole === 'admin' || userRole === 'super_admin') {
+      adminSwitch.style.display = 'block';
+    } else {
+      adminSwitch.style.display = 'none';
+      setRole('siswa');
+    }
+  }
+
+  function setRole(role) {
+    currentRole = role;
+    const btnSiswa = document.getElementById('btnSiswaAdmin');
+    const btnGuru = document.getElementById('btnGuruAdmin');
+    if (btnSiswa) btnSiswa.style.background = (role === 'siswa') ? '#05285e' : '#6c757d';
+    if (btnGuru) btnGuru.style.background = (role === 'guru') ? '#05285e' : '#6c757d';
+  }
+
+  function toggleCamera() {
+    if (!currentActiveSesiName) {
+      showScanPopup("warning", "Sesi Tutup", "Tidak ada sesi aktif!");
+      return;
+    }
+    isCameraOn ? stopCamera() : startCamera();
+  }
+
+  function startCamera() {
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    html5QrcodeScanner.start(
+      { facingMode: "environment" },
+      { fps: 15, qrbox: { width: 220, height: 220 } },
+      (code) => onScanSuccess(code, currentActiveSesiName)
+    ).then(() => {
+      isCameraOn = true;
+      const btn = document.getElementById('btnCameraToggle');
+      btn.innerText = "Tutup Kamera";
+      btn.classList.add('off');
+      showScanPopup("success", "Kamera Ready", "Kamera aktif.");
+    }).catch(err => showScanPopup("danger", "Error Kamera", err));
+  }
+
+  function stopCamera() {
+    if (html5QrcodeScanner) {
+      html5QrcodeScanner.stop().then(() => {
+        html5QrcodeScanner.clear();
+        isCameraOn = false;
+        const btn = document.getElementById('btnCameraToggle');
+        btn.innerText = "Buka Kamera";
+        btn.classList.remove('off');
+        showScanPopup("warning", "Kamera Tutup", "Kamera dimatikan.");
+      });
+    }
+  }
+
+  function onScanSuccess(code, sesiTarget) {
+    if (isProcessing) return;
+    isProcessing = true;
+    
+    sendRequest({ action: 'absen_qr', role: currentRole, code: code, sesi: sesiTarget }, res => {
+      let popupType = res.status === 'success' ? 'success' : (res.status === 'warning' ? 'warning' : 'danger');
+      showScanPopup(popupType, "Hasil Scan", res.message);
+      setTimeout(() => { isProcessing = false; }, 1800);
+    });
+  }
+
+  // ================= IZIN ================= //
+
+  function simpanIzin() {
+    const id = document.getElementById('izinId').value;
+    if (!id) return showScanPopup("warning", "Peringatan", "ID wajib diisi!");
+    sendRequest({
+      action: 'input_izin',
+      role: document.getElementById('izinRole').value,
+      id: id,
+      tanggal: document.getElementById('izinTanggal').value,
+      status: document.getElementById('izinStatus').value,
+      keterangan: document.getElementById('izinKet').value
+    }, res => {
+      showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Izin", res.message);
+      if (res.status === 'success') {
+        document.getElementById('izinId').value = '';
+        fetchDashboardData();
+      }
+    });
+  }
+
+  // ================= CARI ================= //
+
+  function cariKehadiran() {
+    const keyword = document.getElementById('cariKeyword').value.trim();
+    const tglMulai = document.getElementById('cariTglMulai').value;
+    const tglSelesai = document.getElementById('cariTglSelesai').value;
+
+    sendRequest({
+      action: 'cari_kehadiran',
+      keyword: keyword,
+      tglMulai: tglMulai,
+      tglSelesai: tglSelesai
+    }, res => {
+      const thead = document.getElementById('tableCariHead');
+      const tbody = document.getElementById('tableCariBody');
+      tbody.innerHTML = '';
       
-      let statusArr = isSelesaiHariIni && records.length === 0 
-        ? sesiConfigList.map(s => s.alpaSetting === "Bolos" ? "B" : "A") 
-        : buildStatusArray(records, currentMinutes, sesiConfigList);
-
-      guruList.push({
-        id: id,
-        nama: nama,
-        mapel: mapel,
-        jamScan: jamScanStr,
-        sesi: sesiStr,
-        status: statusArr.join(" / ")
+      if (!res.data || res.data.length === 0) {
+        thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status</th></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ditemukan.</td></tr>';
+        return;
+      }
+      
+      thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status</th></tr>';
+      res.data.forEach(r => {
+        tbody.innerHTML += `<tr><td>${r.timestamp}</td><td>${r.peran}</td><td>${r.id}</td><td>${r.nama}</td><td>${r.sesi}</td></tr>`;
       });
-    }
+    });
   }
 
-  let totalSiswa = 0;
-  let siswaList = [];
-  if (dbSiswaSheet) {
-    const sRows = dbSiswaSheet.getDataRange().getDisplayValues();
-    totalSiswa = Math.max(0, sRows.length - 1);
-    let rawSStats = calculateDetailedStatsForRole(sRows, "SISWA", sesiConfigList, currentMinutes);
-    stats.siswa = {
-      tw: rawSStats.tw.join(" / "),
-      tl: rawSStats.tl.join(" / "),
-      sakit: rawSStats.sakit.join(" / "),
-      izin: rawSStats.izin.join(" / "),
-      alpa: rawSStats.alpa.join(" / "),
-      bolos: rawSStats.bolos.join(" / ")
-    };
+  // ================= REKAP ================= //
 
-    for (let i = 1; i < sRows.length; i++) {
-      const id = String(sRows[i][0]).trim();
-      const nama = sRows[i][1];
-      const kelas = sRows[i][2] || "-";
-      let key = `${id}_SISWA`;
-      let records = scanTodayMap[key] || [];
+  function loadOpsiKelas() {
+    sendRequest({ action: 'get_kelas' }, res => {
+      if (res.status === 'success') {
+        const select = document.getElementById('rekapKelas');
+        if (select) {
+          select.innerHTML = '<option value="">-- Semua --</option>';
+          res.data.forEach(k => select.innerHTML += `<option value="${k}">${k}</option>`);
+        }
+      }
+    });
+  }
 
-      let jamScanStr = records.length > 0 ? records.map(r => r.jamScan).join(" | ") : "-";
-      let sesiStr = records.length > 0 ? records.map(r => r.sesiStatus.split(" - ")[0]).join(" | ") : "-";
-
-      let statusArr = isSelesaiHariIni && records.length === 0 
-        ? sesiConfigList.map(s => s.alpaSetting === "Bolos" ? "B" : "A") 
-        : buildStatusArray(records, currentMinutes, sesiConfigList);
-
-      siswaList.push({
-        id: id,
-        nama: nama,
-        kelas: kelas,
-        jamScan: jamScanStr,
-        sesi: sesiStr,
-        status: statusArr.join(" / ")
+  function loadRekap() {
+    sendRequest({
+      action: 'rekap_kehadiran',
+      role: document.getElementById('rekapRole').value,
+      kelas: document.getElementById('rekapKelas').value,
+      tglMulai: document.getElementById('rekapTglMulai').value,
+      tglSelesai: document.getElementById('rekapTglSelesai').value
+    }, res => {
+      const tbody = document.getElementById('tableRekapBody');
+      tbody.innerHTML = '';
+      document.getElementById('labelTotalHari').innerText = `Total Hari: ${res.totalHari} Hari`;
+      if (!res.data || !res.data.length) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Tidak ada data.</td></tr>';
+        return;
+      }
+      res.data.forEach(s => {
+        tbody.innerHTML += `<tr><td>${s.id}</td><td>${s.nama}</td><td>${s.unit}</td><td>${s.tw}</td><td>${s.tl}</td><td>${s.izin}</td><td>${s.sakit}</td><td>${s.alpa}</td><td>${s.totalHadir}</td><td>${s.persentase}%</td></tr>`;
       });
+    });
+  }
+
+  function toggleRekapFilter() {
+    const role = document.getElementById('rekapRole').value;
+    const container = document.getElementById('rekapKelasContainer');
+    if (container) container.style.display = (role === 'siswa') ? 'block' : 'none';
+  }
+
+  function exportRekapToExcel() {
+    const table = document.getElementById('tableRekap');
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Rekap Kehadiran" });
+    XLSX.writeFile(wb, "Rekap_Kehadiran.xlsx");
+  }
+
+  // ================= PENGATURAN ================= //
+
+  function loadPengaturanDataFromServer() {
+    sendRequest({ action: 'get_pengaturan' }, res => {
+      if (res.status === 'success') {
+        globalPengaturanData = res.data;
+        renderPengaturanTable();
+      }
+    });
+  }
+
+  function renderPengaturanTable() {
+    const tbody = document.getElementById('tablePengaturanBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const show1 = document.getElementById('chkSesi1').checked;
+    const show2 = document.getElementById('chkSesi2').checked;
+    const show3 = document.getElementById('chkSesi3').checked;
+
+    let defaults = [
+      { sesi: "Sesi 1", mulai: "07:00", batasTW: "07:15", tutup: "12:00", alpa: "Alpa" },
+      { sesi: "Sesi 2", mulai: "12:00", batasTW: "12:15", tutup: "15:00", alpa: "Alpa" },
+      { sesi: "Sesi 3", mulai: "15:00", batasTW: "15:15", tutup: "17:00", alpa: "Alpa" },
+      { sesi: "PIN_Admin", mulai: "123456", batasTW: "-", tutup: "-", alpa: "-" },
+      { sesi: "PIN_Pengaturan", mulai: "456789", batasTW: "-", tutup: "-", alpa: "-" }
+    ];
+
+    let currentList = globalPengaturanData.length ? globalPengaturanData : defaults;
+
+    currentList.forEach((item) => {
+      if (item.sesi === "Sesi 1" && !show1) return;
+      if (item.sesi === "Sesi 2" && !show2) return;
+      if (item.sesi === "Sesi 3" && !show3) return;
+
+      const isPin = item.sesi.startsWith("PIN_");
+      
+      let rowHtml = `<tr>
+        <td><b>${item.sesi}</b><input type="hidden" class="cfg-sesi" value="${item.sesi}"></td>
+        <td><input type="${isPin ? 'text' : 'time'}" class="cfg-mulai" value="${item.mulai}"></td>
+        <td>${isPin ? '-' : `<input type="time" class="cfg-batasTW" value="${item.batasTW}">`}</td>
+        <td>${isPin ? '-' : `<input type="time" class="cfg-tutup" value="${item.tutup}">`}</td>
+        <td>${isPin ? '-' : `
+          <select class="cfg-alpa">
+            <option value="Alpa" ${item.alpa === 'Alpa' ? 'selected' : ''}>Alpa</option>
+            <option value="Bolos" ${item.alpa === 'Bolos' ? 'selected' : ''}>Bolos</option>
+          </select>
+        `}</td>
+      </tr>`;
+      tbody.innerHTML += rowHtml;
+    });
+  }
+
+  function savePengaturan() {
+    let configList = [];
+    const rows = document.querySelectorAll('#tablePengaturanBody tr');
+
+    rows.forEach(r => {
+      const sesi = r.querySelector('.cfg-sesi').value;
+      const mulai = r.querySelector('.cfg-mulai').value;
+      const batasTW = r.querySelector('.cfg-batasTW') ? r.querySelector('.cfg-batasTW').value : '';
+      const tutup = r.querySelector('.cfg-tutup') ? r.querySelector('.cfg-tutup').value : '';
+      const alpa = r.querySelector('.cfg-alpa') ? r.querySelector('.cfg-alpa').value : 'Alpa';
+      configList.push({ sesi, mulai, batasTW, tutup, alpa });
+    });
+
+    sendRequest({ action: 'save_pengaturan', config: configList }, res => {
+      showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
+      if (res.status === 'success') {
+        globalPengaturanData = configList;
+        preloadPinConfig();
+      }
+    });
+  }
+
+  function loadHariLiburData() {
+    sendRequest({ action: 'get_hari_libur' }, res => {
+      const tbody = document.getElementById('tableHariLiburBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (res.status === 'success' && res.data.length > 0) {
+        res.data.forEach((item, index) => {
+          tbody.innerHTML += `<tr>
+            <td>${index + 1}</td>
+            <td>${item.tanggal}</td>
+            <td>${item.keterangan}</td>
+            <td style="text-align:center;">
+              <button class="btn-edit" onclick="editHariLibur(${item.rowIndex}, '${item.tanggal}', '${item.keterangan}')">Edit</button>
+              <button class="btn-danger" onclick="hapusHariLibur(${item.rowIndex})">Hapus</button>
+            </td>
+          </tr>`;
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada hari libur.</td></tr>';
+      }
+    });
+  }
+
+  function simpanHariLibur() {
+    const tgl = document.getElementById('inputTglLibur').value;
+    const ket = document.getElementById('inputKetLibur').value;
+    const rowIndex = document.getElementById('editHariLiburRowIndex').value;
+
+    if (!tgl) return showScanPopup("warning", "Peringatan", "Tanggal wajib diisi!");
+
+    sendRequest({
+      action: 'save_hari_libur',
+      tanggal: tgl,
+      keterangan: ket,
+      rowIndex: rowIndex
+    }, res => {
+      showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
+      if (res.status === 'success') {
+        resetFormHariLibur();
+        loadHariLiburData();
+        fetchDashboardData();
+      }
+    });
+  }
+
+  function editHariLibur(rowIndex, tanggal, keterangan) {
+    document.getElementById('editHariLiburRowIndex').value = rowIndex;
+    document.getElementById('inputTglLibur').value = tanggal;
+    document.getElementById('inputKetLibur').value = keterangan;
+    document.getElementById('btnBatalEditLibur').style.display = 'inline-block';
+  }
+
+  function resetFormHariLibur() {
+    document.getElementById('editHariLiburRowIndex').value = '0';
+    document.getElementById('inputTglLibur').value = '';
+    document.getElementById('inputKetLibur').value = '';
+    document.getElementById('btnBatalEditLibur').style.display = 'none';
+  }
+
+  function hapusHariLibur(rowIndex) {
+    if (!confirm("Yakin hapus?")) return;
+    sendRequest({ action: 'delete_hari_libur', rowIndex: rowIndex }, res => {
+      showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
+      if (res.status === 'success') {
+        loadHariLiburData();
+        fetchDashboardData();
+      }
+    });
+  }
+
+  // ================= JADWAL MAPEL ================= //
+
+  function loadJadwalMapel() {
+    const now = new Date();
+    const hariIni = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][now.getDay()];
+    
+    document.getElementById('jadwalHariText').innerText = hariIni;
+    document.getElementById('jadwalInfoDisplay').innerHTML = `Menampilkan jadwal hari ini, <b>${hariIni}</b>`;
+    
+    let payload = { action: 'get_jadwal_mapel', hari: hariIni };
+    if (userRole === 'guru' && userData && userData.nip) {
+      payload.nip = userData.nip;
+      payload.role = 'guru';
     }
+    
+    sendRequest(payload, res => {
+      const tbody = document.getElementById('tableJadwalBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      
+      if (res.status === 'success' && res.data && res.data.length > 0) {
+        let filteredData = res.data;
+        if (userRole === 'guru' && userData && userData.mapel) {
+          filteredData = res.data.filter(item => {
+            return userData.mapel.some(m => item.mapel.includes(m));
+          });
+        }
+        
+        if (filteredData.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada jadwal.</td></tr>';
+          return;
+        }
+        
+        filteredData.forEach((item, idx) => {
+          tbody.innerHTML += `<tr>
+            <td>${idx + 1}</td>
+            <td>${item.waktu}</td>
+            <td><b>${item.mapel}</b></td>
+            <td>${item.kelas}</td>
+          </tr>`;
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada data jadwal.</td></tr>';
+      }
+    });
   }
 
-  return responseJSON({
-    status: "success",
-    isHariLibur: false,
-    countSesi: countSesiAktif,
-    totalGuru: totalGuru,
-    totalSiswa: totalSiswa,
-    isSelesai: isSelesaiHariIni,
-    isBelumMulai: isBelumMulai,
-    infoPesanSistem: infoPesanSistem,
-    stats: stats,
-    guruList: guruList,
-    siswaList: siswaList
-  });
-}
-
-// ================= CARI & REKAP ================= //
-
-function handleCariKehadiran(data) {
-  const keyword = String(data.keyword || '').toLowerCase().trim();
-  const tglMulai = String(data.tglMulai || '');
-  const tglSelesai = String(data.tglSelesai || '');
-
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const dbSiswaSheet = ss.getSheetByName("Database_Siswa");
-  const sheetKehadiran = ss.getSheetByName("Kehadiran");
-
-  if (!dbSiswaSheet) return responseJSON({ status: "success", data: [] });
-
-  const siswaRows = dbSiswaSheet.getDataRange().getDisplayValues();
-  let filteredSiswa = [];
-
-  for (let i = 1; i < siswaRows.length; i++) {
-    const id = String(siswaRows[i][0]).replace(/'/g, '').trim();
-    const nama = String(siswaRows[i][1]).trim();
-    const kelas = String(siswaRows[i][2] || '').trim();
-
-    if (!keyword || id.toLowerCase().includes(keyword) || nama.toLowerCase().includes(keyword)) {
-      filteredSiswa.push({ id, nama, kelas });
-    }
+  function loadJadwalMapelForGuru() {
+    loadJadwalMapel();
   }
 
-  if (filteredSiswa.length === 0) {
-    return responseJSON({ status: "success", data: [] });
-  }
+  // ================= INPUT NILAI ================= //
 
-  let kehadiranMap = {};
-  if (sheetKehadiran) {
-    const kRows = sheetKehadiran.getDataRange().getDisplayValues();
-    for (let i = 1; i < kRows.length; i++) {
-      const rowPeran = String(kRows[i][1]).toUpperCase().trim();
-      const id = String(kRows[i][2]).replace(/'/g, '').trim();
-      const tgl = String(kRows[i][5]).substring(0, 10);
-
-      if (rowPeran === "SISWA") {
-        const matchTglMulai = (!tglMulai || tgl >= tglMulai);
-        const matchTglSelesai = (!tglSelesai || tgl <= tglSelesai);
-
-        if (matchTglMulai && matchTglSelesai) {
-          if (!kehadiranMap[id]) kehadiranMap[id] = [];
-          kehadiranMap[id].push({
-            timestamp: kRows[i][0],
-            peran: kRows[i][1],
-            id: id,
-            nama: kRows[i][3],
-            sesi: kRows[i][4],
-            tanggal: kRows[i][5]
+  function loadFilterInputNilaiWithGuru() {
+    if (userRole === 'guru' && userData) {
+      const selectMapel = document.getElementById('filterInputNilaiMapel');
+      const selectKelas = document.getElementById('filterInputNilaiKelas');
+      
+      if (selectMapel) {
+        selectMapel.innerHTML = '<option value="">-- Pilih --</option>';
+        if (userData.mapel && userData.mapel.length > 0) {
+          userData.mapel.forEach(m => {
+            selectMapel.innerHTML += `<option value="${m}">${m}</option>`;
           });
         }
       }
-    }
-  }
-
-  let matchedRecords = [];
-  filteredSiswa.forEach(s => {
-    let records = kehadiranMap[s.id];
-    if (records && records.length > 0) {
-      records.forEach(r => matchedRecords.push(r));
+      
+      if (selectKelas) {
+        selectKelas.innerHTML = '<option value="">-- Semua --</option>';
+        if (userData.kelas && userData.kelas.length > 0) {
+          userData.kelas.forEach(k => {
+            selectKelas.innerHTML += `<option value="${k}">${k}</option>`;
+          });
+        }
+      }
+      
+      document.getElementById('guruNamaDisplay').innerText = userData.nama || '-';
     } else {
-      matchedRecords.push({
-        timestamp: "-",
-        peran: "SISWA",
-        id: s.id,
-        nama: s.nama,
-        sesi: "TW: 0 | TL: 0 | Sakit: 0 | Izin: 0 | Alpa: 0 | Bolos: 0",
-        tanggal: "-"
+      sendRequest({ action: 'get_filter_nilai', pin: '' }, res => {
+        if (res.status === 'success') {
+          const selectMapel = document.getElementById('filterInputNilaiMapel');
+          const selectKelas = document.getElementById('filterInputNilaiKelas');
+          
+          if (selectMapel) {
+            selectMapel.innerHTML = '<option value="">-- Pilih --</option>';
+            res.mapelList.forEach(m => selectMapel.innerHTML += `<option value="${m}">${m}</option>`);
+          }
+          
+          if (selectKelas) {
+            selectKelas.innerHTML = '<option value="">-- Semua --</option>';
+            res.kelasList.forEach(k => selectKelas.innerHTML += `<option value="${k}">${k}</option>`);
+          }
+          
+          if (res.guruNama) {
+            document.getElementById('guruNamaDisplay').innerText = res.guruNama;
+          }
+        }
       });
     }
-  });
-
-  return responseJSON({ status: "success", data: matchedRecords });
-}
-
-function handleRekapKehadiran(data) {
-  const role = String(data.role || 'siswa').toLowerCase();
-  const kelas = String(data.kelas || '').trim();
-  const tglMulai = String(data.tglMulai || '');
-  const tglSelesai = String(data.tglSelesai || '');
-
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const dbSheetName = (role === 'siswa') ? "Database_Siswa" : "Database_Guru";
-  const dbSheet = ss.getSheetByName(dbSheetName);
-  const sheetKehadiran = ss.getSheetByName("Kehadiran");
-  const sheetLibur = ss.getSheetByName("Hari_Libur");
-
-  if (!dbSheet) return responseJSON({ status: "error", message: `Sheet ${dbSheetName} tidak ditemukan!` });
-  if (!sheetKehadiran) return responseJSON({ status: "error", message: "Sheet Kehadiran tidak ditemukan!" });
-
-  const dbData = dbSheet.getDataRange().getDisplayValues();
-  const kData = sheetKehadiran.getDataRange().getDisplayValues();
-
-  let setLibur = new Set();
-  if (sheetLibur) {
-    const liburRows = sheetLibur.getDataRange().getDisplayValues();
-    for (let i = 1; i < liburRows.length; i++) {
-      if (liburRows[i][0]) setLibur.add(liburRows[i][0].substring(0, 10));
-    }
   }
 
-  let setTanggal = new Set();
-  if (tglMulai && tglSelesai) {
-    let curr = new Date(tglMulai);
-    let end = new Date(tglSelesai);
-    while (curr <= end) {
-      const tglStr = Utilities.formatDate(curr, "Asia/Jakarta", "yyyy-MM-dd");
-      if (!setLibur.has(tglStr)) setTanggal.add(tglStr);
-      curr.setDate(curr.getDate() + 1);
+  function loadInputNilaiData() {
+    const mapel = document.getElementById('filterInputNilaiMapel').value;
+    const kelas = document.getElementById('filterInputNilaiKelas').value;
+
+    if (!mapel) {
+      return showScanPopup("warning", "Filter", "Pilih Mapel terlebih dahulu!");
     }
-  } else {
-    for (let i = 1; i < kData.length; i++) {
-      const tgl = kData[i][5].substring(0, 10);
-      const rRole = kData[i][1].toLowerCase();
-      const matchMulai = (!tglMulai || tgl >= tglMulai);
-      const matchSelesai = (!tglSelesai || tgl <= tglSelesai);
-      if (rRole === role && matchMulai && matchSelesai && !setLibur.has(tgl)) {
-        setTanggal.add(tgl);
+
+    const guru = document.getElementById('guruNamaDisplay').innerText;
+
+    sendRequest({ 
+      action: 'get_nilai', 
+      guru: guru, 
+      mapel: mapel, 
+      kelas: kelas
+    }, res => {
+      const tbody = document.getElementById('tableInputNilaiBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (res.status === 'success' && res.data.length > 0) {
+        currentInputNilaiList = res.data;
+        res.data.forEach((item, idx) => {
+          tbody.innerHTML += `<tr>
+            <td>${idx + 1}</td>
+            <td><b>${item.nama}</b><br><small style="color:#666;">NISN: ${item.nisn}</small></td>
+            <td>${item.kelas}</td>
+            <td><input type="number" step="any" class="input-nilai-sm" id="nilai_${idx}" placeholder="Nilai"></td>
+          </tr>`;
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada data siswa.</td></tr>';
       }
-    }
-  }
-  const totalHariMasuk = setTanggal.size || 1;
-
-  let dataMap = {};
-  for (let i = 1; i < dbData.length; i++) {
-    const id = dbData[i][0];
-    const nama = dbData[i][1];
-    const unitKelas = (role === 'siswa') ? dbData[i][2] : (dbData[i][2] || 'Guru');
-
-    if (role === 'guru' || !kelas || unitKelas === kelas) {
-      dataMap[id] = {
-        id: id,
-        nama: nama,
-        unit: unitKelas,
-        tw: 0, tl: 0, izin: 0, sakit: 0, alpa: 0,
-        totalHadir: 0, persentase: 0
-      };
-    }
-  }
-
-  for (let i = 1; i < kData.length; i++) {
-    const rRole = kData[i][1].toLowerCase();
-    const id = String(kData[i][2]).replace(/'/g, '');
-    const statusKet = kData[i][4];
-    const tgl = kData[i][5].substring(0, 10);
-
-    const matchMulai = (!tglMulai || tgl >= tglMulai);
-    const matchSelesai = (!tglSelesai || tgl <= tglSelesai);
-
-    if (rRole === role && dataMap[id] && matchMulai && matchSelesai) {
-      if (statusKet.includes("TW")) dataMap[id].tw++;
-      else if (statusKet.includes("TL")) dataMap[id].tl++;
-      else if (statusKet.startsWith("Izin")) dataMap[id].izin++;
-      else if (statusKet.startsWith("Sakit")) dataMap[id].sakit++;
-      else if (statusKet.startsWith("Alpa") || statusKet.startsWith("Bolos")) dataMap[id].alpa++;
-    }
-  }
-
-  Object.keys(dataMap).forEach(key => {
-    const item = dataMap[key];
-    item.totalHadir = item.tw + item.tl;
-    item.persentase = ((item.totalHadir / totalHariMasuk) * 100).toFixed(1);
-  });
-
-  return responseJSON({ 
-    status: "success", 
-    data: Object.values(dataMap),
-    totalHari: totalHariMasuk
-  });
-}
-
-function handleGetKelas() {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const dbSiswa = ss.getSheetByName("Database_Siswa");
-  if (!dbSiswa) return responseJSON({ status: "success", data: [] });
-  
-  const dbData = dbSiswa.getDataRange().getDisplayValues();
-  let kelasSet = new Set();
-  for (let i = 1; i < dbData.length; i++) {
-    if (dbData[i][2]) kelasSet.add(dbData[i][2]);
-  }
-  return responseJSON({ status: "success", data: Array.from(kelasSet) });
-}
-
-// ================= JADWAL MAPEL ================= //
-
-function handleGetJadwalMapel(data) {
-  const hari = String(data.hari || '').trim();
-  const kelas = String(data.kelas || '').trim();
-  const nip = String(data.nip || '').trim();
-  const role = String(data.role || '').trim();
-
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheetJadwal = ss.getSheetByName("Jadwal_Mapel");
-  
-  if (!sheetJadwal) {
-    return responseJSON({ status: "success", data: [] });
-  }
-
-  const jData = sheetJadwal.getDataRange().getDisplayValues();
-  let results = [];
-
-  // Get current day
-  const now = new Date();
-  const hariIni = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][now.getDay()];
-  const hariTarget = hari || hariIni;
-
-  for (let i = 1; i < jData.length; i++) {
-    const idJadwal = String(jData[i][0] || '').trim();
-    const hariRow = String(jData[i][1] || '').trim();
-    const jamMasuk = String(jData[i][2] || '').trim();
-    const mapel = String(jData[i][3] || '').trim();
-    const kelasRow = String(jData[i][4] || '').trim();
-    const namaGuru = String(jData[i][5] || '').trim();
-
-    if (hariRow !== hariTarget) continue;
-    if (kelas && kelasRow !== kelas) continue;
-
-    results.push({
-      id: idJadwal,
-      hari: hariRow,
-      waktu: jamMasuk,
-      mapel: mapel,
-      kelas: kelasRow,
-      guru: namaGuru
     });
   }
 
-  results.sort((a, b) => {
-    const timeA = a.waktu.split('-')[0].trim();
-    const timeB = b.waktu.split('-')[0].trim();
-    return timeA.localeCompare(timeB);
-  });
+  function simpanDataNilai() {
+    const guru = document.getElementById('guruNamaDisplay').innerText;
+    const mapel = document.getElementById('filterInputNilaiMapel').value;
 
-  return responseJSON({
-    status: "success",
-    data: results,
-    hari: hariTarget
-  });
-}
-
-// ================= FITUR NILAI ================= //
-
-function handleGetFilterNilai(data) {
-  const pin = String(data.pin || '').trim();
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const dbGuruSheet = ss.getSheetByName("Database_Guru");
-  const dbSiswaSheet = ss.getSheetByName("Database_Siswa");
-
-  let guruNama = null;
-  let mapelFilter = [];
-  let kelasFilter = [];
-  
-  if (pin) {
-    const gData = dbGuruSheet.getDataRange().getDisplayValues();
-    for (let i = 1; i < gData.length; i++) {
-      const pinGuru = String(gData[i][4] || '').trim();
-      if (pin === pinGuru) {
-        guruNama = String(gData[i][1]).trim();
-        const mapel = String(gData[i][2] || '').trim();
-        const kelasRaw = String(gData[i][3] || '').trim();
-        mapelFilter = mapel.split(',').map(m => m.trim()).filter(m => m);
-        kelasFilter = kelasRaw.split(',').map(k => k.trim()).filter(k => k);
-        break;
-      }
+    if (!guru || guru === '-' || guru === 'Admin') {
+      return showScanPopup("warning", "Peringatan", "Guru tidak teridentifikasi!");
     }
+
+    if (!mapel) {
+      return showScanPopup("warning", "Peringatan", "Pilih Mapel!");
+    }
+
+    if (!currentInputNilaiList.length) {
+      return showScanPopup("warning", "Peringatan", "Tidak ada daftar siswa!");
+    }
+
+    let payloadList = [];
+    let hasValue = false;
+    currentInputNilaiList.forEach((item, idx) => {
+      let val = document.getElementById(`nilai_${idx}`).value;
+      if (val && val.trim() !== '') {
+        hasValue = true;
+      }
+      payloadList.push({
+        nisn: item.nisn,
+        nama: item.nama,
+        kelas: item.kelas,
+        nilai: val || ''
+      });
+    });
+
+    if (!hasValue) {
+      return showScanPopup("warning", "Peringatan", "Tidak ada nilai yang diisi!");
+    }
+
+    sendRequest({
+      action: 'save_nilai',
+      guru: guru,
+      mapel: mapel,
+      listNilai: payloadList
+    }, res => {
+      showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
+      if (res.status === 'success') {
+        currentInputNilaiList.forEach((item, idx) => {
+          document.getElementById(`nilai_${idx}`).value = '';
+        });
+      }
+    });
   }
 
-  let guruList = [];
-  let mapelSet = new Set();
-  if (dbGuruSheet) {
-    const gRows = dbGuruSheet.getDataRange().getDisplayValues();
-    for (let i = 1; i < gRows.length; i++) {
-      if (gRows[i][1]) {
-        guruList.push(gRows[i][1]);
-        if (gRows[i][2]) {
-          const mapels = String(gRows[i][2]).split(',').map(m => m.trim()).filter(m => m);
-          mapels.forEach(m => mapelSet.add(m));
+  // ================= DAFTAR NILAI ================= //
+
+  function loadFilterDaftarNilaiWithGuru() {
+    if (userRole === 'guru' && userData) {
+      const selectMapel = document.getElementById('filterDaftarNilaiMapel');
+      const selectKelas = document.getElementById('filterDaftarNilaiKelas');
+      
+      if (selectMapel) {
+        selectMapel.innerHTML = '<option value="">-- Semua --</option>';
+        if (userData.mapel && userData.mapel.length > 0) {
+          userData.mapel.forEach(m => {
+            selectMapel.innerHTML += `<option value="${m}">${m}</option>`;
+          });
         }
       }
-    }
-  }
-
-  let kelasSet = new Set();
-  if (dbSiswaSheet) {
-    const sRows = dbSiswaSheet.getDataRange().getDisplayValues();
-    for (let i = 1; i < sRows.length; i++) {
-      if (sRows[i][2]) kelasSet.add(String(sRows[i][2]).trim());
-    }
-  }
-
-  let mapelList = mapelFilter.length > 0 ? mapelFilter : Array.from(mapelSet);
-  let kelasList = kelasFilter.length > 0 ? kelasFilter : Array.from(kelasSet);
-
-  return responseJSON({
-    status: "success",
-    guruList: guruList,
-    mapelList: mapelList,
-    kelasList: kelasList,
-    guruNama: guruNama,
-    isGuruLogin: !!pin
-  });
-}
-
-function handleGetNilai(data) {
-  const namaGuru = String(data.guru || '').trim();
-  const mapel = String(data.mapel || '').trim();
-  const kelas = String(data.kelas || '').trim();
-
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheetNilai = ss.getSheetByName("Nilai");
-  if (!sheetNilai) {
-    sheetNilai = ss.insertSheet("Nilai");
-    sheetNilai.appendRow(["NISN", "Nama", "Kelas", "Guru", "Mapel", "Nilai"]);
-  }
-
-  const dbSiswa = ss.getSheetByName("Database_Siswa");
-  if (!dbSiswa) return responseJSON({ status: "error", message: "Database Siswa tidak ditemukan!" });
-
-  const sRows = dbSiswa.getDataRange().getDisplayValues();
-  
-  let listNilai = [];
-  for (let i = 1; i < sRows.length; i++) {
-    let nisn = String(sRows[i][0]).replace(/'/g, '').trim();
-    let nama = sRows[i][1];
-    let kls = String(sRows[i][2] || '').trim();
-
-    if (!kelas || kls === kelas) {
-      listNilai.push({
-        nisn: nisn,
-        nama: nama,
-        kelas: kls,
-        nilai: ""
+      
+      if (selectKelas) {
+        selectKelas.innerHTML = '<option value="">-- Semua --</option>';
+        if (userData.kelas && userData.kelas.length > 0) {
+          userData.kelas.forEach(k => {
+            selectKelas.innerHTML += `<option value="${k}">${k}</option>`;
+          });
+        }
+      }
+      
+      document.getElementById('guruNamaDisplayDaftar').innerText = userData.nama || '-';
+      loadDaftarNilaiData();
+    } else {
+      sendRequest({ action: 'get_filter_nilai', pin: '' }, res => {
+        if (res.status === 'success') {
+          const selectMapel = document.getElementById('filterDaftarNilaiMapel');
+          const selectKelas = document.getElementById('filterDaftarNilaiKelas');
+          
+          if (selectMapel) {
+            selectMapel.innerHTML = '<option value="">-- Semua --</option>';
+            res.mapelList.forEach(m => selectMapel.innerHTML += `<option value="${m}">${m}</option>`);
+          }
+          
+          if (selectKelas) {
+            selectKelas.innerHTML = '<option value="">-- Semua --</option>';
+            res.kelasList.forEach(k => selectKelas.innerHTML += `<option value="${k}">${k}</option>`);
+          }
+          
+          if (res.guruNama) {
+            document.getElementById('guruNamaDisplayDaftar').innerText = res.guruNama;
+          }
+          loadDaftarNilaiData();
+        }
       });
     }
   }
 
-  return responseJSON({ status: "success", data: listNilai });
-}
+  function loadDaftarNilaiData() {
+    const mapel = document.getElementById('filterDaftarNilaiMapel').value;
+    const kelas = document.getElementById('filterDaftarNilaiKelas').value;
+    const guru = document.getElementById('guruNamaDisplayDaftar').innerText;
 
-function handleSaveNilai(data) {
-  const namaGuru = String(data.guru || '').trim();
-  const mapel = String(data.mapel || '').trim();
-  const listNilai = data.listNilai || [];
+    sendRequest({ action: 'get_daftar_nilai', guru: guru, mapel: mapel, kelas: kelas }, res => {
+      const thead = document.getElementById('tableDaftarNilaiHead');
+      const tbody = document.getElementById('tableDaftarNilaiBody');
+      if (!thead || !tbody) return;
+      tbody.innerHTML = '';
 
-  if (!namaGuru || !mapel) return responseJSON({ status: "error", message: "Pilih Guru dan Mata Pelajaran terlebih dahulu!" });
+      if (res.status === 'success' && res.data && res.data.length > 0) {
+        let headers = res.headers || [];
+        let headerHtml = `<tr>
+          <th>No</th>
+          <th>NISN</th>
+          <th>Nama</th>
+          <th>Kelas</th>
+          <th>Guru</th>
+          <th>Mapel</th>`;
+        headers.forEach(h => {
+          headerHtml += `<th>${h}</th>`;
+        });
+        headerHtml += `</tr>`;
+        thead.innerHTML = headerHtml;
 
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheetNilai = ss.getSheetByName("Nilai");
-  if (!sheetNilai) {
-    sheetNilai = ss.insertSheet("Nilai");
-    sheetNilai.appendRow(["NISN", "Nama", "Kelas", "Guru", "Mapel", "Nilai"]);
+        res.data.forEach((item, idx) => {
+          let rowHtml = `<tr>
+            <td>${idx + 1}</td>
+            <td>${item.nisn}</td>
+            <td><b>${item.nama}</b></td>
+            <td>${item.kelas}</td>
+            <td>${item.guru}</td>
+            <td>${item.mapel}</td>`;
+          
+          headers.forEach((h, hIdx) => {
+            let val = item.nilaiList[hIdx] !== undefined ? item.nilaiList[hIdx] : '';
+            rowHtml += `<td>${val}</td>`;
+          });
+          rowHtml += `</tr>`;
+          tbody.innerHTML += rowHtml;
+        });
+      } else {
+        thead.innerHTML = `<tr>
+          <th>No</th>
+          <th>NISN</th>
+          <th>Nama</th>
+          <th>Kelas</th>
+          <th>Guru</th>
+          <th>Mapel</th>
+        </tr>`;
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada data nilai.</td></tr>';
+      }
+    });
   }
 
-  let appendedCount = 0;
-  listNilai.forEach(item => {
-    let nisn = String(item.nisn).trim();
-    let nilai = String(item.nilai || '').trim();
-    if (nilai !== "") {
-      sheetNilai.appendRow([
-        `'${nisn}`, item.nama, item.kelas, namaGuru, mapel, nilai
-      ]);
-      appendedCount++;
-    }
-  });
+  // ================= EXPORT DAFTAR NILAI ================= //
 
-  if (appendedCount === 0) {
-    return responseJSON({ status: "warning", message: "Tidak ada nilai yang diisi untuk disimpan." });
+  function exportDaftarNilaiToExcel() {
+    const table = document.getElementById('tableDaftarNilaiResult');
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Daftar Nilai" });
+    XLSX.writeFile(wb, "Daftar_Nilai_Siswa.xlsx");
+    showScanPopup("success", "Export Berhasil", "File Excel berhasil diunduh!");
   }
 
-  return responseJSON({ status: "success", message: `Berhasil menyimpan ${appendedCount} data nilai!` });
-}
-
-function handleGetDaftarNilai(data) {
-  const filterGuru = String(data.guru || '').trim();
-  const filterKelas = String(data.kelas || '').trim();
-  const filterMapel = String(data.mapel || '').trim();
-
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheetNilai = ss.getSheetByName("Nilai");
-  if (!sheetNilai) {
-    return responseJSON({ status: "success", headers: [], data: [] });
+  function exportDaftarNilaiToPDF() {
+    // Gunakan window.print() untuk export PDF
+    window.print();
+    showScanPopup("success", "Export PDF", "Silakan pilih 'Save as PDF' pada dialog print.");
   }
 
-  const rows = sheetNilai.getDataRange().getDisplayValues();
-  if (rows.length <= 1) {
-    return responseJSON({ status: "success", headers: [], data: [] });
-  }
-
-  let grouped = {};
-  let maxPenilaianCount = 0;
-
-  for (let i = 1; i < rows.length; i++) {
-    let nisn = String(rows[i][0]).replace(/'/g, '').trim();
-    let nama = rows[i][1];
-    let kelas = rows[i][2];
-    let guru = rows[i][3];
-    let mapel = rows[i][4];
-    let nilai = rows[i][5];
-
-    if (filterGuru && guru !== filterGuru) continue;
-    if (filterKelas && kelas !== filterKelas) continue;
-    if (filterMapel && mapel !== filterMapel) continue;
-
-    let key = `${nisn}_${guru}_${mapel}`;
-    if (!grouped[key]) {
-      grouped[key] = {
-        nisn: nisn,
-        nama: nama,
-        kelas: kelas,
-        guru: guru,
-        mapel: mapel,
-        listNilai: []
-      };
-    }
-    grouped[key].listNilai.push(parseFloat(nilai) || 0);
-    if (grouped[key].listNilai.length > maxPenilaianCount) {
-      maxPenilaianCount = grouped[key].listNilai.length;
-    }
-  }
-
-  let headers = [];
-  for (let p = 1; p <= maxPenilaianCount; p++) {
-    headers.push(`NH${p}`);
-  }
-
-  let resultData = [];
-  Object.values(grouped).forEach(item => {
-    let rowObj = {
-      nisn: item.nisn,
-      nama: item.nama,
-      kelas: item.kelas,
-      guru: item.guru,
-      mapel: item.mapel,
-      nilaiList: item.listNilai
-    };
-    resultData.push(rowObj);
-  });
-
-  return responseJSON({
-    status: "success",
-    headers: headers,
-    data: resultData
-  });
-}
-
-// ================= EXPORT DAFTAR NILAI ================= //
-
-function handleExportDaftarNilai(data) {
-  const filterGuru = String(data.guru || '').trim();
-  const filterKelas = String(data.kelas || '').trim();
-  const filterMapel = String(data.mapel || '').trim();
-
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheetNilai = ss.getSheetByName("Nilai");
-  if (!sheetNilai) {
-    return responseJSON({ status: "success", headers: [], data: [] });
-  }
-
-  const rows = sheetNilai.getDataRange().getDisplayValues();
-  if (rows.length <= 1) {
-    return responseJSON({ status: "success", headers: [], data: [] });
-  }
-
-  let grouped = {};
-  let maxPenilaianCount = 0;
-
-  for (let i = 1; i < rows.length; i++) {
-    let nisn = String(rows[i][0]).replace(/'/g, '').trim();
-    let nama = rows[i][1];
-    let kelas = rows[i][2];
-    let guru = rows[i][3];
-    let mapel = rows[i][4];
-    let nilai = rows[i][5];
-
-    if (filterGuru && guru !== filterGuru) continue;
-    if (filterKelas && kelas !== filterKelas) continue;
-    if (filterMapel && mapel !== filterMapel) continue;
-
-    let key = `${nisn}_${guru}_${mapel}`;
-    if (!grouped[key]) {
-      grouped[key] = {
-        nisn: nisn,
-        nama: nama,
-        kelas: kelas,
-        guru: guru,
-        mapel: mapel,
-        listNilai: []
-      };
-    }
-    grouped[key].listNilai.push(parseFloat(nilai) || 0);
-    if (grouped[key].listNilai.length > maxPenilaianCount) {
-      maxPenilaianCount = grouped[key].listNilai.length;
-    }
-  }
-
-  let headers = [];
-  for (let p = 1; p <= maxPenilaianCount; p++) {
-    headers.push(`NH${p}`);
-  }
-
-  let resultData = [];
-  Object.values(grouped).forEach(item => {
-    let rowObj = {
-      nisn: item.nisn,
-      nama: item.nama,
-      kelas: item.kelas,
-      guru: item.guru,
-      mapel: item.mapel,
-      nilaiList: item.listNilai
-    };
-    resultData.push(rowObj);
-  });
-
-  return responseJSON({
-    status: "success",
-    headers: headers,
-    data: resultData
-  });
-}
+</script>
+</body>
+</html>
