@@ -850,7 +850,59 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxKyxGfVfLWcnV2lu6lX05DA0EGHieCz1zdm0XqGCCzcUH7TUsv1WJC351dd-XqoFSW1A/exec";
+  // ================= RESTORE SESSION ================= //
+
+function restoreSession() {
+  const savedSession = sessionStorage.getItem('userSession');
+  if (!savedSession) return;
+  
+  try {
+    const sessionData = JSON.parse(savedSession);
+    const userId = sessionData.userId;
+    const role = sessionData.role;
+    
+    if (!userId || !role) return;
+    
+    sendRequest({ 
+      action: 'check_session', 
+      userId: userId, 
+      role: role 
+    }, res => {
+      if (res.status === 'success') {
+        userRole = res.role;
+        userData = res;
+        applyRoleAccessUI();
+        updateTopbarUserInfo();
+        
+        if (userRole === 'guru' && userData) {
+          setTimeout(() => {
+            checkFingerprintStatus();
+            loadFilterInputNilaiWithGuru();
+            loadJadwalMapelForGuru();
+          }, 500);
+        }
+        
+        // Update status badge
+        updateUIByRole();
+        closeSidebar();
+      } else {
+        // Session tidak valid, hapus
+        sessionStorage.removeItem('userSession');
+      }
+    });
+  } catch (e) {
+    sessionStorage.removeItem('userSession');
+  }
+}
+
+// Panggil restoreSession di awal
+document.addEventListener('DOMContentLoaded', function() {
+  restoreSession();
+});
+
+
+  
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzwajDFT-B5LaSRr8CSJQxPRKuukF6Lnx4USlIOplY34119hl90kIcqrpnqCY6BO1Nl0Q/exec";
   // GANTI ID_DEPLOYMENT_ANDA dengan URL deployment Anda
 
   // ================= VARIABEL GLOBAL ================= //
