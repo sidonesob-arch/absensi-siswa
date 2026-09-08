@@ -240,7 +240,7 @@
     th, td { padding: 6px 8px; border-bottom: 1px solid #ddd; }
     th { background-color: #f0f4f9; color: #05285e; font-weight: bold; }
 
-    #loginModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
+    #loginModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 3000; }
     #loginSiswaModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 3000; }
     .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 350px; text-align: center; }
 
@@ -494,7 +494,8 @@
 
     <div class="nav-category">ORANG TUA / TAMU</div>
     <a class="nav-item" onclick="switchMenu('cari', this)">🔍 Cari Data Siswa</a>
-    <a class="nav-item" id="nav-siswa-fingerprint" onclick="openLoginSiswaModal()">👆 Sidik Jari Siswa</a>
+    <a class="nav-item" id="nav-login-siswa" onclick="openLoginSiswaModal()">👤 Login Siswa</a>
+    <a class="nav-item" id="nav-siswa-fingerprint" onclick="switchMenu('siswa-fingerprint', this)">👆 Sidik Jari Siswa</a>
 
     <div class="nav-category">MENU UTAMA</div>
     <a class="nav-item" id="nav-login" onclick="openLoginModal()">🔑 Login Sistem</a>
@@ -611,17 +612,14 @@
         <span class="icon-large">👨‍🎓</span>
         <h4 style="margin:0 0 5px 0; color:#05285e;">Registrasi & Absensi Sidik Jari Siswa</h4>
         <p style="font-size:12px; color:#666; margin-bottom:10px;">
-          Login dengan NISN untuk registrasi dan absensi sidik jari.
+          Login terlebih dahulu melalui menu <b>"Login Siswa"</b> untuk registrasi dan absensi.
         </p>
         
         <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:400px; margin:0 auto;">
-          <button id="btnSiswaLogin" class="btn-fingerprint" onclick="openLoginSiswaModal()" style="flex:1; min-width:150px;">
-            🔑 Login Siswa
+          <button id="btnRegisterSiswaFingerprint" class="btn-fingerprint hidden" onclick="registerSiswaFingerprint()">
+            📝 Daftar Sidik Jari
           </button>
-          <button id="btnRegisterSiswaFingerprint" class="btn-fingerprint hidden" style="flex:1; min-width:120px;" onclick="registerSiswaFingerprint()">
-            📝 Daftar
-          </button>
-          <button id="btnAbsenSiswaFingerprint" class="btn-fingerprint hidden" style="flex:1; min-width:120px;" onclick="absenSiswaWithFingerprint()" disabled>
+          <button id="btnAbsenSiswaFingerprint" class="btn-fingerprint hidden" onclick="absenSiswaWithFingerprint()" disabled>
             👆 Absen
           </button>
         </div>
@@ -874,7 +872,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycby0FvsLFVMx4jXS4wW7S2iYjTnhjjeIbJoHI_iK7x904Ld8YV6U_7m6FvbZqcJb6k0l6g/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxUDshGpLc43urXKjYJRNiegohbqqEI97VVzpBFzNg6iD6n-RsvzNSHmZvpe4PQyiNQvg/exec";
   // GANTI ID_DEPLOYMENT_ANDA dengan URL deployment Anda
 
   // ================= VARIABEL GLOBAL ================= //
@@ -1007,7 +1005,6 @@
 
   function resetSiswaUI() {
     document.getElementById('siswaNamaDisplay').innerText = '-';
-    document.getElementById('btnSiswaLogin').classList.remove('hidden');
     document.getElementById('btnRegisterSiswaFingerprint').classList.add('hidden');
     document.getElementById('btnAbsenSiswaFingerprint').classList.add('hidden');
     document.getElementById('siswaLogoutBtn').style.display = 'none';
@@ -1238,20 +1235,17 @@
 
   function updateSiswaUI() {
     const namaEl = document.getElementById('siswaNamaDisplay');
-    const loginBtn = document.getElementById('btnSiswaLogin');
     const registerBtn = document.getElementById('btnRegisterSiswaFingerprint');
     const absenBtn = document.getElementById('btnAbsenSiswaFingerprint');
     const logoutBtn = document.getElementById('siswaLogoutBtn');
     
     if (siswaUserData) {
       namaEl.innerText = siswaUserData.nama || 'Siswa';
-      loginBtn.classList.add('hidden');
       registerBtn.classList.remove('hidden');
       absenBtn.classList.remove('hidden');
       logoutBtn.style.display = 'block';
     } else {
       namaEl.innerText = '-';
-      loginBtn.classList.remove('hidden');
       registerBtn.classList.add('hidden');
       absenBtn.classList.add('hidden');
       logoutBtn.style.display = 'none';
