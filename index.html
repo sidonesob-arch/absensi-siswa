@@ -13,6 +13,7 @@
   </script>
   
   <style>
+    /* ===== STYLE SAMA SEPERTI SEBELUMNYA ===== */
     * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
     body { background-color: #f4f6f9; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
     
@@ -160,6 +161,7 @@
     .topbar-user .user-role-display.guru { background: rgba(46, 204, 113, 0.25); color: #2ecc71; }
     .topbar-user .user-role-display.admin { background: rgba(52, 152, 219, 0.25); color: #3498db; }
     .topbar-user .user-role-display.super { background: rgba(241, 196, 15, 0.25); color: #f1c40f; }
+    .topbar-user .user-role-display.siswa { background: rgba(52, 152, 219, 0.25); color: #3498db; }
     
     @media (max-width: 600px) {
       .topbar { padding: 4px 10px 4px 10px; min-height: 58px; }
@@ -469,6 +471,19 @@
   </div>
 </div>
 
+<!-- LOGIN SISWA MODAL -->
+<div id="loginSiswaModal" style="display:none;">
+  <div class="modal-content">
+    <h3>Login Siswa</h3>
+    <p id="modalSiswaInfo" style="font-size:12px; color:#666;">Masukkan NISN Anda untuk login sidik jari.</p>
+    <div class="form-group">
+      <input type="text" id="inputNISNModal" placeholder="Masukkan NISN..." style="text-align:center; font-size:18px; letter-spacing:3px;">
+    </div>
+    <button class="btn-primary" onclick="submitLoginSiswa()">Masuk</button>
+    <button style="background:#ccc; color:#333; border:none; margin-top:8px;" onclick="closeLoginSiswaModal()">Batal</button>
+  </div>
+</div>
+
 <!-- MAIN WRAPPER -->
 <div class="main-wrapper">
   
@@ -478,7 +493,7 @@
 
     <div class="nav-category">ORANG TUA / TAMU</div>
     <a class="nav-item" onclick="switchMenu('cari', this)">🔍 Cari Data Siswa</a>
-    <a class="nav-item" id="nav-siswa-fingerprint" onclick="switchMenu('siswa-fingerprint', this)">👆 Sidik Jari Siswa</a>
+    <a class="nav-item" id="nav-siswa-fingerprint" onclick="checkSiswaAccess('siswa-fingerprint', this)">👆 Sidik Jari Siswa</a>
 
     <div class="nav-category">MENU UTAMA</div>
     <a class="nav-item" id="nav-login" onclick="openLoginModal()">🔑 Login Sistem</a>
@@ -583,21 +598,31 @@
     <div id="menu-siswa-fingerprint" class="section">
       <h3 style="color:#05285e; font-size:15px;">👆 Absensi Sidik Jari Siswa</h3>
       
+      <div style="background:#e8f0fe; padding:12px 15px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <span style="font-weight:600; color:#05285e; font-size:12px;">👤 Siswa:</span>
+            <span id="siswaNamaDisplay" style="color:#05285e; font-weight:bold; font-size:14px;">-</span>
+          </div>
+          <button class="btn-danger btn-sm" onclick="logoutSiswaSession()" style="display:none;" id="siswaLogoutBtn">🚪 Keluar</button>
+        </div>
+      </div>
+      
       <div class="fingerprint-section" style="border-color:#05285e;">
         <span class="icon-large">👨‍🎓</span>
         <h4 style="margin:0 0 5px 0; color:#05285e;">Registrasi & Absensi Sidik Jari Siswa</h4>
         <p style="font-size:12px; color:#666; margin-bottom:10px;">
-          Gunakan sensor sidik jari HP untuk absensi siswa dengan cepat dan aman.
+          Login dengan NISN untuk registrasi dan absensi sidik jari.
         </p>
         
-        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:500px; margin:0 auto;">
-          <div class="form-group" style="flex:2; min-width:150px; margin-bottom:0;">
-            <input type="text" id="siswaNISN" placeholder="Masukkan NISN Siswa" style="text-align:center; font-size:16px;">
-          </div>
-          <button id="btnRegisterSiswaFingerprint" class="btn-fingerprint" style="flex:1; min-width:120px;" onclick="registerSiswaFingerprint()">
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:400px; margin:0 auto;">
+          <button id="btnSiswaLogin" class="btn-fingerprint" onclick="openLoginSiswaModal()" style="flex:1; min-width:150px;">
+            🔑 Login Siswa
+          </button>
+          <button id="btnRegisterSiswaFingerprint" class="btn-fingerprint hidden" style="flex:1; min-width:120px;" onclick="registerSiswaFingerprint()">
             📝 Daftar
           </button>
-          <button id="btnAbsenSiswaFingerprint" class="btn-fingerprint" style="flex:1; min-width:120px;" onclick="absenSiswaWithFingerprint()" disabled>
+          <button id="btnAbsenSiswaFingerprint" class="btn-fingerprint hidden" style="flex:1; min-width:120px;" onclick="absenSiswaWithFingerprint()" disabled>
             👆 Absen
           </button>
         </div>
@@ -850,59 +875,7 @@
 </div>
 
 <script>
-  // ================= RESTORE SESSION ================= //
-
-function restoreSession() {
-  const savedSession = sessionStorage.getItem('userSession');
-  if (!savedSession) return;
-  
-  try {
-    const sessionData = JSON.parse(savedSession);
-    const userId = sessionData.userId;
-    const role = sessionData.role;
-    
-    if (!userId || !role) return;
-    
-    sendRequest({ 
-      action: 'check_session', 
-      userId: userId, 
-      role: role 
-    }, res => {
-      if (res.status === 'success') {
-        userRole = res.role;
-        userData = res;
-        applyRoleAccessUI();
-        updateTopbarUserInfo();
-        
-        if (userRole === 'guru' && userData) {
-          setTimeout(() => {
-            checkFingerprintStatus();
-            loadFilterInputNilaiWithGuru();
-            loadJadwalMapelForGuru();
-          }, 500);
-        }
-        
-        // Update status badge
-        updateUIByRole();
-        closeSidebar();
-      } else {
-        // Session tidak valid, hapus
-        sessionStorage.removeItem('userSession');
-      }
-    });
-  } catch (e) {
-    sessionStorage.removeItem('userSession');
-  }
-}
-
-// Panggil restoreSession di awal
-document.addEventListener('DOMContentLoaded', function() {
-  restoreSession();
-});
-
-
-  
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzwajDFT-B5LaSRr8CSJQxPRKuukF6Lnx4USlIOplY34119hl90kIcqrpnqCY6BO1Nl0Q/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby24brZ_FoJCNOoMvpfVkEn9lxvTM9vnefQpJfF7QAbwZ5YBd8dfdDZGOZAl_2TAWVy0w/exec";
   // GANTI ID_DEPLOYMENT_ANDA dengan URL deployment Anda
 
   // ================= VARIABEL GLOBAL ================= //
@@ -912,6 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let isProcessing = false;
   let userRole = 'tamu';
   let userData = null;
+  let siswaUserData = null; // Data untuk siswa yang login
   let pendingMenu = null;
   let globalPengaturanData = [];
   let currentActiveSesiName = "";
@@ -932,6 +906,108 @@ document.addEventListener('DOMContentLoaded', function() {
   loadOpsiKelas();
   updateTopbarUserInfo();
   loadAllowedUsers();
+  
+  // Restore session setelah halaman load
+  document.addEventListener('DOMContentLoaded', function() {
+    restoreSession();
+  });
+
+  // ================= RESTORE SESSION ================= //
+
+  function restoreSession() {
+    const savedSession = sessionStorage.getItem('userSession');
+    if (!savedSession) {
+      // Cek session siswa
+      restoreSiswaSession();
+      return;
+    }
+    
+    try {
+      const sessionData = JSON.parse(savedSession);
+      const userId = sessionData.userId;
+      const role = sessionData.role;
+      const sessionToken = sessionData.sessionToken;
+      
+      if (!userId || !role || !sessionToken) {
+        sessionStorage.removeItem('userSession');
+        restoreSiswaSession();
+        return;
+      }
+      
+      sendRequest({ 
+        action: 'check_session', 
+        userId: userId, 
+        role: role,
+        sessionToken: sessionToken
+      }, res => {
+        if (res.status === 'success') {
+          userRole = res.role;
+          userData = res.userData;
+          applyRoleAccessUI();
+          updateTopbarUserInfo();
+          
+          if (userRole === 'guru' && userData) {
+            setTimeout(() => {
+              checkFingerprintStatus();
+              loadFilterInputNilaiWithGuru();
+              loadJadwalMapelForGuru();
+            }, 500);
+          }
+          
+          updateUIByRole();
+          closeSidebar();
+        } else {
+          sessionStorage.removeItem('userSession');
+          restoreSiswaSession();
+        }
+      });
+    } catch (e) {
+      sessionStorage.removeItem('userSession');
+      restoreSiswaSession();
+    }
+  }
+
+  function restoreSiswaSession() {
+    const savedSiswaSession = sessionStorage.getItem('siswaSession');
+    if (!savedSiswaSession) {
+      // Reset UI siswa
+      document.getElementById('siswaNamaDisplay').innerText = '-';
+      document.getElementById('btnSiswaLogin').classList.remove('hidden');
+      document.getElementById('btnRegisterSiswaFingerprint').classList.add('hidden');
+      document.getElementById('btnAbsenSiswaFingerprint').classList.add('hidden');
+      document.getElementById('siswaLogoutBtn').style.display = 'none';
+      return;
+    }
+    
+    try {
+      const sessionData = JSON.parse(savedSiswaSession);
+      const nisn = sessionData.nisn;
+      const sessionToken = sessionData.sessionToken;
+      
+      if (!nisn || !sessionToken) {
+        sessionStorage.removeItem('siswaSession');
+        return;
+      }
+      
+      // Verifikasi siswa login
+      sendRequest({
+        action: 'login_siswa_fingerprint',
+        nisn: nisn,
+        mode: 'check'
+      }, res => {
+        if (res.status === 'success') {
+          siswaUserData = res;
+          currentSiswaNISN = nisn;
+          updateSiswaUI();
+          checkSiswaFingerprintStatus(nisn);
+        } else {
+          sessionStorage.removeItem('siswaSession');
+        }
+      });
+    } catch (e) {
+      sessionStorage.removeItem('siswaSession');
+    }
+  }
 
   // ================= FUNGSI DASAR ================= //
 
@@ -1027,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', function() {
         container.className = 'profile-avatar avatar-bg-super';
         return;
       }
-      if (role === 'guru' && nip) {
+      if ((role === 'guru' || role === 'siswa') && nip) {
         const fotoUrl = `./assets/images/profiles/${nip}.jpg`;
         const img = new Image();
         img.onload = function() {
@@ -1066,6 +1142,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const nameEl = document.getElementById('topbarUserName');
     const roleEl = document.getElementById('topbarUserRole');
 
+    // Prioritaskan siswa jika login
+    if (siswaUserData) {
+      nameEl.innerText = siswaUserData.nama || 'Siswa';
+      roleEl.innerText = 'Siswa';
+      roleEl.className = 'user-role-display siswa';
+      updateProfileAvatar(siswaUserData.nama, siswaUserData.nisn, 'siswa');
+      return;
+    }
+
     if (userRole === 'tamu' || !userRole) {
       nameEl.innerText = 'Tamu';
       roleEl.innerText = 'Tamu';
@@ -1090,6 +1175,103 @@ document.addEventListener('DOMContentLoaded', function() {
       roleEl.className = 'user-role-display super';
       updateProfileAvatar('Super Admin', null, 'super_admin');
     }
+  }
+
+  // ================= SISWA LOGIN ================= //
+
+  function openLoginSiswaModal() {
+    if (siswaUserData) {
+      showScanPopup('warning', 'Info', 'Anda sudah login sebagai siswa.');
+      return;
+    }
+    document.getElementById('inputNISNModal').value = '';
+    document.getElementById('modalSiswaInfo').innerText = 'Masukkan NISN Anda untuk login.';
+    document.getElementById('loginSiswaModal').style.display = 'flex';
+  }
+
+  function closeLoginSiswaModal() {
+    document.getElementById('loginSiswaModal').style.display = 'none';
+  }
+
+  function submitLoginSiswa() {
+    const nisn = document.getElementById('inputNISNModal').value.trim();
+    if (!nisn) {
+      showScanPopup('warning', 'Peringatan', 'NISN tidak boleh kosong!');
+      return;
+    }
+
+    sendRequest({
+      action: 'login_siswa_fingerprint',
+      nisn: nisn,
+      mode: 'check'
+    }, res => {
+      if (res.status === 'success') {
+        siswaUserData = res;
+        currentSiswaNISN = nisn;
+        closeLoginSiswaModal();
+        
+        // Simpan session
+        const sessionToken = 'siswa_' + Date.now() + '_' + nisn;
+        sessionStorage.setItem('siswaSession', JSON.stringify({
+          nisn: nisn,
+          sessionToken: sessionToken
+        }));
+        
+        updateSiswaUI();
+        checkSiswaFingerprintStatus(nisn);
+        updateTopbarUserInfo();
+        showScanPopup('success', 'Login Berhasil', 'Selamat datang, ' + res.nama + '!');
+        closeSidebar();
+      } else {
+        showScanPopup('danger', 'Login Gagal', res.message);
+      }
+    });
+  }
+
+  function updateSiswaUI() {
+    const namaEl = document.getElementById('siswaNamaDisplay');
+    const loginBtn = document.getElementById('btnSiswaLogin');
+    const registerBtn = document.getElementById('btnRegisterSiswaFingerprint');
+    const absenBtn = document.getElementById('btnAbsenSiswaFingerprint');
+    const logoutBtn = document.getElementById('siswaLogoutBtn');
+    
+    if (siswaUserData) {
+      namaEl.innerText = siswaUserData.nama || 'Siswa';
+      loginBtn.classList.add('hidden');
+      registerBtn.classList.remove('hidden');
+      absenBtn.classList.remove('hidden');
+      logoutBtn.style.display = 'block';
+    } else {
+      namaEl.innerText = '-';
+      loginBtn.classList.remove('hidden');
+      registerBtn.classList.add('hidden');
+      absenBtn.classList.add('hidden');
+      logoutBtn.style.display = 'none';
+    }
+  }
+
+  function logoutSiswaSession() {
+    siswaUserData = null;
+    currentSiswaNISN = '';
+    siswaFingerprintRegistered = false;
+    sessionStorage.removeItem('siswaSession');
+    
+    updateSiswaUI();
+    updateSiswaFingerprintUI();
+    updateTopbarUserInfo();
+    document.getElementById('siswaFingerprintStatus').className = 'fingerprint-status';
+    document.getElementById('siswaRegStatus').style.display = 'none';
+    
+    showScanPopup('success', 'Logout Berhasil', 'Anda telah keluar dari akun siswa.');
+  }
+
+  function checkSiswaAccess(menuName, el) {
+    if (!siswaUserData) {
+      pendingMenu = { name: menuName, el: el };
+      openLoginSiswaModal();
+      return;
+    }
+    switchMenu(menuName, el);
   }
 
   // ================= PRELOAD & DASHBOARD ================= //
@@ -1209,7 +1391,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // ================= LOGIN ================= //
+  // ================= LOGIN GURU/ADMIN ================= //
 
   function openLoginModal() {
     if (userRole !== 'tamu') {
@@ -1244,6 +1426,14 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTopbarUserInfo();
         showScanPopup("success", "Login Berhasil", res.message);
         
+        // Simpan session
+        const sessionToken = 'user_' + Date.now() + '_' + (res.nip || 'admin');
+        sessionStorage.setItem('userSession', JSON.stringify({
+          userId: res.nip || 'admin',
+          role: res.role,
+          sessionToken: sessionToken
+        }));
+        
         if (userRole === 'guru' && userData) {
           sendRequest({ action: 'get_guru_profile', pin: pin }, profileRes => {
             if (profileRes.status === 'success') {
@@ -1254,6 +1444,8 @@ document.addEventListener('DOMContentLoaded', function() {
           
           setTimeout(() => {
             checkFingerprintStatus();
+            loadFilterInputNilaiWithGuru();
+            loadJadwalMapelForGuru();
           }, 500);
         }
         
@@ -1321,8 +1513,12 @@ document.addEventListener('DOMContentLoaded', function() {
     userRole = 'tamu';
     userData = null;
     fingerprintRegistered = false;
-    siswaFingerprintRegistered = false;
-    currentSiswaNISN = '';
+    sessionStorage.removeItem('userSession');
+    
+    // Logout siswa juga
+    if (siswaUserData) {
+      logoutSiswaSession();
+    }
     
     document.querySelectorAll('.sidebar .nav-item').forEach(b => {
       if (b.id === 'nav-login') {
@@ -1397,13 +1593,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (menuName === 'input-nilai') loadFilterInputNilaiWithGuru();
     if (menuName === 'daftar-nilai') loadFilterDaftarNilaiWithGuru();
     if (menuName === 'jadwal-mapel') loadJadwalMapel();
-    if (menuName === 'siswa-fingerprint') {
-      document.getElementById('siswaNISN').value = '';
-      document.getElementById('siswaFingerprintStatus').className = 'fingerprint-status';
-      document.getElementById('siswaRegStatus').style.display = 'none';
-      siswaFingerprintRegistered = false;
-      updateSiswaFingerprintUI();
-    }
   }
 
   // ================= SCANNER ================= //
@@ -1571,7 +1760,7 @@ document.addEventListener('DOMContentLoaded', function() {
     XLSX.writeFile(wb, "Rekap_Kehadiran.xlsx");
   }
 
-  // ================= PENGATURAN SESI (FLEKSIBEL) ================= //
+  // ================= PENGATURAN SESI ================= //
 
   function renderSesiConfig(dataList) {
     const container = document.getElementById('sesiConfigContainer');
@@ -1826,7 +2015,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // ================= IZIN ABSENSI (SIDIK JARI) ================= //
+  // ================= IZIN ABSENSI ================= //
 
   function loadAllowedUsers() {
     const filterRole = document.getElementById('filterAllowedRole').value;
@@ -2600,10 +2789,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function registerSiswaFingerprint() {
-    const nisn = document.getElementById('siswaNISN').value.trim();
-    
+    if (!siswaUserData) {
+      showSiswaFingerprintStatus('error', '❌ Silakan login sebagai siswa terlebih dahulu!');
+      return;
+    }
+
+    const nisn = siswaUserData.nisn;
     if (!nisn) {
-      showSiswaFingerprintStatus('error', '❌ Silakan masukkan NISN terlebih dahulu!');
+      showSiswaFingerprintStatus('error', '❌ NISN tidak ditemukan.');
       return;
     }
 
@@ -2612,97 +2805,86 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    showSiswaFingerprintStatus('info', '⏳ Memverifikasi NISN...');
+    showSiswaFingerprintStatus('info', '⏳ Menyiapkan registrasi sidik jari...');
     document.getElementById('btnRegisterSiswaFingerprint').disabled = true;
 
-    // Kirim mode = 'register' agar tidak dicek izin
-    sendRequest({
-      action: 'login_siswa_fingerprint',
-      nisn: nisn,
-      mode: 'register'
-    }, async res => {
-      if (res.status !== 'success') {
-        showSiswaFingerprintStatus('error', '❌ ' + res.message);
-        document.getElementById('btnRegisterSiswaFingerprint').disabled = false;
-        return;
+    try {
+      const nama = siswaUserData.nama || 'Siswa';
+
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+
+      const publicKeyCredentialCreationOptions = {
+        challenge: challenge,
+        rp: {
+          name: 'SMP NEGERI 1 SOBANG',
+          id: window.location.hostname
+        },
+        user: {
+          id: new TextEncoder().encode(nisn),
+          name: nama,
+          displayName: nama
+        },
+        pubKeyCredParams: [
+          { type: 'public-key', alg: -7 },
+          { type: 'public-key', alg: -257 }
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          requireResidentKey: false,
+          userVerification: 'required'
+        },
+        timeout: 60000,
+        attestation: 'none'
+      };
+
+      const credential = await navigator.credentials.create({
+        publicKey: publicKeyCredentialCreationOptions
+      });
+
+      if (!credential) {
+        throw new Error('Registrasi gagal atau dibatalkan.');
       }
 
-      const nama = res.nama || 'Siswa';
+      const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+      const publicKey = btoa(String.fromCharCode(...new Uint8Array(credential.response.getPublicKey())));
 
-      try {
-        showSiswaFingerprintStatus('info', '⏳ Menyiapkan registrasi sidik jari untuk ' + nama + '...');
-
-        const challenge = new Uint8Array(32);
-        crypto.getRandomValues(challenge);
-
-        const publicKeyCredentialCreationOptions = {
-          challenge: challenge,
-          rp: {
-            name: 'SMP NEGERI 1 SOBANG',
-            id: window.location.hostname
-          },
-          user: {
-            id: new TextEncoder().encode(nisn),
-            name: nama,
-            displayName: nama
-          },
-          pubKeyCredParams: [
-            { type: 'public-key', alg: -7 },
-            { type: 'public-key', alg: -257 }
-          ],
-          authenticatorSelection: {
-            authenticatorAttachment: 'platform',
-            requireResidentKey: false,
-            userVerification: 'required'
-          },
-          timeout: 60000,
-          attestation: 'none'
-        };
-
-        const credential = await navigator.credentials.create({
-          publicKey: publicKeyCredentialCreationOptions
-        });
-
-        if (!credential) {
-          throw new Error('Registrasi gagal atau dibatalkan.');
+      sendRequest({
+        action: 'webauthn_register',
+        userId: nisn,
+        userName: nama,
+        credentialId: credentialId,
+        publicKey: publicKey
+      }, resReg => {
+        if (resReg.status === 'success') {
+          siswaFingerprintRegistered = true;
+          currentSiswaNISN = nisn;
+          updateSiswaFingerprintUI();
+          document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
+          document.getElementById('btnRegisterSiswaFingerprint').classList.add('hidden');
+          showSiswaFingerprintStatus('success', '✅ ' + resReg.message);
+        } else {
+          showSiswaFingerprintStatus('error', '❌ ' + resReg.message);
         }
-
-        const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-        const publicKey = btoa(String.fromCharCode(...new Uint8Array(credential.response.getPublicKey())));
-
-        sendRequest({
-          action: 'webauthn_register',
-          userId: nisn,
-          userName: nama,
-          credentialId: credentialId,
-          publicKey: publicKey
-        }, resReg => {
-          if (resReg.status === 'success') {
-            siswaFingerprintRegistered = true;
-            currentSiswaNISN = nisn;
-            updateSiswaFingerprintUI();
-            document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-            document.getElementById('btnRegisterSiswaFingerprint').classList.add('hidden');
-            showSiswaFingerprintStatus('success', '✅ ' + resReg.message);
-          } else {
-            showSiswaFingerprintStatus('error', '❌ ' + resReg.message);
-          }
-          document.getElementById('btnRegisterSiswaFingerprint').disabled = false;
-        });
-
-      } catch (error) {
-        console.error('Register error:', error);
-        showSiswaFingerprintStatus('error', '❌ Gagal registrasi: ' + error.message);
         document.getElementById('btnRegisterSiswaFingerprint').disabled = false;
-      }
-    });
+      });
+
+    } catch (error) {
+      console.error('Register error:', error);
+      showSiswaFingerprintStatus('error', '❌ Gagal registrasi: ' + error.message);
+      document.getElementById('btnRegisterSiswaFingerprint').disabled = false;
+    }
   }
 
   async function absenSiswaWithFingerprint() {
-    const nisn = document.getElementById('siswaNISN').value.trim();
-    
+    if (!siswaUserData) {
+      showSiswaFingerprintStatus('error', '❌ Silakan login sebagai siswa terlebih dahulu!');
+      return;
+    }
+
+    const nisn = siswaUserData.nisn;
     if (!nisn) {
-      showSiswaFingerprintStatus('error', '❌ Silakan masukkan NISN terlebih dahulu!');
+      showSiswaFingerprintStatus('error', '❌ NISN tidak ditemukan.');
       return;
     }
 
@@ -2716,105 +2898,73 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
+    if (!siswaFingerprintRegistered) {
+      showSiswaFingerprintStatus('error', '❌ Siswa belum mendaftarkan sidik jari. Silakan daftar terlebih dahulu.');
+      return;
+    }
+
     try {
-      showSiswaFingerprintStatus('info', '⏳ Memverifikasi NISN...');
+      showSiswaFingerprintStatus('info', '⏳ Mohon tempelkan jari pada sensor...');
       document.getElementById('btnAbsenSiswaFingerprint').disabled = true;
 
-      // Kirim mode = 'absen' agar dicek izin
       sendRequest({
-        action: 'login_siswa_fingerprint',
-        nisn: nisn,
-        mode: 'absen'
-      }, async res => {
-        if (res.status !== 'success') {
-          showSiswaFingerprintStatus('error', '❌ ' + res.message);
+        action: 'webauthn_login',
+        userId: nisn
+      }, async loginRes => {
+        if (loginRes.status !== 'success') {
+          showSiswaFingerprintStatus('error', '❌ ' + loginRes.message);
           document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
           return;
         }
 
         try {
-          showSiswaFingerprintStatus('info', '⏳ Mohon tempelkan jari pada sensor...');
+          const credentialId = Uint8Array.from(atob(loginRes.credentialId), c => c.charCodeAt(0));
+          const challenge = new Uint8Array(32);
+          crypto.getRandomValues(challenge);
+
+          const publicKeyCredentialRequestOptions = {
+            challenge: challenge,
+            allowCredentials: [{
+              type: 'public-key',
+              id: credentialId
+            }],
+            timeout: 60000,
+            userVerification: 'required',
+            rpId: window.location.hostname
+          };
+
+          const assertion = await navigator.credentials.get({
+            publicKey: publicKeyCredentialRequestOptions
+          });
+
+          if (!assertion) {
+            throw new Error('Verifikasi gagal atau dibatalkan.');
+          }
+
+          showSiswaFingerprintStatus('info', '✅ Sidik jari terverifikasi! Melakukan absensi...');
 
           sendRequest({
-            action: 'webauthn_check',
-            userId: nisn
-          }, async checkRes => {
-            if (checkRes.status !== 'success' || !checkRes.registered) {
-              showSiswaFingerprintStatus('error', '❌ Siswa belum mendaftarkan sidik jari. Silakan daftar terlebih dahulu.');
-              document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-              return;
+            action: 'absen_qr',
+            role: 'siswa',
+            code: nisn,
+            sesi: currentActiveSesiName
+          }, absenRes => {
+            let popupType = absenRes.status === 'success' ? 'success' : 
+                           (absenRes.status === 'warning' ? 'warning' : 'danger');
+            showScanPopup(popupType, 'Absensi Siswa', absenRes.message);
+            
+            if (absenRes.status === 'success') {
+              showSiswaFingerprintStatus('success', '✅ ' + absenRes.message);
+              fetchDashboardData();
+            } else {
+              showSiswaFingerprintStatus('error', '❌ ' + absenRes.message);
             }
-
-            sendRequest({
-              action: 'webauthn_login',
-              userId: nisn
-            }, async loginRes => {
-              if (loginRes.status !== 'success') {
-                showSiswaFingerprintStatus('error', '❌ ' + loginRes.message);
-                document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-                return;
-              }
-
-              try {
-                const credentialId = Uint8Array.from(atob(loginRes.credentialId), c => c.charCodeAt(0));
-                const challenge = new Uint8Array(32);
-                crypto.getRandomValues(challenge);
-
-                const publicKeyCredentialRequestOptions = {
-                  challenge: challenge,
-                  allowCredentials: [{
-                    type: 'public-key',
-                    id: credentialId
-                  }],
-                  timeout: 60000,
-                  userVerification: 'required',
-                  rpId: window.location.hostname
-                };
-
-                const assertion = await navigator.credentials.get({
-                  publicKey: publicKeyCredentialRequestOptions
-                });
-
-                if (!assertion) {
-                  throw new Error('Verifikasi gagal atau dibatalkan.');
-                }
-
-                showSiswaFingerprintStatus('info', '✅ Sidik jari terverifikasi! Melakukan absensi...');
-
-                sendRequest({
-                  action: 'absen_qr',
-                  role: 'siswa',
-                  code: nisn,
-                  sesi: currentActiveSesiName
-                }, absenRes => {
-                  let popupType = absenRes.status === 'success' ? 'success' : 
-                                 (absenRes.status === 'warning' ? 'warning' : 'danger');
-                  showScanPopup(popupType, 'Absensi Siswa', absenRes.message);
-                  
-                  if (absenRes.status === 'success') {
-                    showSiswaFingerprintStatus('success', '✅ ' + absenRes.message);
-                    fetchDashboardData();
-                    document.getElementById('siswaNISN').value = '';
-                    currentSiswaNISN = '';
-                    document.getElementById('siswaRegStatus').style.display = 'none';
-                    document.getElementById('btnRegisterSiswaFingerprint').classList.remove('hidden');
-                  } else {
-                    showSiswaFingerprintStatus('error', '❌ ' + absenRes.message);
-                  }
-                  document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-                });
-
-              } catch (error) {
-                console.error('Login error:', error);
-                showSiswaFingerprintStatus('error', '❌ Gagal verifikasi: ' + error.message);
-                document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
-              }
-            });
+            document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
           });
 
         } catch (error) {
-          console.error('Absen error:', error);
-          showSiswaFingerprintStatus('error', '❌ Gagal: ' + error.message);
+          console.error('Login error:', error);
+          showSiswaFingerprintStatus('error', '❌ Gagal verifikasi: ' + error.message);
           document.getElementById('btnAbsenSiswaFingerprint').disabled = false;
         }
       });
@@ -2838,25 +2988,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Event listener untuk NISN input
+  function updateUIByRole() {
+    // Tidak perlu update badge di topbar karena sudah pakai topbar-user
+  }
+
+  // Panggil restore session setelah halaman load
   document.addEventListener('DOMContentLoaded', function() {
-    const nisnInput = document.getElementById('siswaNISN');
-    if (nisnInput) {
-      let timeoutId;
-      nisnInput.addEventListener('input', function() {
-        clearTimeout(timeoutId);
-        const nisn = this.value.trim();
-        if (nisn.length >= 4) {
-          timeoutId = setTimeout(() => {
-            checkSiswaFingerprintStatus(nisn);
-          }, 500);
-        } else {
-          document.getElementById('siswaRegStatus').style.display = 'none';
-          document.getElementById('btnRegisterSiswaFingerprint').classList.remove('hidden');
-          document.getElementById('btnAbsenSiswaFingerprint').disabled = true;
-        }
-      });
-    }
+    restoreSession();
   });
 
 </script>
