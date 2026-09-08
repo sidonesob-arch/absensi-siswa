@@ -322,7 +322,6 @@
       .fingerprint-section .icon-large { font-size: 36px; }
     }
 
-    /* ===== SWITCH TOGGLE ===== */
     .switch {
       position: relative;
       display: inline-block;
@@ -380,19 +379,18 @@
     .role-badge.guru { background: #d4edda; color: #155724; }
     .role-badge.siswa { background: #d1ecf1; color: #0c5460; }
 
-    /* ===== SESI CONFIG ===== */
     .sesi-row {
       display: flex;
       gap: 8px;
       align-items: center;
       padding: 6px 0;
       border-bottom: 1px solid #f0f0f0;
+      flex-wrap: wrap;
     }
-    .sesi-row .sesi-name {
-      font-weight: 600;
-      min-width: 70px;
+    .sesi-row .sesi-number {
       font-size: 12px;
-      color: #05285e;
+      color: #666;
+      min-width: 20px;
     }
     .sesi-row input, .sesi-row select {
       padding: 5px 8px;
@@ -414,22 +412,13 @@
       color: #dc3545;
       cursor: pointer;
     }
-    .sesi-row .btn-remove:hover {
-      color: #c0392b;
-    }
-    .sesi-row .sesi-number {
-      font-size: 12px;
-      color: #666;
-      min-width: 20px;
+    .sesi-row .sesi-name-input {
+      width: 80px;
+      font-weight: 600;
     }
     @media (max-width: 600px) {
-      .sesi-row {
-        flex-wrap: wrap;
-        gap: 4px;
-      }
-      .sesi-row input[type="time"] {
-        width: 80px;
-      }
+      .sesi-row input[type="time"] { width: 80px; }
+      .sesi-row .sesi-name-input { width: 70px; }
     }
   </style>
 </head>
@@ -701,21 +690,15 @@
     <div id="menu-pengaturan" class="section">
       <h3 style="color:#05285e; font-size:15px;">⚙️ Pengaturan</h3>
       
-      <!-- ===== PENGATURAN SESI (FLEKSIBEL) ===== -->
       <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">Sesi Absensi & PIN</h4>
-      
       <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
         <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
           <button class="btn-add" onclick="addSesiRow()">➕ Tambah Sesi</button>
           <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="savePengaturan()">💾 Simpan Pengaturan</button>
         </div>
-        
-        <div id="sesiConfigContainer">
-          <!-- Sesi rows akan di-render di sini -->
-        </div>
+        <div id="sesiConfigContainer"></div>
       </div>
       
-      <!-- ===== HARI LIBUR ===== -->
       <hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ccc;">
       
       <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">Hari Libur</h4>
@@ -737,7 +720,6 @@
         </table>
       </div>
       
-      <!-- ===== PENGATURAN IZIN SIDIK JARI ===== -->
       <hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ccc;">
       
       <h4 style="color:#05285e; margin-bottom:6px; font-size:13px;">👥 Pengaturan Izin Sidik Jari</h4>
@@ -868,7 +850,8 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzCD3DubmkuXIcjQMKPVPW7Cieo09Cih5HyAlqwPCeCD22WyB0Mq4pDGvnsWNtWxoFnvw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwYyscY14MuiR6NFiMUpz81KgvS4qMCoCWng4OqjrXAy8Tne_HluOjBXa3kbAgQjy3LYQ/exec";
+  // GANTI ID_DEPLOYMENT_ANDA dengan URL deployment Anda
 
   // ================= VARIABEL GLOBAL ================= //
   let currentRole = 'siswa';
@@ -909,6 +892,7 @@
     .then(r => r.json())
     .then(res => callback(res))
     .catch(err => {
+      console.error('Fetch error:', err);
       showScanPopup("danger", "Koneksi Error", "Gagal menghubungkan ke server!");
     });
   }
@@ -1541,7 +1525,6 @@
     const container = document.getElementById('sesiConfigContainer');
     if (!container) return;
     
-    // Ambil data sesi (tanpa PIN)
     let sesiList = [];
     let pinData = [];
     
@@ -1555,7 +1538,6 @@
       });
     }
     
-    // Jika tidak ada sesi, buat default 2 sesi
     if (sesiList.length === 0) {
       sesiList = [
         { sesi: 'Sesi 1', mulai: '07:00', batasTW: '07:15', tutup: '12:00', alpa: 'Alpa' },
@@ -1563,19 +1545,18 @@
       ];
     }
     
-    // Render sesi
     let html = '';
     sesiList.forEach((item, index) => {
       html += `
         <div class="sesi-row" data-index="${index}">
           <span class="sesi-number">${index + 1}.</span>
-          <input type="text" class="sesi-name-input" value="${item.sesi}" placeholder="Nama Sesi" style="width:80px; font-weight:600;">
-          <input type="time" class="sesi-mulai" value="${item.mulai}" style="width:100px;">
+          <input type="text" class="sesi-name-input" value="${item.sesi}" placeholder="Nama Sesi">
+          <input type="time" class="sesi-mulai" value="${item.mulai}">
           <span style="font-size:11px; color:#666;">-</span>
-          <input type="time" class="sesi-batas" value="${item.batasTW}" style="width:100px;">
+          <input type="time" class="sesi-batas" value="${item.batasTW}">
           <span style="font-size:11px; color:#666;">|</span>
-          <input type="time" class="sesi-tutup" value="${item.tutup}" style="width:100px;">
-          <select class="sesi-alpa" style="width:80px;">
+          <input type="time" class="sesi-tutup" value="${item.tutup}">
+          <select class="sesi-alpa">
             <option value="Alpa" ${item.alpa === 'Alpa' ? 'selected' : ''}>Alpa</option>
             <option value="Bolos" ${item.alpa === 'Bolos' ? 'selected' : ''}>Bolos</option>
           </select>
@@ -1584,26 +1565,21 @@
       `;
     });
     
-    // PIN data (tampilkan di bawah)
-    let pinHtml = '';
     if (pinData.length > 0) {
-      pinHtml = `<div style="margin-top:10px; padding-top:10px; border-top:1px solid #eee;">`;
+      html += `<div style="margin-top:10px; padding-top:10px; border-top:1px solid #eee;">`;
       pinData.forEach(item => {
-        pinHtml += `
+        html += `
           <div class="sesi-row" style="border-bottom: none; padding:4px 0;">
-            <span class="sesi-name" style="min-width:100px;">${item.sesi}</span>
+            <span style="font-weight:600; min-width:100px;">${item.sesi}</span>
             <input type="text" value="${item.mulai}" style="width:120px; font-weight:bold; text-align:center;" readonly>
             <span style="font-size:11px; color:#999; margin-left:10px;">(PIN tidak dapat diubah di sini)</span>
           </div>
         `;
       });
-      pinHtml += `</div>`;
+      html += `</div>`;
     }
     
-    container.innerHTML = html + pinHtml;
-    
-    // Simpan referensi data
-    container.dataset.sesiCount = sesiList.length;
+    container.innerHTML = html;
   }
 
   function addSesiRow() {
@@ -1614,20 +1590,19 @@
     row.className = 'sesi-row';
     row.innerHTML = `
       <span class="sesi-number">${count}.</span>
-      <input type="text" class="sesi-name-input" value="Sesi ${count}" placeholder="Nama Sesi" style="width:80px; font-weight:600;">
-      <input type="time" class="sesi-mulai" value="07:00" style="width:100px;">
+      <input type="text" class="sesi-name-input" value="Sesi ${count}" placeholder="Nama Sesi">
+      <input type="time" class="sesi-mulai" value="07:00">
       <span style="font-size:11px; color:#666;">-</span>
-      <input type="time" class="sesi-batas" value="07:15" style="width:100px;">
+      <input type="time" class="sesi-batas" value="07:15">
       <span style="font-size:11px; color:#666;">|</span>
-      <input type="time" class="sesi-tutup" value="12:00" style="width:100px;">
-      <select class="sesi-alpa" style="width:80px;">
+      <input type="time" class="sesi-tutup" value="12:00">
+      <select class="sesi-alpa">
         <option value="Alpa">Alpa</option>
         <option value="Bolos">Bolos</option>
       </select>
       <button class="btn-remove" onclick="removeSesiRow(this)" title="Hapus Sesi">✕</button>
     `;
     
-    // Insert before pin section (if exists)
     const pinSection = container.querySelector('div:last-child');
     if (pinSection && pinSection.innerHTML.includes('PIN_')) {
       container.insertBefore(row, pinSection);
@@ -1662,10 +1637,6 @@
     rows.forEach((row, index) => {
       const numSpan = row.querySelector('.sesi-number');
       if (numSpan) numSpan.textContent = (index + 1) + '.';
-      const nameInput = row.querySelector('.sesi-name-input');
-      if (nameInput && !nameInput.value.trim().startsWith('Sesi')) {
-        // Jika nama custom, biarkan saja
-      }
     });
   }
 
@@ -1692,10 +1663,9 @@
       }
     });
     
-    // Tambahkan PIN data (baca dari existing)
     const pinRows = container.querySelectorAll('.sesi-row:has(input[readonly])');
     pinRows.forEach(row => {
-      const nameSpan = row.querySelector('.sesi-name');
+      const nameSpan = row.querySelector('span:first-child');
       const input = row.querySelector('input[readonly]');
       if (nameSpan && input) {
         configList.push({
@@ -1805,184 +1775,171 @@
   }
 
   // ================= IZIN ABSENSI (SIDIK JARI) ================= //
-// ================= IZIN ABSENSI (SIDIK JARI) - PERBAIKAN ================= //
 
-function loadAllowedUsers() {
-  const filterRole = document.getElementById('filterAllowedRole').value;
-  const searchText = document.getElementById('searchAllowedUser').value.toLowerCase().trim();
+  function loadAllowedUsers() {
+    const filterRole = document.getElementById('filterAllowedRole').value;
+    const searchText = document.getElementById('searchAllowedUser').value.toLowerCase().trim();
 
-  sendRequest({ action: 'get_allowed_users' }, res => {
-    const tbody = document.getElementById('tableAllowedUsersBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
+    sendRequest({ action: 'get_allowed_users' }, res => {
+      const tbody = document.getElementById('tableAllowedUsersBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
 
-    console.log('Response from server:', res); // Debug
-
-    if (res.status === 'success' && res.data && res.data.length > 0) {
-      let filtered = res.data;
-      
-      if (filterRole) {
-        filtered = filtered.filter(u => u.role === filterRole);
-      }
-      
-      if (searchText) {
-        filtered = filtered.filter(u => 
-          u.id.toLowerCase().includes(searchText) || 
-          u.nama.toLowerCase().includes(searchText)
-        );
-      }
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada data.</td></tr>';
-        return;
-      }
-
-      filtered.forEach((item, idx) => {
-        // PASTIKAN: allowed adalah boolean
-        const isAllowed = item.allowed === true;
-        const statusLabel = isAllowed ? 'Diizinkan' : 'Ditolak';
-        const statusClass = isAllowed ? 'allowed' : 'denied';
-        const isChecked = isAllowed ? 'checked' : '';
+      if (res.status === 'success' && res.data && res.data.length > 0) {
+        let filtered = res.data;
         
-        console.log('User:', item.id, 'Allowed:', isAllowed); // Debug
+        if (filterRole) {
+          filtered = filtered.filter(u => u.role === filterRole);
+        }
         
-        tbody.innerHTML += `<tr>
-          <td>${idx + 1}</td>
-          <td><b>${item.id}</b></td>
-          <td>${item.nama}</td>
-          <td><span class="role-badge ${item.role}">${item.role}</span></td>
-          <td style="text-align:center;">
-            <label class="switch">
-              <input type="checkbox" ${isChecked} 
-                     onchange="updateAllowedUser('${item.id}', this.checked, this)"
-                     data-userid="${item.id}">
-              <span class="slider"></span>
-            </label>
-            <span class="switch-label ${statusClass}">${statusLabel}</span>
-          </td>
-        </tr>`;
-      });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data. Klik "Sinkronisasi Data" untuk memuat.</td></tr>';
+        if (searchText) {
+          filtered = filtered.filter(u => 
+            u.id.toLowerCase().includes(searchText) || 
+            u.nama.toLowerCase().includes(searchText)
+          );
+        }
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada data.</td></tr>';
+          return;
+        }
+
+        filtered.forEach((item, idx) => {
+          const isAllowed = item.allowed === true;
+          const statusLabel = isAllowed ? 'Diizinkan' : 'Ditolak';
+          const statusClass = isAllowed ? 'allowed' : 'denied';
+          const isChecked = isAllowed ? 'checked' : '';
+          
+          tbody.innerHTML += `<tr>
+            <td>${idx + 1}</td>
+            <td><b>${item.id}</b></td>
+            <td>${item.nama}</td>
+            <td><span class="role-badge ${item.role}">${item.role}</span></td>
+            <td style="text-align:center;">
+              <label class="switch">
+                <input type="checkbox" ${isChecked} 
+                       onchange="updateAllowedUser('${item.id}', this.checked, this)"
+                       data-userid="${item.id}">
+                <span class="slider"></span>
+              </label>
+              <span class="switch-label ${statusClass}">${statusLabel}</span>
+            </td>
+          </tr>`;
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data. Klik "Sinkronisasi Data" untuk memuat.</td></tr>';
+      }
+    });
+  }
+
+  function updateAllowedUser(userId, allowed, checkboxElement) {
+    if (checkboxElement) {
+      checkboxElement.disabled = true;
     }
-  });
-}
-
-function updateAllowedUser(userId, allowed, checkboxElement) {
-  // Tampilkan loading state
-  if (checkboxElement) {
-    checkboxElement.disabled = true;
-  }
-  
-  // Update label sementara
-  const row = checkboxElement.closest('tr');
-  const labelSpan = row.querySelector('.switch-label');
-  if (labelSpan) {
-    labelSpan.textContent = '⏳...';
-    labelSpan.className = 'switch-label';
-  }
-  
-  console.log('Updating user:', userId, 'to:', allowed); // Debug
-  
-  sendRequest({
-    action: 'update_allowed_users',
-    userId: userId,
-    allowed: allowed
-  }, res => {
-    console.log('Update response:', res); // Debug
     
-    if (res.status === 'success') {
-      showScanPopup('success', 'Berhasil', res.message);
-      // Refresh data dari server
-      loadAllowedUsers();
-    } else {
-      showScanPopup('danger', 'Gagal', res.message);
-      // Refresh untuk mengembalikan ke state sebelumnya
-      loadAllowedUsers();
+    const row = checkboxElement.closest('tr');
+    const labelSpan = row.querySelector('.switch-label');
+    if (labelSpan) {
+      labelSpan.textContent = '⏳...';
+      labelSpan.className = 'switch-label';
     }
-  });
-}
-
-function syncAllowedUsers() {
-  showScanPopup('info', 'Sinkronisasi', 'Sedang menyinkronkan data...');
-  
-  sendRequest({ action: 'sync_allowed_users' }, res => {
-    if (res.status === 'success') {
-      showScanPopup('success', 'Sinkronisasi', res.message);
-      loadAllowedUsers();
-    } else {
-      showScanPopup('danger', 'Gagal', res.message);
-    }
-  });
-}
-
-function allowAllUsers() {
-  if (!confirm('Yakin ingin mengizinkan SEMUA user untuk absensi sidik jari?')) return;
-  
-  showScanPopup('info', 'Proses', 'Sedang mengizinkan semua user...');
-  
-  sendRequest({ action: 'get_allowed_users' }, res => {
-    if (res.status === 'success' && res.data) {
-      let count = 0;
-      const toUpdate = res.data.filter(u => !u.allowed);
-      
-      if (toUpdate.length === 0) {
-        showScanPopup('info', 'Info', 'Semua user sudah diizinkan.');
-        return;
+    
+    sendRequest({
+      action: 'update_allowed_users',
+      userId: userId,
+      allowed: allowed
+    }, res => {
+      if (res.status === 'success') {
+        showScanPopup('success', 'Berhasil', res.message);
+        loadAllowedUsers();
+      } else {
+        showScanPopup('danger', 'Gagal', res.message);
+        loadAllowedUsers();
       }
-      
-      toUpdate.forEach((user, index) => {
-        sendRequest({
-          action: 'update_allowed_users',
-          userId: user.id,
-          allowed: true
-        }, () => { 
-          count++; 
-          if (count === toUpdate.length) {
-            setTimeout(() => {
-              showScanPopup('success', 'Berhasil', `${count} user diizinkan sidik jari.`);
-              loadAllowedUsers();
-            }, 500);
-          }
-        });
-      });
-    }
-  });
-}
+    });
+  }
 
-function denyAllUsers() {
-  if (!confirm('Yakin ingin menolak SEMUA user untuk absensi sidik jari?')) return;
-  
-  showScanPopup('info', 'Proses', 'Sedang menolak semua user...');
-  
-  sendRequest({ action: 'get_allowed_users' }, res => {
-    if (res.status === 'success' && res.data) {
-      let count = 0;
-      const toUpdate = res.data.filter(u => u.allowed);
-      
-      if (toUpdate.length === 0) {
-        showScanPopup('info', 'Info', 'Semua user sudah ditolak.');
-        return;
+  function syncAllowedUsers() {
+    showScanPopup('info', 'Sinkronisasi', 'Sedang menyinkronkan data...');
+    
+    sendRequest({ action: 'sync_allowed_users' }, res => {
+      if (res.status === 'success') {
+        showScanPopup('success', 'Sinkronisasi', res.message);
+        loadAllowedUsers();
+      } else {
+        showScanPopup('danger', 'Gagal', res.message);
       }
-      
-      toUpdate.forEach((user, index) => {
-        sendRequest({
-          action: 'update_allowed_users',
-          userId: user.id,
-          allowed: false
-        }, () => { 
-          count++; 
-          if (count === toUpdate.length) {
-            setTimeout(() => {
-              showScanPopup('success', 'Berhasil', `${count} user ditolak sidik jari.`);
-              loadAllowedUsers();
-            }, 500);
-          }
+    });
+  }
+
+  function allowAllUsers() {
+    if (!confirm('Yakin ingin mengizinkan SEMUA user untuk absensi sidik jari?')) return;
+    
+    showScanPopup('info', 'Proses', 'Sedang mengizinkan semua user...');
+    
+    sendRequest({ action: 'get_allowed_users' }, res => {
+      if (res.status === 'success' && res.data) {
+        let count = 0;
+        const toUpdate = res.data.filter(u => !u.allowed);
+        
+        if (toUpdate.length === 0) {
+          showScanPopup('info', 'Info', 'Semua user sudah diizinkan.');
+          return;
+        }
+        
+        toUpdate.forEach((user) => {
+          sendRequest({
+            action: 'update_allowed_users',
+            userId: user.id,
+            allowed: true
+          }, () => { 
+            count++; 
+            if (count === toUpdate.length) {
+              setTimeout(() => {
+                showScanPopup('success', 'Berhasil', `${count} user diizinkan sidik jari.`);
+                loadAllowedUsers();
+              }, 500);
+            }
+          });
         });
-      });
-    }
-  });
-}
+      }
+    });
+  }
+
+  function denyAllUsers() {
+    if (!confirm('Yakin ingin menolak SEMUA user untuk absensi sidik jari?')) return;
+    
+    showScanPopup('info', 'Proses', 'Sedang menolak semua user...');
+    
+    sendRequest({ action: 'get_allowed_users' }, res => {
+      if (res.status === 'success' && res.data) {
+        let count = 0;
+        const toUpdate = res.data.filter(u => u.allowed);
+        
+        if (toUpdate.length === 0) {
+          showScanPopup('info', 'Info', 'Semua user sudah ditolak.');
+          return;
+        }
+        
+        toUpdate.forEach((user) => {
+          sendRequest({
+            action: 'update_allowed_users',
+            userId: user.id,
+            allowed: false
+          }, () => { 
+            count++; 
+            if (count === toUpdate.length) {
+              setTimeout(() => {
+                showScanPopup('success', 'Berhasil', `${count} user ditolak sidik jari.`);
+                loadAllowedUsers();
+              }, 500);
+            }
+          });
+        });
+      }
+    });
+  }
+
   // ================= JADWAL MAPEL ================= //
 
   function loadJadwalMapel() {
@@ -2606,9 +2563,11 @@ function denyAllUsers() {
     showSiswaFingerprintStatus('info', '⏳ Memverifikasi NISN...');
     document.getElementById('btnRegisterSiswaFingerprint').disabled = true;
 
+    // Kirim mode = 'register' agar tidak dicek izin
     sendRequest({
       action: 'login_siswa_fingerprint',
-      nisn: nisn
+      nisn: nisn,
+      mode: 'register'
     }, async res => {
       if (res.status !== 'success') {
         showSiswaFingerprintStatus('error', '❌ ' + res.message);
@@ -2709,9 +2668,11 @@ function denyAllUsers() {
       showSiswaFingerprintStatus('info', '⏳ Memverifikasi NISN...');
       document.getElementById('btnAbsenSiswaFingerprint').disabled = true;
 
+      // Kirim mode = 'absen' agar dicek izin
       sendRequest({
         action: 'login_siswa_fingerprint',
-        nisn: nisn
+        nisn: nisn,
+        mode: 'absen'
       }, async res => {
         if (res.status !== 'success') {
           showSiswaFingerprintStatus('error', '❌ ' + res.message);
