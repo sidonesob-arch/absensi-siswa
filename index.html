@@ -13,7 +13,7 @@
   </script>
   
   <style>
-    /* ===== STYLE SAMA SEPERTI SEBELUMNYA ===== */
+    /* ===== SEMUA STYLE SAMA SEPERTI SEBELUMNYA ===== */
     * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
     body { background-color: #f4f6f9; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
     
@@ -241,6 +241,7 @@
     th { background-color: #f0f4f9; color: #05285e; font-weight: bold; }
 
     #loginModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
+    #loginSiswaModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 3000; }
     .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 350px; text-align: center; }
 
     .input-nilai-sm { width: 70px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
@@ -458,7 +459,7 @@
 <!-- SIDEBAR OVERLAY -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<!-- LOGIN MODAL -->
+<!-- LOGIN MODAL GURU/ADMIN -->
 <div id="loginModal" style="display:none;">
   <div class="modal-content">
     <h3>Login Sistem</h3>
@@ -471,11 +472,11 @@
   </div>
 </div>
 
-<!-- LOGIN SISWA MODAL -->
+<!-- LOGIN MODAL SISWA -->
 <div id="loginSiswaModal" style="display:none;">
   <div class="modal-content">
     <h3>Login Siswa</h3>
-    <p id="modalSiswaInfo" style="font-size:12px; color:#666;">Masukkan NISN Anda untuk login sidik jari.</p>
+    <p id="modalSiswaInfo" style="font-size:12px; color:#666;">Masukkan NISN Anda untuk login.</p>
     <div class="form-group">
       <input type="text" id="inputNISNModal" placeholder="Masukkan NISN..." style="text-align:center; font-size:18px; letter-spacing:3px;">
     </div>
@@ -493,7 +494,7 @@
 
     <div class="nav-category">ORANG TUA / TAMU</div>
     <a class="nav-item" onclick="switchMenu('cari', this)">🔍 Cari Data Siswa</a>
-    <a class="nav-item" id="nav-siswa-fingerprint" onclick="checkSiswaAccess('siswa-fingerprint', this)">👆 Sidik Jari Siswa</a>
+    <a class="nav-item" id="nav-siswa-fingerprint" onclick="openLoginSiswaModal()">👆 Sidik Jari Siswa</a>
 
     <div class="nav-category">MENU UTAMA</div>
     <a class="nav-item" id="nav-login" onclick="openLoginModal()">🔑 Login Sistem</a>
@@ -598,14 +599,12 @@
     <div id="menu-siswa-fingerprint" class="section">
       <h3 style="color:#05285e; font-size:15px;">👆 Absensi Sidik Jari Siswa</h3>
       
-      <div style="background:#e8f0fe; padding:12px 15px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:15px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <div>
-            <span style="font-weight:600; color:#05285e; font-size:12px;">👤 Siswa:</span>
-            <span id="siswaNamaDisplay" style="color:#05285e; font-weight:bold; font-size:14px;">-</span>
-          </div>
-          <button class="btn-danger btn-sm" onclick="logoutSiswaSession()" style="display:none;" id="siswaLogoutBtn">🚪 Keluar</button>
+      <div style="background:#e8f0fe; padding:12px 15px; border-radius:8px; border-left:4px solid #05285e; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <span style="font-weight:600; color:#05285e; font-size:12px;">👤 Siswa:</span>
+          <span id="siswaNamaDisplay" style="color:#05285e; font-weight:bold; font-size:14px;">-</span>
         </div>
+        <button class="btn-danger btn-sm" onclick="logoutSiswaSession()" style="display:none;" id="siswaLogoutBtn">🚪 Keluar</button>
       </div>
       
       <div class="fingerprint-section" style="border-color:#05285e;">
@@ -875,7 +874,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycby24brZ_FoJCNOoMvpfVkEn9lxvTM9vnefQpJfF7QAbwZ5YBd8dfdDZGOZAl_2TAWVy0w/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby0FvsLFVMx4jXS4wW7S2iYjTnhjjeIbJoHI_iK7x904Ld8YV6U_7m6FvbZqcJb6k0l6g/exec";
   // GANTI ID_DEPLOYMENT_ANDA dengan URL deployment Anda
 
   // ================= VARIABEL GLOBAL ================= //
@@ -885,7 +884,7 @@
   let isProcessing = false;
   let userRole = 'tamu';
   let userData = null;
-  let siswaUserData = null; // Data untuk siswa yang login
+  let siswaUserData = null;
   let pendingMenu = null;
   let globalPengaturanData = [];
   let currentActiveSesiName = "";
@@ -917,7 +916,6 @@
   function restoreSession() {
     const savedSession = sessionStorage.getItem('userSession');
     if (!savedSession) {
-      // Cek session siswa
       restoreSiswaSession();
       return;
     }
@@ -970,12 +968,7 @@
   function restoreSiswaSession() {
     const savedSiswaSession = sessionStorage.getItem('siswaSession');
     if (!savedSiswaSession) {
-      // Reset UI siswa
-      document.getElementById('siswaNamaDisplay').innerText = '-';
-      document.getElementById('btnSiswaLogin').classList.remove('hidden');
-      document.getElementById('btnRegisterSiswaFingerprint').classList.add('hidden');
-      document.getElementById('btnAbsenSiswaFingerprint').classList.add('hidden');
-      document.getElementById('siswaLogoutBtn').style.display = 'none';
+      resetSiswaUI();
       return;
     }
     
@@ -986,10 +979,10 @@
       
       if (!nisn || !sessionToken) {
         sessionStorage.removeItem('siswaSession');
+        resetSiswaUI();
         return;
       }
       
-      // Verifikasi siswa login
       sendRequest({
         action: 'login_siswa_fingerprint',
         nisn: nisn,
@@ -1000,13 +993,29 @@
           currentSiswaNISN = nisn;
           updateSiswaUI();
           checkSiswaFingerprintStatus(nisn);
+          updateTopbarUserInfo();
         } else {
           sessionStorage.removeItem('siswaSession');
+          resetSiswaUI();
         }
       });
     } catch (e) {
       sessionStorage.removeItem('siswaSession');
+      resetSiswaUI();
     }
+  }
+
+  function resetSiswaUI() {
+    document.getElementById('siswaNamaDisplay').innerText = '-';
+    document.getElementById('btnSiswaLogin').classList.remove('hidden');
+    document.getElementById('btnRegisterSiswaFingerprint').classList.add('hidden');
+    document.getElementById('btnAbsenSiswaFingerprint').classList.add('hidden');
+    document.getElementById('siswaLogoutBtn').style.display = 'none';
+    document.getElementById('siswaFingerprintStatus').className = 'fingerprint-status';
+    document.getElementById('siswaRegStatus').style.display = 'none';
+    siswaFingerprintRegistered = false;
+    currentSiswaNISN = '';
+    updateTopbarUserInfo();
   }
 
   // ================= FUNGSI DASAR ================= //
@@ -1210,7 +1219,6 @@
         currentSiswaNISN = nisn;
         closeLoginSiswaModal();
         
-        // Simpan session
         const sessionToken = 'siswa_' + Date.now() + '_' + nisn;
         sessionStorage.setItem('siswaSession', JSON.stringify({
           nisn: nisn,
@@ -1256,22 +1264,9 @@
     siswaFingerprintRegistered = false;
     sessionStorage.removeItem('siswaSession');
     
-    updateSiswaUI();
-    updateSiswaFingerprintUI();
+    resetSiswaUI();
     updateTopbarUserInfo();
-    document.getElementById('siswaFingerprintStatus').className = 'fingerprint-status';
-    document.getElementById('siswaRegStatus').style.display = 'none';
-    
     showScanPopup('success', 'Logout Berhasil', 'Anda telah keluar dari akun siswa.');
-  }
-
-  function checkSiswaAccess(menuName, el) {
-    if (!siswaUserData) {
-      pendingMenu = { name: menuName, el: el };
-      openLoginSiswaModal();
-      return;
-    }
-    switchMenu(menuName, el);
   }
 
   // ================= PRELOAD & DASHBOARD ================= //
@@ -1426,7 +1421,6 @@
         updateTopbarUserInfo();
         showScanPopup("success", "Login Berhasil", res.message);
         
-        // Simpan session
         const sessionToken = 'user_' + Date.now() + '_' + (res.nip || 'admin');
         sessionStorage.setItem('userSession', JSON.stringify({
           userId: res.nip || 'admin',
@@ -1515,7 +1509,6 @@
     fingerprintRegistered = false;
     sessionStorage.removeItem('userSession');
     
-    // Logout siswa juga
     if (siswaUserData) {
       logoutSiswaSession();
     }
@@ -1534,7 +1527,6 @@
     
     updateTopbarUserInfo();
     updateFingerprintUI();
-    updateSiswaFingerprintUI();
     switchMenu('dashboard', document.querySelector('.sidebar .nav-item'));
     showScanPopup("success", "Logout Berhasil", "Anda telah keluar.");
     closeSidebar();
@@ -2730,7 +2722,11 @@
   // ================= SIDIK JARI SISWA ================= //
 
   function checkSiswaFingerprintStatus(nisn) {
-    if (!nisn) return;
+    if (!nisn) {
+      siswaFingerprintRegistered = false;
+      updateSiswaFingerprintUI();
+      return;
+    }
     
     sendRequest({ 
       action: 'webauthn_check', 
@@ -2991,11 +2987,6 @@
   function updateUIByRole() {
     // Tidak perlu update badge di topbar karena sudah pakai topbar-user
   }
-
-  // Panggil restore session setelah halaman load
-  document.addEventListener('DOMContentLoaded', function() {
-    restoreSession();
-  });
 
 </script>
 </body>
