@@ -873,7 +873,7 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxRlrtq-2C-QCov3XNv9hiY5ZquC3gHsJsHF7fgmLDh8raf1yZfuBo-Ise_aU_WxDXz/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwHvoeFPpkFZgpaJv9ZVF9KYVTGcyiSu_RWwb2YM_ryzYG4Ug8KkUzfa0NcfLc4xFpm2w/exec";
 
   // ================= VARIABEL GLOBAL ================= //
   let currentRole = 'siswa';
@@ -1395,41 +1395,42 @@
   }
 
   function fetchDashboardData() {
-    sendRequest({ action: 'get_dashboard_data' }, res => {
-      if (res.status === 'success') {
-        if (res.totalGuru !== undefined) document.getElementById('totalGuruCount').innerText = res.totalGuru;
-        if (res.totalSiswa !== undefined) document.getElementById('totalSiswaCount').innerText = res.totalSiswa;
-        
-        const sesiEl = document.getElementById('realtimeActiveSesi');
-        const containerTabel = document.getElementById('containerTabelHariIni');
-        const pesanNonAktif = document.getElementById('pesanTabelNonAktif');
-        const teksPesanNonAktif = document.getElementById('teksPesanNonAktif');
+  sendRequest({ action: 'get_dashboard_data' }, res => {
+    if (res.status === 'success') {
+      if (res.totalGuru !== undefined) document.getElementById('totalGuruCount').innerText = res.totalGuru;
+      if (res.totalSiswa !== undefined) document.getElementById('totalSiswaCount').innerText = res.totalSiswa;
+      
+      const sesiEl = document.getElementById('realtimeActiveSesi');
+      const containerTabel = document.getElementById('containerTabelHariIni');
+      const pesanNonAktif = document.getElementById('pesanTabelNonAktif');
+      const teksPesanNonAktif = document.getElementById('teksPesanNonAktif');
 
-        if (res.isHariLibur) {
-          containerTabel.style.display = 'none';
-          pesanNonAktif.style.display = 'block';
-          teksPesanNonAktif.innerText = res.infoPesanSistem;
-          if (sesiEl) sesiEl.innerText = "HARI LIBUR";
-          updateStatsUI(res.stats);
-          return;
-        }
-
-        if (sesiEl) sesiEl.innerText = res.infoPesanSistem || 'Sesi Aktif';
-
-        if (res.isBelumMulai || res.isSelesai) {
-          containerTabel.style.display = 'none';
-          pesanNonAktif.style.display = 'block';
-          teksPesanNonAktif.innerText = res.infoPesanSistem;
-        } else {
-          containerTabel.style.display = 'block';
-          pesanNonAktif.style.display = 'none';
-          updateDashboardTables(res.guruList, res.siswaList);
-        }
+      if (res.isHariLibur) {
+        containerTabel.style.display = 'none';
+        pesanNonAktif.style.display = 'block';
+        teksPesanNonAktif.innerText = res.infoPesanSistem;
+        if (sesiEl) sesiEl.innerText = "HARI LIBUR";
         updateStatsUI(res.stats);
+        return;
       }
-    });
-  }
 
+      if (sesiEl) sesiEl.innerText = res.infoPesanSistem || 'Sesi Aktif';
+
+      // CEK FLAG isTabelBolehDitampilkan dari server
+      if (res.isTabelBolehDitampilkan === false) {
+        containerTabel.style.display = 'none';
+        pesanNonAktif.style.display = 'block';
+        teksPesanNonAktif.innerText = res.infoPesanSistem || 'Tabel tidak tersedia';
+      } else {
+        containerTabel.style.display = 'block';
+        pesanNonAktif.style.display = 'none';
+        updateDashboardTables(res.guruList, res.siswaList);
+      }
+      updateStatsUI(res.stats);
+    }
+  });
+}
+  
   function updateStatsUI(stats) {
     if (!stats) return;
     document.getElementById('g-tw').innerText = stats.guru.tw || '0';
