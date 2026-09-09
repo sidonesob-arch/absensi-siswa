@@ -1761,33 +1761,33 @@
 
   // ================= CARI ================= //
 
-  function cariKehadiran() {
-    const keyword = document.getElementById('cariKeyword').value.trim();
-    const tglMulai = document.getElementById('cariTglMulai').value;
-    const tglSelesai = document.getElementById('cariTglSelesai').value;
+function cariKehadiran() {
+  const keyword = document.getElementById('cariKeyword').value.trim();
+  const tglMulai = document.getElementById('cariTglMulai').value;
+  const tglSelesai = document.getElementById('cariTglSelesai').value;
 
-    sendRequest({
-      action: 'cari_kehadiran',
-      keyword: keyword,
-      tglMulai: tglMulai,
-      tglSelesai: tglSelesai
-    }, res => {
-      const thead = document.getElementById('tableCariHead');
-      const tbody = document.getElementById('tableCariBody');
-      tbody.innerHTML = '';
-      
-      if (!res.data || res.data.length === 0) {
-        thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status</th></tr>';
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ditemukan.</td></tr>';
-        return;
-      }
-      
+  sendRequest({
+    action: 'cari_kehadiran',
+    keyword: keyword,
+    tglMulai: tglMulai,
+    tglSelesai: tglSelesai
+  }, res => {
+    const thead = document.getElementById('tableCariHead');
+    const tbody = document.getElementById('tableCariBody');
+    tbody.innerHTML = '';
+    
+    if (!res.data || res.data.length === 0) {
       thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status</th></tr>';
-      res.data.forEach(r => {
-        tbody.innerHTML += `<tr><td>${r.timestamp}</td><td>${r.peran}</td><td>${r.id}</td><td>${r.nama}</td><td>${r.sesi}</td></tr>`;
-      });
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ditemukan data siswa.</td></tr>';
+      return;
+    }
+    
+    thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status</th></tr>';
+    res.data.forEach(r => {
+      tbody.innerHTML += `<tr><td>${r.timestamp}</td><td>${r.peran}</td><td>${r.id}</td><td>${r.nama}</td><td>${r.sesi}</td></tr>`;
     });
-  }
+  });
+}
 
   // ================= REKAP ================= //
 
@@ -2055,61 +2055,61 @@
 
   // ================= IZIN ABSENSI ================= //
 
-  function loadAllowedUsers() {
-    const filterRole = document.getElementById('filterAllowedRole').value;
-    const searchText = document.getElementById('searchAllowedUser').value.toLowerCase().trim();
+function loadAllowedUsers() {
+  const filterRole = document.getElementById('filterAllowedRole').value;
+  const searchText = document.getElementById('searchAllowedUser').value.toLowerCase().trim();
 
-    sendRequest({ action: 'get_allowed_users' }, res => {
-      const tbody = document.getElementById('tableAllowedUsersBody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
+  sendRequest({ action: 'get_allowed_users' }, res => {
+    const tbody = document.getElementById('tableAllowedUsersBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
 
-      if (res.status === 'success' && res.data && res.data.length > 0) {
-        let filtered = res.data;
-        
-        if (filterRole) {
-          filtered = filtered.filter(u => u.role === filterRole);
-        }
-        
-        if (searchText) {
-          filtered = filtered.filter(u => 
-            u.id.toLowerCase().includes(searchText) || 
-            u.nama.toLowerCase().includes(searchText)
-          );
-        }
-
-        if (filtered.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada data.</td></tr>';
-          return;
-        }
-
-        filtered.forEach((item, idx) => {
-          const isAllowed = item.allowed === true;
-          const statusLabel = isAllowed ? 'Diizinkan' : 'Ditolak';
-          const statusClass = isAllowed ? 'allowed' : 'denied';
-          const isChecked = isAllowed ? 'checked' : '';
-          
-          tbody.innerHTML += `<tr>
-            <td>${idx + 1}</td>
-            <td><b>${item.id}</b></td>
-            <td>${item.nama}</td>
-            <td><span class="role-badge ${item.role}">${item.role}</span></td>
-            <td style="text-align:center;">
-              <label class="switch">
-                <input type="checkbox" ${isChecked} 
-                       onchange="updateAllowedUser('${item.id}', this.checked, this)"
-                       data-userid="${item.id}">
-                <span class="slider"></span>
-              </label>
-              <span class="switch-label ${statusClass}">${statusLabel}</span>
-            </td>
-          </tr>`;
-        });
-      } else {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data. Klik "Sinkronisasi Data" untuk memuat.</td></tr>';
+    if (res.status === 'success' && res.data && res.data.length > 0) {
+      let filtered = res.data;
+      
+      if (filterRole) {
+        filtered = filtered.filter(u => u.role === filterRole);
       }
-    });
-  }
+      
+      if (searchText) {
+        filtered = filtered.filter(u => 
+          u.id.toLowerCase().includes(searchText) || 
+          u.nama.toLowerCase().includes(searchText)
+        );
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada data yang sesuai.</td></tr>';
+        return;
+      }
+
+      filtered.forEach((item, idx) => {
+        const isAllowed = item.allowed === true;
+        const statusLabel = isAllowed ? 'Diizinkan' : 'Ditolak';
+        const statusClass = isAllowed ? 'allowed' : 'denied';
+        const isChecked = isAllowed ? 'checked' : '';
+        
+        tbody.innerHTML += `<tr>
+          <td>${idx + 1}</td>
+          <td><b>${item.id}</b></td>
+          <td>${item.nama}</td>
+          <td><span class="role-badge ${item.role}">${item.role}</span></td>
+          <td style="text-align:center;">
+            <label class="switch">
+              <input type="checkbox" ${isChecked} 
+                     onchange="updateAllowedUser('${item.id}', this.checked, this)"
+                     data-userid="${item.id}">
+              <span class="slider"></span>
+            </label>
+            <span class="switch-label ${statusClass}">${statusLabel}</span>
+          </td>
+        </tr>`;
+      });
+    } else {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data. Klik "Sinkronisasi" untuk memuat data siswa dan guru.</td></tr>';
+    }
+  });
+}
 
   function updateAllowedUser(userId, allowed, checkboxElement) {
     if (checkboxElement) {
