@@ -202,6 +202,7 @@
     .popup-success { background: #d4edda; color: #155724; border-left: 5px solid #28a745; }
     .popup-warning { background: #fff3cd; color: #856404; border-left: 5px solid #ffc107; }
     .popup-danger { background: #f8d7da; color: #721c24; border-left: 5px solid #dc3545; }
+    .popup-info { background: #d1ecf1; color: #0c5460; border-left: 5px solid #17a2b8; }
 
     .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
     @media(max-width: 900px) { .stats-container { grid-template-columns: 1fr; } }
@@ -423,6 +424,20 @@
     @media (max-width: 600px) {
       .sesi-row input[type="time"] { width: 80px; }
       .sesi-row .sesi-name-input { width: 70px; }
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #05285e;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -873,7 +888,53 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyusYDkkw5szwABTsZNqDygnzWvQ0U_vtNiRaeMTxr1dbb02WMULCj_ezq-voNtiQCYdQ/exec";
+  // ================= KONFIGURASI ================= //
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzWtO859NzG_EznSUjeLcNNBMNbyHssT0BaNPHQNalQq4FXOdJF4uv3iHsJTd6nvVIunw/exec";
+  
+  // Cek koneksi ke server
+  let isServerConnected = false;
+  let connectionRetryCount = 0;
+  const MAX_RETRY = 3;
+
+  // ================= FUNGSI SEND REQUEST DENGAN RETRY ================= //
+  function sendRequest(payload, callback, retryCount = 0) {
+    // Tampilkan loading indicator di console
+    console.log('Mengirim request:', payload.action);
+    
+    fetch(GAS_URL, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(res => {
+      isServerConnected = true;
+      connectionRetryCount = 0;
+      callback(res);
+    })
+    .catch(err => {
+      console.error('Fetch error:', err);
+      isServerConnected = false;
+      
+      if (retryCount < MAX_RETRY) {
+        console.log(`Retry ${retryCount + 1}/${MAX_RETRY} untuk action: ${payload.action}`);
+        setTimeout(() => {
+          sendRequest(payload, callback, retryCount + 1);
+        }, 2000 * (retryCount + 1));
+      } else {
+        showScanPopup("danger", "Koneksi Error", 
+          "Gagal terhubung ke server! Periksa koneksi internet atau URL script.\nError: " + err.message);
+        callback({ status: "error", message: "Koneksi gagal: " + err.message });
+      }
+    });
+  }
 
   // ================= VARIABEL GLOBAL ================= //
   let currentRole = 'siswa';
@@ -893,21 +954,40 @@
   let fingerprintRegistered = false;
   let siswaFingerprintRegistered = false;
   let currentSiswaNISN = '';
+  let isInitialLoad = true;
 
   // ================= INISIALISASI ================= //
   document.getElementById('izinTanggal').value = new Date().toISOString().split('T')[0];
+  
+  // Cek koneksi awal
+  checkConnection();
   
   startRealtimeClock();
   preloadPinConfig();
   startRealtimeDashboard();
   loadOpsiKelas();
   updateTopbarUserInfo();
-  loadAllowedUsers();
   
   // Restore session setelah halaman load
   document.addEventListener('DOMContentLoaded', function() {
-    restoreSession();
+    setTimeout(() => {
+      restoreSession();
+    }, 500);
   });
+
+  // ================= CEK KONEKSI ================= //
+  function checkConnection() {
+    sendRequest({ action: 'get_pengaturan' }, (res) => {
+      if (res.status === 'success') {
+        isServerConnected = true;
+        console.log('✅ Koneksi ke server berhasil');
+      } else {
+        isServerConnected = false;
+        console.log('⚠️ Koneksi ke server gagal');
+        showScanPopup("warning", "Koneksi", "Gagal terhubung ke server. Aplikasi mungkin tidak berfungsi dengan baik.");
+      }
+    });
+  }
 
   // ================= RESTORE SESSION ================= //
 
@@ -1019,20 +1099,6 @@
 
   // ================= FUNGSI DASAR ================= //
 
-  function sendRequest(payload, callback) {
-    fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    })
-    .then(r => r.json())
-    .then(res => callback(res))
-    .catch(err => {
-      console.error('Fetch error:', err);
-      showScanPopup("danger", "Koneksi Error", "Gagal menghubungkan ke server!");
-    });
-  }
-
   function startRealtimeClock() {
     updateClock();
     setInterval(updateClock, 1000);
@@ -1067,7 +1133,7 @@
     document.getElementById('popupTitle').innerText = title;
     document.getElementById('popupMessage').innerText = message;
     popup.style.display = 'block';
-    popupTimeout = setTimeout(() => { popup.style.display = 'none'; }, 2800);
+    popupTimeout = setTimeout(() => { popup.style.display = 'none'; }, 4000);
     closeSidebar();
   }
 
@@ -1391,45 +1457,45 @@
   function startRealtimeDashboard() {
     fetchDashboardData();
     if (dashboardTimer) clearInterval(dashboardTimer);
-    dashboardTimer = setInterval(fetchDashboardData, 8000);
+    dashboardTimer = setInterval(fetchDashboardData, 10000);
   }
 
   function fetchDashboardData() {
-  sendRequest({ action: 'get_dashboard_data' }, res => {
-    if (res.status === 'success') {
-      if (res.totalGuru !== undefined) document.getElementById('totalGuruCount').innerText = res.totalGuru;
-      if (res.totalSiswa !== undefined) document.getElementById('totalSiswaCount').innerText = res.totalSiswa;
-      
-      const sesiEl = document.getElementById('realtimeActiveSesi');
-      const containerTabel = document.getElementById('containerTabelHariIni');
-      const pesanNonAktif = document.getElementById('pesanTabelNonAktif');
-      const teksPesanNonAktif = document.getElementById('teksPesanNonAktif');
+    sendRequest({ action: 'get_dashboard_data' }, res => {
+      if (res.status === 'success') {
+        if (res.totalGuru !== undefined) document.getElementById('totalGuruCount').innerText = res.totalGuru;
+        if (res.totalSiswa !== undefined) document.getElementById('totalSiswaCount').innerText = res.totalSiswa;
+        
+        const sesiEl = document.getElementById('realtimeActiveSesi');
+        const containerTabel = document.getElementById('containerTabelHariIni');
+        const pesanNonAktif = document.getElementById('pesanTabelNonAktif');
+        const teksPesanNonAktif = document.getElementById('teksPesanNonAktif');
 
-      if (res.isHariLibur) {
-        containerTabel.style.display = 'none';
-        pesanNonAktif.style.display = 'block';
-        teksPesanNonAktif.innerText = res.infoPesanSistem;
-        if (sesiEl) sesiEl.innerText = "HARI LIBUR";
+        if (res.isHariLibur) {
+          containerTabel.style.display = 'none';
+          pesanNonAktif.style.display = 'block';
+          teksPesanNonAktif.innerText = res.infoPesanSistem;
+          if (sesiEl) sesiEl.innerText = "HARI LIBUR";
+          updateStatsUI(res.stats);
+          return;
+        }
+
+        if (sesiEl) sesiEl.innerText = res.infoPesanSistem || 'Sesi Aktif';
+
+        // CEK FLAG isTabelBolehDitampilkan dari server
+        if (res.isTabelBolehDitampilkan === false) {
+          containerTabel.style.display = 'none';
+          pesanNonAktif.style.display = 'block';
+          teksPesanNonAktif.innerText = res.infoPesanSistem || 'Tabel tidak tersedia';
+        } else {
+          containerTabel.style.display = 'block';
+          pesanNonAktif.style.display = 'none';
+          updateDashboardTables(res.guruList, res.siswaList);
+        }
         updateStatsUI(res.stats);
-        return;
       }
-
-      if (sesiEl) sesiEl.innerText = res.infoPesanSistem || 'Sesi Aktif';
-
-      // CEK FLAG isTabelBolehDitampilkan dari server
-      if (res.isTabelBolehDitampilkan === false) {
-        containerTabel.style.display = 'none';
-        pesanNonAktif.style.display = 'block';
-        teksPesanNonAktif.innerText = res.infoPesanSistem || 'Tabel tidak tersedia';
-      } else {
-        containerTabel.style.display = 'block';
-        pesanNonAktif.style.display = 'none';
-        updateDashboardTables(res.guruList, res.siswaList);
-      }
-      updateStatsUI(res.stats);
-    }
-  });
-}
+    });
+  }
   
   function updateStatsUI(stats) {
     if (!stats) return;
@@ -1761,33 +1827,33 @@
 
   // ================= CARI ================= //
 
-function cariKehadiran() {
-  const keyword = document.getElementById('cariKeyword').value.trim();
-  const tglMulai = document.getElementById('cariTglMulai').value;
-  const tglSelesai = document.getElementById('cariTglSelesai').value;
+  function cariKehadiran() {
+    const keyword = document.getElementById('cariKeyword').value.trim();
+    const tglMulai = document.getElementById('cariTglMulai').value;
+    const tglSelesai = document.getElementById('cariTglSelesai').value;
 
-  sendRequest({
-    action: 'cari_kehadiran',
-    keyword: keyword,
-    tglMulai: tglMulai,
-    tglSelesai: tglSelesai
-  }, res => {
-    const thead = document.getElementById('tableCariHead');
-    const tbody = document.getElementById('tableCariBody');
-    tbody.innerHTML = '';
-    
-    if (!res.data || res.data.length === 0) {
+    sendRequest({
+      action: 'cari_kehadiran',
+      keyword: keyword,
+      tglMulai: tglMulai,
+      tglSelesai: tglSelesai
+    }, res => {
+      const thead = document.getElementById('tableCariHead');
+      const tbody = document.getElementById('tableCariBody');
+      tbody.innerHTML = '';
+      
+      if (!res.data || res.data.length === 0) {
+        thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status</th></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ditemukan data siswa.</td></tr>';
+        return;
+      }
+      
       thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status</th></tr>';
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ditemukan data siswa.</td></tr>';
-      return;
-    }
-    
-    thead.innerHTML = '<tr><th>Waktu</th><th>Peran</th><th>ID</th><th>Nama</th><th>Status</th></tr>';
-    res.data.forEach(r => {
-      tbody.innerHTML += `<tr><td>${r.timestamp}</td><td>${r.peran}</td><td>${r.id}</td><td>${r.nama}</td><td>${r.sesi}</td></tr>`;
+      res.data.forEach(r => {
+        tbody.innerHTML += `<tr><td>${r.timestamp}</td><td>${r.peran}</td><td>${r.id}</td><td>${r.nama}</td><td>${r.sesi}</td></tr>`;
+      });
     });
-  });
-}
+  }
 
   // ================= REKAP ================= //
 
@@ -2055,61 +2121,61 @@ function cariKehadiran() {
 
   // ================= IZIN ABSENSI ================= //
 
-function loadAllowedUsers() {
-  const filterRole = document.getElementById('filterAllowedRole').value;
-  const searchText = document.getElementById('searchAllowedUser').value.toLowerCase().trim();
+  function loadAllowedUsers() {
+    const filterRole = document.getElementById('filterAllowedRole').value;
+    const searchText = document.getElementById('searchAllowedUser').value.toLowerCase().trim();
 
-  sendRequest({ action: 'get_allowed_users' }, res => {
-    const tbody = document.getElementById('tableAllowedUsersBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
+    sendRequest({ action: 'get_allowed_users' }, res => {
+      const tbody = document.getElementById('tableAllowedUsersBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
 
-    if (res.status === 'success' && res.data && res.data.length > 0) {
-      let filtered = res.data;
-      
-      if (filterRole) {
-        filtered = filtered.filter(u => u.role === filterRole);
-      }
-      
-      if (searchText) {
-        filtered = filtered.filter(u => 
-          u.id.toLowerCase().includes(searchText) || 
-          u.nama.toLowerCase().includes(searchText)
-        );
-      }
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada data yang sesuai.</td></tr>';
-        return;
-      }
-
-      filtered.forEach((item, idx) => {
-        const isAllowed = item.allowed === true;
-        const statusLabel = isAllowed ? 'Diizinkan' : 'Ditolak';
-        const statusClass = isAllowed ? 'allowed' : 'denied';
-        const isChecked = isAllowed ? 'checked' : '';
+      if (res.status === 'success' && res.data && res.data.length > 0) {
+        let filtered = res.data;
         
-        tbody.innerHTML += `<tr>
-          <td>${idx + 1}</td>
-          <td><b>${item.id}</b></td>
-          <td>${item.nama}</td>
-          <td><span class="role-badge ${item.role}">${item.role}</span></td>
-          <td style="text-align:center;">
-            <label class="switch">
-              <input type="checkbox" ${isChecked} 
-                     onchange="updateAllowedUser('${item.id}', this.checked, this)"
-                     data-userid="${item.id}">
-              <span class="slider"></span>
-            </label>
-            <span class="switch-label ${statusClass}">${statusLabel}</span>
-          </td>
-        </tr>`;
-      });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data. Klik "Sinkronisasi" untuk memuat data siswa dan guru.</td></tr>';
-    }
-  });
-}
+        if (filterRole) {
+          filtered = filtered.filter(u => u.role === filterRole);
+        }
+        
+        if (searchText) {
+          filtered = filtered.filter(u => 
+            u.id.toLowerCase().includes(searchText) || 
+            u.nama.toLowerCase().includes(searchText)
+          );
+        }
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada data yang sesuai.</td></tr>';
+          return;
+        }
+
+        filtered.forEach((item, idx) => {
+          const isAllowed = item.allowed === true;
+          const statusLabel = isAllowed ? 'Diizinkan' : 'Ditolak';
+          const statusClass = isAllowed ? 'allowed' : 'denied';
+          const isChecked = isAllowed ? 'checked' : '';
+          
+          tbody.innerHTML += `<tr>
+            <td>${idx + 1}</td>
+            <td><b>${item.id}</b></td>
+            <td>${item.nama}</td>
+            <td><span class="role-badge ${item.role}">${item.role}</span></td>
+            <td style="text-align:center;">
+              <label class="switch">
+                <input type="checkbox" ${isChecked} 
+                       onchange="updateAllowedUser('${item.id}', this.checked, this)"
+                       data-userid="${item.id}">
+                <span class="slider"></span>
+              </label>
+              <span class="switch-label ${statusClass}">${statusLabel}</span>
+            </td>
+          </tr>`;
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data. Klik "Sinkronisasi" untuk memuat data siswa dan guru.</td></tr>';
+      }
+    });
+  }
 
   function updateAllowedUser(userId, allowed, checkboxElement) {
     if (checkboxElement) {
