@@ -6,6 +6,7 @@
 <title>Sistem Absensi Terpadu - SMP NEGERI 1 SOBANG</title>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
   const ASSETS_BASE_URL = './assets/';
   const PROFILE_IMAGES_PATH = ASSETS_BASE_URL + 'images/profiles/';
@@ -112,12 +113,49 @@ body { background: var(--bg); margin: 0; padding: 0; display: flex; flex-directi
 .section.active { display: block; }
 .footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 40px; background: var(--primary); border-top: 1px solid var(--primary-border); display: flex; justify-content: center; align-items: center; font-size: 11px; color: #d0dbe8; z-index: 999; font-weight: 500; }
 
-/* POPUP */
-#scanPopup { position: fixed; top: 75px; right: 10px; z-index: 3000; width: 280px; padding: 10px 12px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); display: none; }
-.popup-success { background: #d4edda; color: #155724; border-left: 5px solid var(--success); }
-.popup-warning { background: #fff3cd; color: #856404; border-left: 5px solid var(--warning); }
-.popup-danger { background: #f8d7da; color: #721c24; border-left: 5px solid var(--danger); }
-.popup-info { background: var(--info-bg); color: var(--info-text); border-left: 5px solid #17a2b8; }
+/* MODAL POPUP BESAR (Ganti scanPopup) */
+.modal-popup {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
+  z-index: 4000;
+}
+.modal-popup.show { display: flex; }
+.modal-popup-box {
+  background: #fff; border-radius: 14px; padding: 28px 24px;
+  min-width: 300px; max-width: 420px; width: 88%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+  animation: popIn 0.25s ease-out;
+  border-top: 8px solid var(--primary);
+}
+.modal-popup-box.popup-success { border-top-color: var(--success); }
+.modal-popup-box.popup-warning { border-top-color: var(--warning); }
+.modal-popup-box.popup-danger { border-top-color: var(--danger); }
+.modal-popup-box.popup-info { border-top-color: #17a2b8; }
+@keyframes popIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.modal-popup-icon { font-size: 54px; margin-bottom: 10px; line-height: 1; }
+.modal-popup-title {
+  font-size: 18px; font-weight: 800; margin-bottom: 8px;
+  color: var(--primary); letter-spacing: 0.3px;
+}
+.modal-popup-box.popup-success .modal-popup-title { color: #155724; }
+.modal-popup-box.popup-warning .modal-popup-title { color: #856404; }
+.modal-popup-box.popup-danger .modal-popup-title { color: #721c24; }
+.modal-popup-box.popup-info .modal-popup-title { color: #0c5460; }
+.modal-popup-message {
+  font-size: 14px; line-height: 1.5; color: #333;
+  margin-bottom: 18px; word-wrap: break-word;
+}
+.modal-popup-btn {
+  background: var(--primary); color: #fff; border: none;
+  padding: 10px 30px; border-radius: 30px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  min-width: 110px;
+}
+.modal-popup-btn:hover { background: var(--primary-hover); }
 
 /* STATS */
 .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
@@ -160,7 +198,7 @@ table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: lef
 th, td { padding: 6px 8px; border-bottom: 1px solid var(--border-light); }
 th { background: var(--primary-lighter); color: var(--primary); font-weight: bold; }
 
-/* MODAL */
+/* LOGIN MODAL */
 #loginModal, #loginSiswaModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 3000; }
 .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 350px; text-align: center; }
 
@@ -206,7 +244,7 @@ th { background: var(--primary-lighter); color: var(--primary); font-weight: bol
 .role-badge.guru { background: #d4edda; color: #155724; }
 .role-badge.siswa { background: var(--info-bg); color: var(--info-text); }
 
-/* SESI */
+/* SESI ROW */
 .sesi-row { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid #f0f0f0; flex-wrap: wrap; }
 .sesi-row .sesi-number { font-size: 12px; color: var(--muted); min-width: 20px; }
 .sesi-row input, .sesi-row select { padding: 5px 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 12px; }
@@ -218,6 +256,193 @@ th { background: var(--primary-lighter); color: var(--primary); font-weight: bol
   .sesi-row input[type="time"] { width: 80px; }
   .sesi-row .sesi-name-input { width: 70px; }
 }
+
+/* PENGATURAN - TOGGLE FORM */
+.pengaturan-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.pengaturan-tab-btn {
+  background: #fff;
+  border: 2px solid var(--border);
+  color: var(--primary);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  width: 100%;
+  margin: 0;
+}
+.pengaturan-tab-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+.pengaturan-tab-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 3px 8px rgba(5,40,94,0.3);
+}
+.pengaturan-tab-btn .tab-icon { display: block; font-size: 20px; margin-bottom: 4px; }
+.pengaturan-panel {
+  display: none;
+  background: #fff;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 14px;
+  animation: panelSlide 0.25s ease-out;
+}
+.pengaturan-panel.open { display: block; }
+@keyframes panelSlide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.panel-title {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--primary-light);
+}
+
+/* CEK SYARAT KELULUSAN */
+.syarat-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border-top: 6px solid var(--primary);
+  max-width: 560px;
+  margin: 0 auto;
+}
+.syarat-card.hijau { border-top-color: var(--success); }
+.syarat-card.merah { border-top-color: var(--danger); }
+.syarat-card.kuning { border-top-color: var(--warning); }
+.syarat-header {
+  text-align: center;
+  padding-bottom: 14px;
+  border-bottom: 2px dashed var(--border);
+  margin-bottom: 14px;
+}
+.syarat-header .syarat-nama { font-size: 18px; font-weight: 800; color: var(--primary); margin: 0; }
+.syarat-header .syarat-kelas { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.syarat-header .syarat-periode {
+  display: inline-block;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  margin-top: 8px;
+  font-weight: 600;
+}
+.syarat-list { list-style: none; padding: 0; margin: 0 0 14px; }
+.syarat-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.syarat-list li:nth-child(odd) { background: var(--primary-lighter); }
+.syarat-list li .label { color: var(--text); font-weight: 600; }
+.syarat-list li .value { color: var(--primary); font-weight: 700; }
+.syarat-total {
+  background: linear-gradient(135deg, #e8f0fe, #d0e0f8);
+  padding: 14px;
+  border-radius: 10px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.syarat-total .total-label { font-size: 11px; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.syarat-total .total-value { font-size: 30px; font-weight: 900; color: var(--primary); line-height: 1.1; margin-top: 4px; }
+.syarat-total .total-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.syarat-status {
+  padding: 16px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+}
+.syarat-status.hijau { background: #d4edda; color: #155724; border: 2px solid var(--success); }
+.syarat-status.merah { background: #f8d7da; color: #721c24; border: 2px solid var(--danger); }
+.syarat-status.kuning { background: #fff3cd; color: #856404; border: 2px solid var(--warning); }
+.syarat-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.syarat-actions button {
+  padding: 10px 22px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  width: auto;
+}
+.syarat-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+.syarat-empty .icon { font-size: 60px; display: block; margin-bottom: 12px; }
+
+/* RESET USER LIST */
+.reset-user-list {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+.reset-user-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 12px;
+}
+.reset-user-item:last-child { border-bottom: none; }
+.reset-user-item input[type="checkbox"] { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+.reset-user-item .user-info { flex: 1; }
+.reset-user-item .user-name { font-weight: 700; color: var(--primary); }
+.reset-user-item .user-id { font-size: 10px; color: var(--muted); }
+.reset-user-item .user-badge {
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+.reset-user-item .badge-guru { background: #d4edda; color: #155724; }
+.reset-user-item .badge-siswa { background: var(--info-bg); color: var(--info-text); }
+.reset-user-item .badge-registered { background: #fff3cd; color: #856404; margin-left: 4px; }
+
+/* PIN GURU LIST */
+.pin-list { max-height: 400px; overflow-y: auto; }
+.pin-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.pin-item .pin-info { flex: 1; min-width: 150px; }
+.pin-item .pin-info .name { font-weight: 700; color: var(--primary); }
+.pin-item .pin-info .meta { font-size: 10px; color: var(--muted); }
+.pin-item input[type="text"] { width: 100px; padding: 4px 8px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -245,10 +470,14 @@ th { background: var(--primary-lighter); color: var(--primary); font-weight: bol
   </div>
 </div>
 
-<!-- SCAN POPUP -->
-<div id="scanPopup">
-  <b id="popupTitle" style="display:block; font-size:12px; margin-bottom:2px;">Notifikasi</b>
-  <span id="popupMessage" style="font-size:11px; display:block; line-height:1.3;">Pesan sistem...</span>
+<!-- MODAL POPUP BESAR -->
+<div id="bigPopup" class="modal-popup">
+  <div class="modal-popup-box" id="bigPopupBox">
+    <div class="modal-popup-icon" id="bigPopupIcon">ℹ️</div>
+    <div class="modal-popup-title" id="bigPopupTitle">Notifikasi</div>
+    <div class="modal-popup-message" id="bigPopupMessage">Pesan...</div>
+    <button class="modal-popup-btn" onclick="closeBigPopup()">OK</button>
+  </div>
 </div>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -288,6 +517,7 @@ th { background: var(--primary-lighter); color: var(--primary); font-weight: bol
     <a class="nav-item" onclick="switchMenu('cari', this)">🔍 Cari Data Siswa</a>
     <a class="nav-item" id="nav-login-siswa" onclick="openLoginSiswaModal()">👤 Login Siswa</a>
     <a class="nav-item" id="nav-siswa-fingerprint" onclick="switchMenu('siswa-fingerprint', this)">👆 Sidik Jari Siswa</a>
+    <a class="nav-item" id="nav-cek-syarat" onclick="switchMenu('cek-syarat', this)">🎓 Cek Syarat Naik Kelas/Lulus</a>
 
     <div class="nav-category">MENU UTAMA</div>
     <a class="nav-item" id="nav-login" onclick="openLoginModal()">🔑 Login Sistem</a>
@@ -413,6 +643,24 @@ th { background: var(--primary-lighter); color: var(--primary); font-weight: bol
       </div>
     </div>
 
+    <!-- CEK SYARAT NAIK KELAS / LULUS -->
+    <div id="menu-cek-syarat" class="section">
+      <h3 style="color:var(--primary); font-size:15px;">🎓 Cek Syarat Naik Kelas / Lulus</h3>
+      <div id="syaratBelumLogin" class="syarat-empty">
+        <span class="icon">🔒</span>
+        <h4 style="color:var(--primary); margin:0 0 8px;">Menu Terkunci</h4>
+        <p style="font-size:13px;">Silakan login sebagai siswa terlebih dahulu untuk mengakses menu ini.</p>
+        <button class="btn-primary" style="width:auto; padding:10px 30px; margin-top:15px; border-radius:30px;" onclick="openLoginSiswaModal()">👤 Login Siswa</button>
+      </div>
+      <div id="syaratContent" style="display:none;">
+        <div id="syaratLoading" style="text-align:center; padding:30px; color:var(--muted);">
+          <div style="font-size:36px; margin-bottom:10px;">⏳</div>
+          <div>Memuat data kelulusan...</div>
+        </div>
+        <div id="syaratResult"></div>
+      </div>
+    </div>
+
     <!-- SCANNER -->
     <div id="menu-scanner" class="section">
       <h3 style="color:var(--primary); font-size:15px;">📷 Scanner QR Barcode</h3>
@@ -480,41 +728,53 @@ th { background: var(--primary-lighter); color: var(--primary); font-weight: bol
       </div>
     </div>
 
-    <!-- PENGATURAN -->
+    <!-- PENGATURAN (TATA LETAK BARU - TOGGLE) -->
     <div id="menu-pengaturan" class="section">
       <h3 style="color:var(--primary); font-size:15px;">⚙️ Pengaturan</h3>
-      <h4 style="color:var(--primary); margin-bottom:6px; font-size:13px;">Sesi Absensi & PIN</h4>
-      <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid var(--border-light); margin-bottom:10px;">
+
+      <!-- TOMBOL TOGGLE -->
+      <div class="pengaturan-tabs">
+        <button class="pengaturan-tab-btn" data-tab="sesi" onclick="togglePengaturanPanel('sesi')">
+          <span class="tab-icon">📋</span>Sesi Absensi
+        </button>
+        <button class="pengaturan-tab-btn" data-tab="izin" onclick="togglePengaturanPanel('izin')">
+          <span class="tab-icon">📝</span>Izin / Sakit
+        </button>
+        <button class="pengaturan-tab-btn" data-tab="reset-fingerprint" onclick="togglePengaturanPanel('reset-fingerprint')">
+          <span class="tab-icon">👆</span>Reset Sidik Jari
+        </button>
+        <button class="pengaturan-tab-btn" data-tab="reset-pin" onclick="togglePengaturanPanel('reset-pin')">
+          <span class="tab-icon">🔑</span>Reset PIN
+        </button>
+        <button class="pengaturan-tab-btn" data-tab="seting-absen" onclick="togglePengaturanPanel('seting-absen')">
+          <span class="tab-icon">📅</span>Seting Absen
+        </button>
+        <button class="pengaturan-tab-btn" data-tab="pin-guru" onclick="togglePengaturanPanel('pin-guru')">
+          <span class="tab-icon">🔐</span>Isi PIN Guru
+        </button>
+        <button class="pengaturan-tab-btn" data-tab="hari-libur" onclick="togglePengaturanPanel('hari-libur')">
+          <span class="tab-icon">🎉</span>Hari Libur
+        </button>
+        <button class="pengaturan-tab-btn" data-tab="historis" onclick="togglePengaturanPanel('historis')">
+          <span class="tab-icon">📦</span>Historis
+        </button>
+      </div>
+
+      <!-- PANEL: SESI -->
+      <div class="pengaturan-panel" id="panel-sesi">
+        <h4 class="panel-title">📋 Sesi Absensi & PIN</h4>
         <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
           <button class="btn-add" onclick="addSesiRow()">➕ Tambah Sesi</button>
-          <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="savePengaturan()">💾 Simpan Pengaturan</button>
+          <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="savePengaturan()">💾 Simpan</button>
         </div>
         <div id="sesiConfigContainer"></div>
       </div>
-      <hr style="margin:20px 0; border:0; border-top:2px dashed #ccc;">
-      <h4 style="color:var(--primary); margin-bottom:6px; font-size:13px;">Hari Libur</h4>
-      <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid var(--border-light);">
-        <input type="hidden" id="editHariLiburRowIndex" value="0">
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <div class="form-group" style="flex:1; min-width:180px;"><label>Tanggal:</label><input type="date" id="inputTglLibur"></div>
-          <div class="form-group" style="flex:2; min-width:200px;"><label>Keterangan:</label><input type="text" id="inputKetLibur" placeholder="Keterangan"></div>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="simpanHariLibur()">Simpan</button>
-          <button id="btnBatalEditLibur" style="display:none; width:auto; padding:6px 16px; background:#6c757d; color:#fff; border:none; border-radius:6px;" onclick="resetFormHariLibur()">Batal</button>
-        </div>
-      </div>
-      <div class="table-responsive">
-        <table>
-          <thead><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th style="width:100px;">Aksi</th></tr></thead>
-          <tbody id="tableHariLiburBody"><tr><td colspan="4" style="text-align:center;">Memuat...</td></tr></tbody>
-        </table>
-      </div>
-      <hr style="margin:20px 0; border:0; border-top:2px dashed #ccc;">
-      <h4 style="color:var(--primary); margin-bottom:6px; font-size:13px;">👥 Pengaturan Izin Sidik Jari</h4>
-      <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid var(--border-light); margin-bottom:10px;">
-        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
-          Centang untuk mengizinkan user melakukan absensi sidik jari. Kosongkan untuk menolak.
+
+      <!-- PANEL: IZIN / SAKIT (dulu ada di form) -->
+      <div class="pengaturan-panel" id="panel-izin">
+        <h4 class="panel-title">📝 Pengaturan Izin / Sakit</h4>
+        <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">
+          Pengaturan user yang diizinkan melakukan absensi sidik jari.
         </p>
         <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
           <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="syncAllowedUsers()">🔄 Sinkronisasi</button>
@@ -535,15 +795,125 @@ th { background: var(--primary-lighter); color: var(--primary); font-weight: bol
             <input type="text" id="searchAllowedUser" placeholder="Cari nama atau ID..." oninput="loadAllowedUsers()">
           </div>
         </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr><th style="width:40px;">No</th><th>ID / NISN</th><th>Nama</th><th style="width:80px;">Role</th><th style="width:120px; text-align:center;">Status</th></tr>
+            </thead>
+            <tbody id="tableAllowedUsersBody"><tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr></tbody>
+          </table>
+        </div>
       </div>
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr><th style="width:40px;">No</th><th>ID / NISN</th><th>Nama</th><th style="width:80px;">Role</th><th style="width:120px; text-align:center;">Status</th></tr>
-          </thead>
-          <tbody id="tableAllowedUsersBody"><tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr></tbody>
-        </table>
+
+      <!-- PANEL: RESET SIDIK JARI -->
+      <div class="pengaturan-panel" id="panel-reset-fingerprint">
+        <h4 class="panel-title">👆 Reset Sidik Jari</h4>
+        <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">
+          Pilih user yang akan direset data sidik jarinya. Setelah direset, user harus mendaftar ulang.
+        </p>
+        <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+          <button class="btn-primary btn-sm" style="width:auto; padding:6px 14px;" onclick="loadResetFingerprintList()">🔄 Muat Ulang</button>
+          <button class="btn-primary btn-sm" style="width:auto; padding:6px 14px; background:var(--danger);" onclick="resetFingerprintAll()">⚠️ Reset Semua</button>
+          <button class="btn-success btn-sm" style="width:auto; padding:6px 14px;" onclick="resetFingerprintSelected()">✅ Reset Terpilih</button>
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <input type="text" id="filterResetFingerprint" placeholder="Cari nama atau ID..." oninput="filterResetFingerprintList()">
+        </div>
+        <div class="reset-user-list" id="resetFingerprintList">
+          <div style="text-align:center; padding:20px; color:var(--muted);">Memuat data...</div>
+        </div>
       </div>
+
+      <!-- PANEL: RESET PIN -->
+      <div class="pengaturan-panel" id="panel-reset-pin">
+        <h4 class="panel-title">🔑 Reset PIN Guru</h4>
+        <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">
+          Reset PIN guru (akan dikosongkan). Guru tidak bisa login sampai PIN diisi ulang oleh Super Admin.
+        </p>
+        <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+          <button class="btn-primary btn-sm" style="width:auto; padding:6px 14px;" onclick="loadResetPinList()">🔄 Muat Ulang</button>
+          <button class="btn-primary btn-sm" style="width:auto; padding:6px 14px; background:var(--danger);" onclick="resetPinAll()">⚠️ Reset Semua</button>
+          <button class="btn-success btn-sm" style="width:auto; padding:6px 14px;" onclick="resetPinSelected()">✅ Reset Terpilih</button>
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <input type="text" id="filterResetPin" placeholder="Cari nama guru..." oninput="filterResetPinList()">
+        </div>
+        <div class="reset-user-list" id="resetPinList">
+          <div style="text-align:center; padding:20px; color:var(--muted);">Memuat data...</div>
+        </div>
+      </div>
+
+      <!-- PANEL: SETING ABSEN -->
+      <div class="pengaturan-panel" id="panel-seting-absen">
+        <h4 class="panel-title">📅 Seting Absen (Masa Berlaku)</h4>
+        <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">
+          Tentukan rentang tanggal yang akan dijadikan perhitungan akumulasi syarat naik kelas/lulus.
+        </p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; min-width:180px;">
+            <label>Tanggal Mulai Berlaku:</label>
+            <input type="date" id="setingAbsenMulai">
+          </div>
+          <div class="form-group" style="flex:1; min-width:180px;">
+            <label>Tanggal Akhir Berlaku:</label>
+            <input type="date" id="setingAbsenAkhir">
+          </div>
+          <div class="form-group" style="flex:1; min-width:180px;">
+            <label>Batas Minimal Kehadiran (%):</label>
+            <input type="number" id="setingAbsenBatas" min="0" max="100" step="1" placeholder="80">
+          </div>
+        </div>
+        <button class="btn-primary" style="width:auto; padding:8px 22px;" onclick="saveSettingAbsen()">💾 Simpan Seting Absen</button>
+      </div>
+
+      <!-- PANEL: ISI PIN GURU -->
+      <div class="pengaturan-panel" id="panel-pin-guru">
+        <h4 class="panel-title">🔐 Isi / Ganti PIN Guru</h4>
+        <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">
+          Masukkan PIN baru untuk guru. PIN minimal 4 karakter.
+        </p>
+        <div class="form-group" style="margin-bottom:8px;">
+          <input type="text" id="filterPinGuru" placeholder="Cari nama guru..." oninput="filterPinGuruList()">
+        </div>
+        <div class="pin-list" id="pinGuruList">
+          <div style="text-align:center; padding:20px; color:var(--muted);">Memuat data...</div>
+        </div>
+      </div>
+
+      <!-- PANEL: HARI LIBUR -->
+      <div class="pengaturan-panel" id="panel-hari-libur">
+        <h4 class="panel-title">🎉 Hari Libur</h4>
+        <input type="hidden" id="editHariLiburRowIndex" value="0">
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; min-width:180px;"><label>Tanggal:</label><input type="date" id="inputTglLibur"></div>
+          <div class="form-group" style="flex:2; min-width:200px;"><label>Keterangan:</label><input type="text" id="inputKetLibur" placeholder="Keterangan"></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="simpanHariLibur()">Simpan</button>
+          <button id="btnBatalEditLibur" style="display:none; width:auto; padding:6px 16px; background:#6c757d; color:#fff; border:none; border-radius:6px;" onclick="resetFormHariLibur()">Batal</button>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th style="width:100px;">Aksi</th></tr></thead>
+            <tbody id="tableHariLiburBody"><tr><td colspan="4" style="text-align:center;">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PANEL: HISTORIS -->
+      <div class="pengaturan-panel" id="panel-historis">
+        <h4 class="panel-title">📦 Manajemen Historis</h4>
+        <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">
+          Data kehadiran otomatis dipindahkan ke sheet <b>Historis</b> setiap hari jam 23:59.
+          Gunakan tombol di bawah untuk memindahkan manual atau memasang trigger otomatis.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn-primary" style="width:auto; padding:8px 18px; background:var(--warning); color:#333;" onclick="moveToHistorisManual()">📦 Pindahkan Sekarang</button>
+          <button class="btn-success" style="width:auto; padding:8px 18px;" onclick="setupTriggerHistoris()">⚙️ Pasang Trigger Otomatis 23:59</button>
+        </div>
+        <div id="historisInfo" style="margin-top:12px; font-size:12px; color:var(--muted);"></div>
+      </div>
+
     </div>
 
     <!-- JADWAL MAPEL -->
@@ -625,7 +995,7 @@ th { background: var(--primary-lighter); color: var(--primary); font-weight: bol
 
 <script>
 // ================= KONFIGURASI =================
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz3G5RRMG2QrpeS3xQXLxRwU7fzugHL0OwyGIvAFzqSLN5bKGZGu2yOfeTRIQIWhV9nMQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzB1wcFtGHpO4xpMwC4C-ZhgalSSHdHYMs1ms5QnEq9_XYW1GXritUNxEwaechvGfDsDQ/exec";
 const MAX_RETRY = 3;
 
 // ================= DOM HELPERS =================
@@ -655,6 +1025,10 @@ let currentInputNilaiList = [];
 let fingerprintRegistered = false;
 let siswaFingerprintRegistered = false;
 let currentSiswaNISN = '';
+let activePengaturanPanel = null;
+let resetFingerprintData = [];
+let resetPinData = [];
+let pinGuruData = [];
 
 // ================= SEND REQUEST =================
 function sendRequest(payload, callback, retryCount = 0) {
@@ -670,11 +1044,40 @@ function sendRequest(payload, callback, retryCount = 0) {
     if (retryCount < MAX_RETRY) {
       setTimeout(() => sendRequest(payload, callback, retryCount + 1), 2000 * (retryCount + 1));
     } else {
-      showScanPopup("danger", "Koneksi Error", "Gagal terhubung ke server! Error: " + err.message);
+      showBigPopup("danger", "Koneksi Error", "Gagal terhubung ke server! Error: " + err.message);
       callback({ status: "error", message: "Koneksi gagal: " + err.message });
     }
   });
 }
+
+// ================= BIG POPUP (MODAL TENGAH) =================
+const POPUP_ICONS = {
+  success: "✅",
+  warning: "⚠️",
+  danger: "❌",
+  info: "ℹ️"
+};
+function showBigPopup(type, title, message, autoClose = null) {
+  const popup = $('bigPopup');
+  const box = $('bigPopupBox');
+  if (popupTimeout) clearTimeout(popupTimeout);
+  box.className = 'modal-popup-box popup-' + type;
+  setText('bigPopupIcon', POPUP_ICONS[type] || 'ℹ️');
+  setText('bigPopupTitle', title);
+  setText('bigPopupMessage', message);
+  popup.classList.add('show');
+  closeSidebar();
+  // Auto-close: success & info = 2 detik, warning & danger = tunggu klik OK
+  let delay = autoClose;
+  if (delay === null) delay = (type === 'success' || type === 'info') ? 2000 : 0;
+  if (delay > 0) popupTimeout = setTimeout(closeBigPopup, delay);
+}
+function closeBigPopup() {
+  if (popupTimeout) { clearTimeout(popupTimeout); popupTimeout = null; }
+  $('bigPopup').classList.remove('show');
+}
+// Alias agar semua panggilan showScanPopup lama tetap berfungsi
+function showScanPopup(type, title, message) { showBigPopup(type, title, message); }
 
 // ================= INIT =================
 $('izinTanggal').value = new Date().toISOString().split('T')[0];
@@ -684,7 +1087,7 @@ startRealtimeDashboard();
 loadOpsiKelas();
 updateTopbarUserInfo();
 sendRequest({ action: 'get_pengaturan' }, res => {
-  if (res.status !== 'success') showScanPopup("warning", "Koneksi", "Gagal terhubung ke server.");
+  if (res.status !== 'success') showBigPopup("warning", "Koneksi", "Gagal terhubung ke server.");
 });
 document.addEventListener('DOMContentLoaded', () => setTimeout(restoreSession, 500));
 
@@ -709,18 +1112,6 @@ function toggleSidebar() {
 function closeSidebar() {
   $('appSidebar').classList.remove('open');
   $('sidebarOverlay').classList.remove('active');
-}
-
-// ================= POPUP =================
-function showScanPopup(type, title, message) {
-  const popup = $('scanPopup');
-  if (popupTimeout) clearTimeout(popupTimeout);
-  popup.className = `popup-${type}`;
-  setText('popupTitle', title);
-  setText('popupMessage', message);
-  popup.style.display = 'block';
-  popupTimeout = setTimeout(() => popup.style.display = 'none', 4000);
-  closeSidebar();
 }
 
 // ================= AVATAR =================
@@ -837,11 +1228,12 @@ function resetSiswaUI() {
   siswaFingerprintRegistered = false;
   currentSiswaNISN = '';
   updateTopbarUserInfo();
+  updateSyaratAccessUI();
 }
 
 // ================= SISWA LOGIN =================
 function openLoginSiswaModal() {
-  if (siswaUserData) return showScanPopup('warning', 'Info', 'Anda sudah login sebagai siswa.');
+  if (siswaUserData) return showBigPopup('warning', 'Info', 'Anda sudah login sebagai siswa.');
   $('inputNISNModal').value = '';
   setText('modalSiswaInfo', 'Masukkan NISN Anda untuk login.');
   showFlex('loginSiswaModal');
@@ -849,7 +1241,7 @@ function openLoginSiswaModal() {
 function closeLoginSiswaModal() { hideEl('loginSiswaModal'); }
 function submitLoginSiswa() {
   const nisn = $('inputNISNModal').value.trim();
-  if (!nisn) return showScanPopup('warning', 'Peringatan', 'NISN tidak boleh kosong!');
+  if (!nisn) return showBigPopup('warning', 'Peringatan', 'NISN tidak boleh kosong!');
   sendRequest({ action: 'login_siswa_fingerprint', nisn, mode: 'check' }, res => {
     if (res.status === 'success') {
       siswaUserData = res;
@@ -859,9 +1251,10 @@ function submitLoginSiswa() {
       updateSiswaUI();
       setTimeout(() => checkSiswaFingerprintStatus(nisn), 300);
       updateTopbarUserInfo();
-      showScanPopup('success', 'Login Berhasil', 'Selamat datang, ' + res.nama + '!');
+      updateSyaratAccessUI();
+      showBigPopup('success', 'Login Berhasil', 'Selamat datang, ' + res.nama + '!');
       closeSidebar();
-    } else showScanPopup('danger', 'Login Gagal', res.message);
+    } else showBigPopup('danger', 'Login Gagal', res.message);
   });
 }
 function updateSiswaUI() {
@@ -917,7 +1310,8 @@ function logoutSiswaSession() {
   sessionStorage.removeItem('siswaSession');
   resetSiswaUI();
   updateTopbarUserInfo();
-  showScanPopup('success', 'Logout Berhasil', 'Anda telah keluar dari akun siswa.');
+  updateSyaratAccessUI();
+  showBigPopup('success', 'Logout Berhasil', 'Anda telah keluar dari akun siswa.');
 }
 function checkSiswaFingerprintStatus(nisn) {
   if (!nisn) { siswaFingerprintRegistered = false; currentSiswaNISN = ''; return updateSiswaFingerprintUI(); }
@@ -1011,7 +1405,7 @@ function updateDashboardTables(guruList, siswaList) {
 
 // ================= LOGIN GURU/ADMIN =================
 function openLoginModal() {
-  if (userRole !== 'tamu') return showScanPopup("warning", "Info", "Anda sudah login.");
+  if (userRole !== 'tamu') return showBigPopup("warning", "Info", "Anda sudah login.");
   closeSidebar();
   $('inputPinModal').value = '';
   setText('modalInfo', "Masukkan PIN Anda.");
@@ -1024,7 +1418,7 @@ function closeLoginModal() {
 }
 function submitLogin() {
   const pin = $('inputPinModal').value.trim();
-  if (!pin) return showScanPopup("warning", "Peringatan", "PIN tidak boleh kosong!");
+  if (!pin) return showBigPopup("warning", "Peringatan", "PIN tidak boleh kosong!");
   sendRequest({ action: 'login', pin }, res => {
     if (res.status === 'success') {
       userRole = res.role;
@@ -1032,7 +1426,7 @@ function submitLogin() {
       closeLoginModal();
       applyRoleAccessUI();
       updateTopbarUserInfo();
-      showScanPopup("success", "Login Berhasil", res.message);
+      showBigPopup("success", "Login Berhasil", res.message);
       sessionStorage.setItem('userSession', JSON.stringify({ userId: res.nip || 'admin', role: res.role, sessionToken: 'user_' + Date.now() + '_' + (res.nip || 'admin') }));
       if (userRole === 'guru' && userData) {
         sendRequest({ action: 'get_guru_profile', pin }, profileRes => {
@@ -1043,7 +1437,7 @@ function submitLogin() {
       if (pendingMenu) { switchMenu(pendingMenu.name, pendingMenu.el); pendingMenu = null; }
       closeSidebar();
     } else {
-      showScanPopup("danger", "Login Gagal", res.message);
+      showBigPopup("danger", "Login Gagal", res.message);
       closeSidebar();
     }
   });
@@ -1082,7 +1476,7 @@ function logoutSession() {
   updateTopbarUserInfo();
   updateFingerprintUI();
   switchMenu('dashboard', document.querySelector('.sidebar .nav-item'));
-  showScanPopup("success", "Logout Berhasil", "Anda telah keluar.");
+  showBigPopup("success", "Logout Berhasil", "Anda telah keluar.");
   closeSidebar();
 }
 function checkMenuAccess(menuName, el) {
@@ -1090,7 +1484,7 @@ function checkMenuAccess(menuName, el) {
   if (userRole === 'tamu') { pendingMenu = { name: menuName, el }; openLoginModal(); return; }
   const isAdmin = userRole === 'admin' || userRole === 'super_admin';
   const isSuperAdmin = userRole === 'super_admin';
-  if (menuName === 'pengaturan' && !isSuperAdmin) return showScanPopup("warning", "Akses Ditolak", "Hanya Super Admin!");
+  if (menuName === 'pengaturan' && !isSuperAdmin) return showBigPopup("warning", "Akses Ditolak", "Hanya Super Admin!");
   const pembelajaran = ['jadwal-mapel','input-nilai','daftar-nilai','kelulusan'];
   if (pembelajaran.includes(menuName) && (userRole === 'guru' || isAdmin)) {
     switchMenu(menuName, el);
@@ -1110,10 +1504,16 @@ function switchMenu(menuName, el) {
   $(`menu-${menuName}`)?.classList.add('active');
   if (menuName === 'scanner') setupScannerView();
   if (menuName === 'rekap') loadOpsiKelas();
-  if (menuName === 'pengaturan') { loadPengaturanDataFromServer(); loadHariLiburData(); loadAllowedUsers(); }
+  if (menuName === 'pengaturan') {
+    loadPengaturanDataFromServer();
+    loadHariLiburData();
+    loadAllowedUsers();
+    loadHistorisInfo();
+  }
   if (menuName === 'input-nilai') loadFilterInputNilaiWithGuru();
   if (menuName === 'daftar-nilai') loadFilterDaftarNilaiWithGuru();
   if (menuName === 'jadwal-mapel') loadJadwalMapel();
+  if (menuName === 'cek-syarat') loadCekSyarat();
 }
 
 // ================= SCANNER =================
@@ -1128,7 +1528,7 @@ function setRole(role) {
   $('btnGuruAdmin').style.background = role === 'guru' ? 'var(--primary)' : '#6c757d';
 }
 function toggleCamera() {
-  if (!currentActiveSesiName) return showScanPopup("warning", "Sesi Tutup", "Tidak ada sesi aktif!");
+  if (!currentActiveSesiName) return showBigPopup("warning", "Sesi Tutup", "Tidak ada sesi aktif!");
   isCameraOn ? stopCamera() : startCamera();
 }
 function startCamera() {
@@ -1140,8 +1540,8 @@ function startCamera() {
     const btn = $('btnCameraToggle');
     btn.innerText = "Tutup Kamera";
     btn.classList.add('off');
-    showScanPopup("success", "Kamera Ready", "Kamera aktif.");
-  }).catch(err => showScanPopup("danger", "Error Kamera", err));
+    showBigPopup("success", "Kamera Ready", "Kamera aktif.");
+  }).catch(err => showBigPopup("danger", "Error Kamera", err));
 }
 function stopCamera() {
   if (html5QrcodeScanner) {
@@ -1151,7 +1551,7 @@ function stopCamera() {
       const btn = $('btnCameraToggle');
       btn.innerText = "Buka Kamera";
       btn.classList.remove('off');
-      showScanPopup("warning", "Kamera Tutup", "Kamera dimatikan.");
+      showBigPopup("warning", "Kamera Tutup", "Kamera dimatikan.");
     });
   }
 }
@@ -1160,7 +1560,7 @@ function onScanSuccess(code, sesiTarget) {
   isProcessing = true;
   sendRequest({ action: 'absen_qr', role: currentRole, code, sesi: sesiTarget }, res => {
     const type = res.status === 'success' ? 'success' : (res.status === 'warning' ? 'warning' : 'danger');
-    showScanPopup(type, "Hasil Scan", res.message);
+    showBigPopup(type, "Hasil Scan", res.message);
     setTimeout(() => { isProcessing = false; }, 1800);
   });
 }
@@ -1168,12 +1568,12 @@ function onScanSuccess(code, sesiTarget) {
 // ================= IZIN =================
 function simpanIzin() {
   const id = $('izinId').value;
-  if (!id) return showScanPopup("warning", "Peringatan", "ID wajib diisi!");
+  if (!id) return showBigPopup("warning", "Peringatan", "ID wajib diisi!");
   sendRequest({
     action: 'input_izin', role: $('izinRole').value, id,
     tanggal: $('izinTanggal').value, status: $('izinStatus').value, keterangan: $('izinKet').value
   }, res => {
-    showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info Izin", res.message);
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', "Info Izin", res.message);
     if (res.status === 'success') { $('izinId').value = ''; fetchDashboardData(); }
   });
 }
@@ -1217,6 +1617,127 @@ function toggleRekapFilter() {
 function exportRekapToExcel() {
   const wb = XLSX.utils.table_to_book($('tableRekap'), { sheet: "Rekap Kehadiran" });
   XLSX.writeFile(wb, "Rekap_Kehadiran.xlsx");
+}
+
+// ================= CEK SYARAT KELULUSAN =================
+function updateSyaratAccessUI() {
+  const belumLogin = $('syaratBelumLogin');
+  const content = $('syaratContent');
+  if (!belumLogin || !content) return;
+  if (siswaUserData && siswaUserData.nisn) {
+    belumLogin.style.display = 'none';
+    content.style.display = 'block';
+  } else {
+    belumLogin.style.display = 'block';
+    content.style.display = 'none';
+  }
+}
+function loadCekSyarat() {
+  updateSyaratAccessUI();
+  if (!siswaUserData || !siswaUserData.nisn) return;
+  const content = $('syaratContent');
+  content.style.display = 'block';
+  showEl('syaratLoading');
+  setHTML('syaratResult', '');
+  sendRequest({ action: 'get_syarat_kelulusan', nisn: siswaUserData.nisn }, res => {
+    hideEl('syaratLoading');
+    if (res.status === 'not_configured') {
+      setHTML('syaratResult', `<div class="syarat-empty"><span class="icon">⚙️</span><h4 style="color:var(--primary); margin:0 0 8px;">Seting Absen Belum Dikonfigurasi</h4><p style="font-size:13px;">${res.message}</p></div>`);
+      return;
+    }
+    if (res.status !== 'success') {
+      setHTML('syaratResult', `<div class="syarat-empty"><span class="icon">❌</span><h4 style="color:var(--danger); margin:0 0 8px;">Gagal Memuat</h4><p style="font-size:13px;">${res.message}</p></div>`);
+      return;
+    }
+    renderSyaratResult(res.data);
+  });
+}
+function renderSyaratResult(d) {
+  const container = $('syaratResult');
+  const statusIcon = d.memenuhi ? (d.isKelas9 ? '🎓' : '✅') : '❌';
+  const statusText = d.pesan;
+  container.innerHTML = `
+    <div class="syarat-card ${d.warna}" id="syaratCard">
+      <div class="syarat-header">
+        <h3 class="syarat-nama">${d.nama}</h3>
+        <div class="syarat-kelas">Kelas ${d.kelas} • NISN ${d.nisn}</div>
+        <div class="syarat-periode">📅 ${formatTanggal(d.periodeMulai)} s/d ${formatTanggal(d.periodeAkhir)}</div>
+      </div>
+      <ul class="syarat-list">
+        <li><span class="label">✅ Tepat Waktu (TW)</span><span class="value">${d.tw} hari</span></li>
+        <li><span class="label">⏰ Terlambat (TL)</span><span class="value">${d.tl} hari</span></li>
+        <li><span class="label">🤒 Sakit</span><span class="value">${d.sakit} hari</span></li>
+        <li><span class="label">📝 Izin</span><span class="value">${d.izin} hari</span></li>
+        <li><span class="label">❌ Alpa</span><span class="value">${d.alpa} hari</span></li>
+        <li><span class="label">🚫 Bolos</span><span class="value">${d.bolos} hari</span></li>
+      </ul>
+      <div class="syarat-total">
+        <div class="total-label">Persentase Kehadiran</div>
+        <div class="total-value">${d.persen}%</div>
+        <div class="total-sub">Hadir: ${d.totalHadir} dari ${d.totalHariEfektif} hari efektif • Batas minimal: ${d.batasPersen}%</div>
+      </div>
+      <div class="syarat-status ${d.warna}">${statusIcon} ${statusText}</div>
+      <div class="syarat-actions">
+        <button class="btn-primary" style="background:var(--danger);" onclick="cetakSyaratPDF()">📄 Cetak PDF</button>
+        <button class="btn-primary" style="background:var(--primary);" onclick="loadCekSyarat()">🔄 Muat Ulang</button>
+      </div>
+    </div>
+  `;
+}
+function formatTanggal(tgl) {
+  if (!tgl) return '-';
+  const parts = String(tgl).split('-');
+  if (parts.length !== 3) return tgl;
+  const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+  return `${parseInt(parts[2], 10)} ${bulan[parseInt(parts[1], 10) - 1]} ${parts[0]}`;
+}
+function cetakSyaratPDF() {
+  const element = $('syaratCard');
+  if (!element) return showBigPopup('warning', 'Info', 'Tidak ada data untuk dicetak.');
+  if (typeof html2pdf === 'undefined') {
+    return showBigPopup('warning', 'Info', 'Library PDF belum siap. Coba lagi sebentar lagi.');
+  }
+  const opt = {
+    margin: [8, 8, 8, 8],
+    filename: `Syarat_Kelulusan_${siswaUserData?.nisn || 'siswa'}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  const clone = element.cloneNode(true);
+  clone.querySelector('.syarat-actions')?.remove();
+  clone.style.maxWidth = '100%';
+  clone.style.boxShadow = 'none';
+  html2pdf().set(opt).from(clone).save().then(() => {
+    showBigPopup('success', 'PDF Dibuat', 'File PDF berhasil diunduh.');
+  }).catch(err => showBigPopup('danger', 'Gagal', 'Gagal membuat PDF: ' + err.message));
+}
+
+// ================= PENGATURAN — TOGGLE PANEL =================
+function togglePengaturanPanel(tab) {
+  const panels = $$('.pengaturan-panel');
+  const buttons = $$('.pengaturan-tab-btn');
+  const targetPanel = $(`panel-${tab}`);
+  const targetBtn = document.querySelector(`.pengaturan-tab-btn[data-tab="${tab}"]`);
+  // Jika panel yang sama diklik lagi, tutup
+  if (activePengaturanPanel === tab) {
+    panels.forEach(p => p.classList.remove('open'));
+    buttons.forEach(b => b.classList.remove('active'));
+    activePengaturanPanel = null;
+    return;
+  }
+  // Tutup semua, buka target
+  panels.forEach(p => p.classList.remove('open'));
+  buttons.forEach(b => b.classList.remove('active'));
+  targetPanel?.classList.add('open');
+  targetBtn?.classList.add('active');
+  activePengaturanPanel = tab;
+  // Auto-load data sesuai tab
+  if (tab === 'reset-fingerprint') loadResetFingerprintList();
+  if (tab === 'reset-pin') loadResetPinList();
+  if (tab === 'pin-guru') loadPinGuruList();
+  if (tab === 'seting-absen') loadSettingAbsen();
+  if (tab === 'historis') loadHistorisInfo();
 }
 
 // ================= PENGATURAN SESI =================
@@ -1265,15 +1786,15 @@ function addSesiRow() {
   `;
   container.appendChild(row);
   updateSesiNumbers();
-  showScanPopup('success', 'Sesi Ditambahkan', `Sesi ${count} berhasil ditambahkan.`);
+  showBigPopup('success', 'Sesi Ditambahkan', `Sesi ${count} berhasil ditambahkan.`);
 }
 function removeSesiRow(btn) {
   const container = $('sesiConfigContainer');
-  if (container.querySelectorAll('.sesi-row').length <= 1) return showScanPopup('warning', 'Peringatan', 'Minimal harus ada 1 sesi!');
+  if (container.querySelectorAll('.sesi-row').length <= 1) return showBigPopup('warning', 'Peringatan', 'Minimal harus ada 1 sesi!');
   if (confirm('Hapus sesi ini?')) {
     btn.closest('.sesi-row').remove();
     updateSesiNumbers();
-    showScanPopup('success', 'Sesi Dihapus', 'Sesi berhasil dihapus.');
+    showBigPopup('success', 'Sesi Dihapus', 'Sesi berhasil dihapus.');
   }
 }
 function updateSesiNumbers() {
@@ -1297,9 +1818,30 @@ function loadPengaturanDataFromServer() {
   });
 }
 function savePengaturan() {
-  sendRequest({ action: 'save_pengaturan', config: getSesiConfigFromUI() }, res => {
-    showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
-    if (res.status === 'success') { globalPengaturanData = getSesiConfigFromUI(); preloadPinConfig(); }
+  const config = getSesiConfigFromUI();
+  sendRequest({ action: 'save_pengaturan', config }, res => {
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
+    if (res.status === 'success') { globalPengaturanData = config; preloadPinConfig(); }
+  });
+}
+
+// ================= SETING ABSEN =================
+function loadSettingAbsen() {
+  sendRequest({ action: 'get_setting_absen' }, res => {
+    if (res.status !== 'success') return;
+    $('setingAbsenMulai').value = res.data.mulai || '';
+    $('setingAbsenAkhir').value = res.data.akhir || '';
+    $('setingAbsenBatas').value = res.data.batas || 80;
+  });
+}
+function saveSettingAbsen() {
+  const mulai = $('setingAbsenMulai').value;
+  const akhir = $('setingAbsenAkhir').value;
+  const batas = $('setingAbsenBatas').value;
+  if (!mulai || !akhir) return showBigPopup('warning', 'Peringatan', 'Tanggal mulai dan akhir wajib diisi!');
+  if (mulai > akhir) return showBigPopup('warning', 'Peringatan', 'Tanggal mulai tidak boleh melebihi tanggal akhir!');
+  sendRequest({ action: 'save_setting_absen', mulai, akhir, batas }, res => {
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', 'Info', res.message);
   });
 }
 
@@ -1320,12 +1862,12 @@ function loadHariLiburData() {
 }
 function simpanHariLibur() {
   const tgl = $('inputTglLibur').value;
-  if (!tgl) return showScanPopup("warning", "Peringatan", "Tanggal wajib diisi!");
+  if (!tgl) return showBigPopup("warning", "Peringatan", "Tanggal wajib diisi!");
   sendRequest({
     action: 'save_hari_libur', tanggal: tgl,
     keterangan: $('inputKetLibur').value, rowIndex: $('editHariLiburRowIndex').value
   }, res => {
-    showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
     if (res.status === 'success') { resetFormHariLibur(); loadHariLiburData(); fetchDashboardData(); }
   });
 }
@@ -1344,7 +1886,7 @@ function resetFormHariLibur() {
 function hapusHariLibur(rowIndex) {
   if (!confirm("Yakin hapus?")) return;
   sendRequest({ action: 'delete_hari_libur', rowIndex }, res => {
-    showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
     if (res.status === 'success') { loadHariLiburData(); fetchDashboardData(); }
   });
 }
@@ -1383,32 +1925,32 @@ function updateAllowedUser(userId, allowed, checkboxElement) {
   const labelSpan = row.querySelector('.switch-label');
   if (labelSpan) { labelSpan.textContent = '⏳...'; labelSpan.className = 'switch-label'; }
   sendRequest({ action: 'update_allowed_users', userId, allowed }, res => {
-    showScanPopup(res.status === 'success' ? 'success' : 'danger', res.status === 'success' ? 'Berhasil' : 'Gagal', res.message);
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', res.status === 'success' ? 'Berhasil' : 'Gagal', res.message);
     loadAllowedUsers();
   });
 }
 function syncAllowedUsers() {
-  showScanPopup('info', 'Sinkronisasi', 'Sedang menyinkronkan data...');
+  showBigPopup('info', 'Sinkronisasi', 'Sedang menyinkronkan data...');
   sendRequest({ action: 'sync_allowed_users' }, res => {
-    showScanPopup(res.status === 'success' ? 'success' : 'danger', 'Sinkronisasi', res.message);
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', 'Sinkronisasi', res.message);
     if (res.status === 'success') loadAllowedUsers();
   });
 }
 function bulkUpdateAllowed(allow) {
   const label = allow ? 'mengizinkan' : 'menolak';
   if (!confirm(`Yakin ingin ${label} SEMUA user untuk absensi sidik jari?`)) return;
-  showScanPopup('info', 'Proses', `Sedang ${label} semua user...`);
+  showBigPopup('info', 'Proses', `Sedang ${label} semua user...`);
   sendRequest({ action: 'get_allowed_users' }, res => {
     if (res.status !== 'success' || !res.data) return;
     const toUpdate = res.data.filter(u => u.allowed !== allow);
-    if (!toUpdate.length) return showScanPopup('info', 'Info', allow ? 'Semua user sudah diizinkan.' : 'Semua user sudah ditolak.');
+    if (!toUpdate.length) return showBigPopup('info', 'Info', allow ? 'Semua user sudah diizinkan.' : 'Semua user sudah ditolak.');
     let count = 0;
     toUpdate.forEach(user => {
       sendRequest({ action: 'update_allowed_users', userId: user.id, allowed: allow }, () => {
         count++;
         if (count === toUpdate.length) {
           setTimeout(() => {
-            showScanPopup('success', 'Berhasil', `${count} user ${allow ? 'diizinkan' : 'ditolak'} sidik jari.`);
+            showBigPopup('success', 'Berhasil', `${count} user ${allow ? 'diizinkan' : 'ditolak'} sidik jari.`);
             loadAllowedUsers();
           }, 500);
         }
@@ -1418,6 +1960,190 @@ function bulkUpdateAllowed(allow) {
 }
 function allowAllUsers() { bulkUpdateAllowed(true); }
 function denyAllUsers() { bulkUpdateAllowed(false); }
+
+// ================= RESET SIDIK JARI =================
+function loadResetFingerprintList() {
+  sendRequest({ action: 'get_reset_fingerprint_list' }, res => {
+    const container = $('resetFingerprintList');
+    if (!container) return;
+    if (res.status === 'success' && res.data) {
+      resetFingerprintData = res.data;
+      renderResetFingerprintList();
+    } else {
+      container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted);">Gagal memuat data.</div>';
+    }
+  });
+}
+function renderResetFingerprintList() {
+  const container = $('resetFingerprintList');
+  const keyword = ($('filterResetFingerprint')?.value || '').toLowerCase().trim();
+  let filtered = resetFingerprintData;
+  if (keyword) {
+    filtered = filtered.filter(u => u.id.toLowerCase().includes(keyword) || u.nama.toLowerCase().includes(keyword));
+  }
+  if (!filtered.length) {
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted);">Tidak ada data.</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(u => `
+    <label class="reset-user-item">
+      <input type="checkbox" value="${u.id}" data-role="${u.role}">
+      <div class="user-info">
+        <div class="user-name">${u.nama}</div>
+        <div class="user-id">ID: ${u.id}</div>
+      </div>
+      <span class="user-badge badge-${u.role}">${u.role.toUpperCase()}</span>
+      ${u.registered ? '<span class="user-badge badge-registered">👆 Terdaftar</span>' : ''}
+    </label>
+  `).join('');
+}
+function filterResetFingerprintList() { renderResetFingerprintList(); }
+function getSelectedResetFingerprint() {
+  const checked = $$('#resetFingerprintList input[type="checkbox"]:checked');
+  return Array.from(checked).map(cb => cb.value);
+}
+function resetFingerprintSelected() {
+  const userIds = getSelectedResetFingerprint();
+  if (!userIds.length) return showBigPopup('warning', 'Peringatan', 'Pilih minimal 1 user terlebih dahulu.');
+  if (!confirm(`Yakin reset sidik jari ${userIds.length} user? Tindakan ini tidak dapat dibatalkan.`)) return;
+  sendRequest({ action: 'reset_fingerprint', userIds }, res => {
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', 'Reset Sidik Jari', res.message);
+    if (res.status === 'success') loadResetFingerprintList();
+  });
+}
+function resetFingerprintAll() {
+  const allIds = resetFingerprintData.filter(u => u.registered).map(u => u.id);
+  if (!allIds.length) return showBigPopup('info', 'Info', 'Tidak ada user yang terdaftar sidik jari.');
+  if (!confirm(`Yakin reset SEMUA sidik jari (${allIds.length} user terdaftar)? Tindakan ini tidak dapat dibatalkan.`)) return;
+  sendRequest({ action: 'reset_fingerprint', userIds: allIds }, res => {
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', 'Reset Sidik Jari', res.message);
+    if (res.status === 'success') loadResetFingerprintList();
+  });
+}
+
+// ================= RESET PIN GURU =================
+function loadResetPinList() {
+  sendRequest({ action: 'get_reset_pin_list' }, res => {
+    const container = $('resetPinList');
+    if (!container) return;
+    if (res.status === 'success' && res.data) {
+      resetPinData = res.data;
+      renderResetPinList();
+    } else {
+      container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted);">Gagal memuat data.</div>';
+    }
+  });
+}
+function renderResetPinList() {
+  const container = $('resetPinList');
+  const keyword = ($('filterResetPin')?.value || '').toLowerCase().trim();
+  let filtered = resetPinData;
+  if (keyword) filtered = filtered.filter(u => u.id.toLowerCase().includes(keyword) || u.nama.toLowerCase().includes(keyword));
+  if (!filtered.length) {
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted);">Tidak ada data.</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(u => `
+    <label class="reset-user-item">
+      <input type="checkbox" value="${u.id}">
+      <div class="user-info">
+        <div class="user-name">${u.nama}</div>
+        <div class="user-id">NIP: ${u.id}</div>
+      </div>
+      <span class="user-badge badge-guru">GURU</span>
+      ${u.pinSet ? '<span class="user-badge badge-registered">🔑 Punya PIN</span>' : ''}
+    </label>
+  `).join('');
+}
+function filterResetPinList() { renderResetPinList(); }
+function getSelectedResetPin() {
+  const checked = $$('#resetPinList input[type="checkbox"]:checked');
+  return Array.from(checked).map(cb => cb.value);
+}
+function resetPinSelected() {
+  const userIds = getSelectedResetPin();
+  if (!userIds.length) return showBigPopup('warning', 'Peringatan', 'Pilih minimal 1 guru terlebih dahulu.');
+  if (!confirm(`Yakin reset PIN ${userIds.length} guru? Guru tidak akan bisa login sampai PIN diisi ulang.`)) return;
+  sendRequest({ action: 'reset_pin', userIds }, res => {
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', 'Reset PIN', res.message);
+    if (res.status === 'success') { loadResetPinList(); loadPinGuruList(); }
+  });
+}
+function resetPinAll() {
+  const allIds = resetPinData.map(u => u.id);
+  if (!allIds.length) return showBigPopup('info', 'Info', 'Tidak ada guru.');
+  if (!confirm(`Yakin reset SEMUA PIN guru (${allIds.length} guru)? Tindakan ini tidak dapat dibatalkan.`)) return;
+  sendRequest({ action: 'reset_pin', userIds: allIds }, res => {
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', 'Reset PIN', res.message);
+    if (res.status === 'success') { loadResetPinList(); loadPinGuruList(); }
+  });
+}
+
+// ================= ISI/GANTI PIN GURU =================
+function loadPinGuruList() {
+  sendRequest({ action: 'get_guru_pin_list' }, res => {
+    const container = $('pinGuruList');
+    if (!container) return;
+    if (res.status === 'success' && res.data) {
+      pinGuruData = res.data;
+      renderPinGuruList();
+    } else {
+      container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted);">Gagal memuat data.</div>';
+    }
+  });
+}
+function renderPinGuruList() {
+  const container = $('pinGuruList');
+  const keyword = ($('filterPinGuru')?.value || '').toLowerCase().trim();
+  let filtered = pinGuruData;
+  if (keyword) filtered = filtered.filter(u => u.id.toLowerCase().includes(keyword) || u.nama.toLowerCase().includes(keyword));
+  if (!filtered.length) {
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted);">Tidak ada data.</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(u => `
+    <div class="pin-item">
+      <div class="pin-info">
+        <div class="name">${u.nama}</div>
+        <div class="meta">NIP: ${u.id} • PIN: ${u.pinMasked}</div>
+      </div>
+      <input type="text" id="pinInput_${u.id}" placeholder="PIN baru" maxlength="8">
+      <button class="btn-success btn-sm" onclick="simpanPinGuru('${u.id}')">💾 Simpan</button>
+    </div>
+  `).join('');
+}
+function filterPinGuruList() { renderPinGuruList(); }
+function simpanPinGuru(userId) {
+  const input = $(`pinInput_${userId}`);
+  const pin = input?.value?.trim();
+  if (!pin || pin.length < 4) return showBigPopup('warning', 'Peringatan', 'PIN minimal 4 karakter!');
+  sendRequest({ action: 'save_guru_pin', userId, pin }, res => {
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', 'Simpan PIN', res.message);
+    if (res.status === 'success') { input.value = ''; loadPinGuruList(); }
+  });
+}
+
+// ================= HISTORIS =================
+function loadHistorisInfo() {
+  const el = $('historisInfo');
+  if (!el) return;
+  el.innerHTML = 'Klik salah satu tombol di atas untuk memproses data.';
+}
+function moveToHistorisManual() {
+  if (!confirm('Pindahkan SEMUA data dari sheet Kehadiran ke sheet Historis sekarang?')) return;
+  showBigPopup('info', 'Proses', 'Sedang memindahkan data...');
+  sendRequest({ action: 'move_to_historis' }, res => {
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', 'Pindah Historis', res.message);
+    if (res.status === 'success') loadHistorisInfo();
+  });
+}
+function setupTriggerHistoris() {
+  if (!confirm('Pasang trigger otomatis untuk memindahkan data ke Historis setiap hari jam 23:59?')) return;
+  showBigPopup('info', 'Proses', 'Sedang memasang trigger...');
+  sendRequest({ action: 'setup_trigger' }, res => {
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', 'Trigger Otomatis', res.message);
+  });
+}
 
 // ================= JADWAL =================
 function loadJadwalMapel() {
@@ -1459,7 +2185,7 @@ function loadFilterInputNilaiWithGuru() {
 function loadInputNilaiData() {
   const mapel = $('filterInputNilaiMapel').value;
   const kelas = $('filterInputNilaiKelas').value;
-  if (!mapel) return showScanPopup("warning", "Filter", "Pilih Mapel terlebih dahulu!");
+  if (!mapel) return showBigPopup("warning", "Filter", "Pilih Mapel terlebih dahulu!");
   const guru = $('guruNamaDisplay').innerText;
   sendRequest({ action: 'get_nilai', guru, mapel, kelas }, res => {
     const tbody = $('tableInputNilaiBody');
@@ -1477,18 +2203,18 @@ function loadInputNilaiData() {
 function simpanDataNilai() {
   const guru = $('guruNamaDisplay').innerText;
   const mapel = $('filterInputNilaiMapel').value;
-  if (!guru || guru === '-' || guru === 'Admin') return showScanPopup("warning", "Peringatan", "Guru tidak teridentifikasi!");
-  if (!mapel) return showScanPopup("warning", "Peringatan", "Pilih Mapel!");
-  if (!currentInputNilaiList.length) return showScanPopup("warning", "Peringatan", "Tidak ada daftar siswa!");
+  if (!guru || guru === '-' || guru === 'Admin') return showBigPopup("warning", "Peringatan", "Guru tidak teridentifikasi!");
+  if (!mapel) return showBigPopup("warning", "Peringatan", "Pilih Mapel!");
+  if (!currentInputNilaiList.length) return showBigPopup("warning", "Peringatan", "Tidak ada daftar siswa!");
   let hasValue = false;
   const payloadList = currentInputNilaiList.map((item, idx) => {
     const val = $(`nilai_${idx}`).value;
     if (val && val.trim() !== '') hasValue = true;
     return { nisn: item.nisn, nama: item.nama, kelas: item.kelas, nilai: val || '' };
   });
-  if (!hasValue) return showScanPopup("warning", "Peringatan", "Tidak ada nilai yang diisi!");
+  if (!hasValue) return showBigPopup("warning", "Peringatan", "Tidak ada nilai yang diisi!");
   sendRequest({ action: 'save_nilai', guru, mapel, listNilai: payloadList }, res => {
-    showScanPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
+    showBigPopup(res.status === 'success' ? 'success' : 'danger', "Info", res.message);
     if (res.status === 'success') currentInputNilaiList.forEach((_, idx) => $(`nilai_${idx}`).value = '');
   });
 }
@@ -1533,11 +2259,11 @@ function loadDaftarNilaiData() {
 function exportDaftarNilaiToExcel() {
   const wb = XLSX.utils.table_to_book($('tableDaftarNilaiResult'), { sheet: "Daftar Nilai" });
   XLSX.writeFile(wb, "Daftar_Nilai_Siswa.xlsx");
-  showScanPopup("success", "Export Berhasil", "File Excel berhasil diunduh!");
+  showBigPopup("success", "Export Berhasil", "File Excel berhasil diunduh!");
 }
 function exportDaftarNilaiToPDF() {
   window.print();
-  showScanPopup("success", "Export PDF", "Silakan pilih 'Save as PDF' pada dialog print.");
+  showBigPopup("success", "Export PDF", "Silakan pilih 'Save as PDF' pada dialog print.");
 }
 
 // ================= FINGERPRINT (GURU & SISWA) =================
@@ -1573,7 +2299,6 @@ function checkFingerprintStatus() {
   });
 }
 
-// Fungsi generik untuk registrasi WebAuthn
 async function createWebAuthnCredential(userId, userName) {
   const challenge = new Uint8Array(32);
   crypto.getRandomValues(challenge);
@@ -1593,8 +2318,6 @@ async function createWebAuthnCredential(userId, userName) {
     publicKey: btoa(String.fromCharCode(...new Uint8Array(credential.response.getPublicKey())))
   };
 }
-
-// Fungsi generik untuk verifikasi WebAuthn
 async function verifyWebAuthnCredential(credentialIdBase64) {
   const credentialId = Uint8Array.from(atob(credentialIdBase64), c => c.charCodeAt(0));
   const challenge = new Uint8Array(32);
@@ -1610,8 +2333,6 @@ async function verifyWebAuthnCredential(credentialIdBase64) {
   if (!assertion) throw new Error('Verifikasi gagal atau dibatalkan.');
   return true;
 }
-
-// Registrasi fingerprint (guru atau siswa)
 async function doRegisterFingerprint(userId, userName, statusFn, btnId) {
   if (!isWebAuthnSupported()) return statusFn('error', '❌ Browser tidak mendukung WebAuthn.');
   statusFn('info', '⏳ Menyiapkan registrasi sidik jari...');
@@ -1640,8 +2361,6 @@ async function doRegisterFingerprint(userId, userName, statusFn, btnId) {
     btn.disabled = false;
   }
 }
-
-// Absen dengan fingerprint (guru atau siswa)
 async function doAbsenFingerprint(userId, role, statusFn, btnId) {
   if (!isWebAuthnSupported()) return statusFn('error', '❌ Browser tidak mendukung WebAuthn.');
   if (!currentActiveSesiName) return statusFn('error', '❌ Tidak ada sesi absen aktif saat ini!');
@@ -1659,7 +2378,7 @@ async function doAbsenFingerprint(userId, role, statusFn, btnId) {
       statusFn('info', '✅ Sidik jari terverifikasi! Melakukan absensi...');
       sendRequest({ action: 'absen_qr', role, code: userId, sesi: currentActiveSesiName }, absenRes => {
         const type = absenRes.status === 'success' ? 'success' : (absenRes.status === 'warning' ? 'warning' : 'danger');
-        showScanPopup(type, role === 'guru' ? 'Absensi Sidik Jari' : 'Absensi Siswa', absenRes.message);
+        showBigPopup(type, role === 'guru' ? 'Absensi Sidik Jari' : 'Absensi Siswa', absenRes.message);
         if (absenRes.status === 'success') {
           statusFn('success', '✅ ' + absenRes.message);
           fetchDashboardData();
@@ -1673,7 +2392,6 @@ async function doAbsenFingerprint(userId, role, statusFn, btnId) {
     }
   });
 }
-
 function showFingerprintStatus(type, message) {
   const el = $('fingerprintStatus');
   el.className = 'fingerprint-status show ' + type;
@@ -1686,8 +2404,6 @@ function showSiswaFingerprintStatus(type, message) {
   el.innerHTML = message;
   if (type === 'success') setTimeout(() => { el.className = 'fingerprint-status'; }, 5000);
 }
-
-// Guru: register
 async function registerFingerprint() {
   if (!isWebAuthnSupported()) return showFingerprintStatus('error', '❌ Browser Anda tidak mendukung WebAuthn. Gunakan Chrome/Edge terbaru.');
   if (userRole !== 'guru' || !userData) return showFingerprintStatus('error', '❌ Silakan login sebagai Guru terlebih dahulu.');
@@ -1695,14 +2411,12 @@ async function registerFingerprint() {
   if (!userId) return showFingerprintStatus('error', '❌ User ID tidak ditemukan.');
   await doRegisterFingerprint(userId, userData.nama || 'Guru', showFingerprintStatus, 'btnRegisterFingerprint');
 }
-// Guru: absen
 async function absenWithFingerprint() {
   if (!fingerprintRegistered) return showFingerprintStatus('error', '❌ Silakan daftarkan sidik jari terlebih dahulu.');
   const userId = userData?.nip || userData?.id;
   if (!userId) return showFingerprintStatus('error', '❌ User ID tidak ditemukan.');
   await doAbsenFingerprint(userId, 'guru', showFingerprintStatus, 'btnAbsenFingerprint');
 }
-// Siswa: register
 async function registerSiswaFingerprint() {
   if (!siswaUserData) return showSiswaFingerprintStatus('error', '❌ Silakan login sebagai siswa terlebih dahulu!');
   const nisn = siswaUserData.nisn;
@@ -1710,7 +2424,6 @@ async function registerSiswaFingerprint() {
   if (!isWebAuthnSupported()) return showSiswaFingerprintStatus('error', '❌ Browser tidak mendukung WebAuthn.');
   await doRegisterFingerprint(nisn, siswaUserData.nama || 'Siswa', showSiswaFingerprintStatus, 'btnRegisterSiswaFingerprint');
 }
-// Siswa: absen
 async function absenSiswaWithFingerprint() {
   if (!siswaUserData) return showSiswaFingerprintStatus('error', '❌ Silakan login sebagai siswa terlebih dahulu!');
   const nisn = siswaUserData.nisn;
@@ -1736,3 +2449,4 @@ async function absenSiswaWithFingerprint() {
 </script>
 </body>
 </html>
+
